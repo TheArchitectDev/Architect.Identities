@@ -15,7 +15,7 @@ public class Startup
 {
 	public void ConfigureServices(IServiceCollection services)
 	{
-		// The Fluid generator needs a source of unique application instance IDs
+		// The Fluid generator needs a source to provide its unique application instance ID
 		services.AddApplicationInstanceIdSource(source => source.UseFixedSource(valueFromConfig));
 
 		// Register the Fluid ID generator
@@ -52,3 +52,7 @@ The package offers various application instance ID sources. Most sources use som
 - `UseStandardSql`. This source works with most SQL databases, allowing other databases to be used without the need for custom extensions. However, since table creation syntax rarely follows the standard, this throws if the required table does not exist.
 
 Third party libraries may provide additional sources through further extension methods.
+
+## Service-free Usage
+
+The Fluid ID generator can be used without the need for injected services. For example, in Domain-Driven Design (DDD) an entity's ID property should be immutable. Ideally, it does not have a setter at all. We must either inject the ID into the constructor (complicating construction) or make the entity responsible for generating its own ID.
