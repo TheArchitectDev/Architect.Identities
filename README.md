@@ -28,14 +28,14 @@ public class ExampleFactory
 	public IIdGenerator IdGenerator { get; }
 
 	public ExampleFactory(IIdGenerator idGenerator)
-  {
-  	this.IdGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
-  }
-  
-  public Example CreateExample()
-  {
-    return new Example(this.IdGenerator.CreateId());
-  }
+	{
+		this.IdGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+	}
+	
+	public Example CreateExample()
+	{
+		return new Example(this.IdGenerator.CreateId());
+	}
 }
 ```
 
