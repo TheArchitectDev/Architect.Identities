@@ -2,11 +2,11 @@
 
 Provides various tools related to IDs.
 
-This package features the **Fluid** ID generator, which generates **F**lexible, **L**ocally-**U**nique **ID**s. A Fluid is intended to replace a pair of auto-increment ID + UUID. It is 64-bit and incremental (i.e. suitable as a primary key) and does not leak the sensitive information that an auto-increment ID does.
+This package features the **Fluid** ID generator, which generates **F**lexible, **L**ocally-**U**nique **ID**s. A Fluid is intended to replace the combination of auto-increment ID and UUID. It is 64-bit and incremental (i.e. efficient as a primary key) and does not leak the sensitive information that an auto-increment ID does.
 
-The package also features the **PublicIdentities** system, a set of tools for converting local IDs to public IDs. If the local IDs still leak too much information to be shared publically, PublicIdentities can be used. It converts 64-bit (or smaller) IDs into deterministic, reversible public IDs that are indistinguishable from random noise without possession of the configured key. These can replace UUIDs, without the additional bookkeeping.
+The package also provides the **PublicIdentities** feature set, a set of tools for converting local IDs to public IDs. When a Fluid is still considered to leak too much information to be exposed publically, or when using auto-increment IDs, PublicIdentities can help out. This subsystem converts 64-bit (or smaller) IDs into deterministic, reversible public IDs that are indistinguishable from random noise without possession of the configured key. Using the key, public IDs can be converted back to the original IDs. These can replace UUIDs, without the additional bookkeeping.
 
-Furthermore, this package features various **ApplicationInstanceIdSource** implementations. These implementations provide a unique ID to each distinct application (or instance thereof) in a bounded context, by using a centralized storage component, such as a SQL database or an Azure Blob Storage Container. The Fluid system relies on this.
+Furthermore, this package features various **ApplicationInstanceIdSource** implementations. These implementations provide a unique ID to each distinct application (or instance thereof) within a chosen bounded context, by using a centralized storage component, such as a SQL database or an Azure Blob Storage Container. The Fluid ID generator relies on this feature to ensure that generated IDs are unique.
 
 ## Registering and Using an IIdGenerator
 
@@ -56,3 +56,7 @@ Third party libraries may provide additional sources through further extension m
 ## Service-free Usage
 
 The Fluid ID generator can be used without the need for injected services. For example, in Domain-Driven Design (DDD) an entity's ID property should be immutable. Ideally, it does not have a setter at all. We must either inject the ID into the constructor (complicating construction) or make the entity responsible for generating its own ID.
+
+## Fluid requirements
+
+Because a Fluid contains a time component, it relies on the host system's clock. This would introduce the risk of collisions if the clock were to be adjusted backwards. To counter this, the generator will wait for up to a second to let the clock catch up if necessary, i.e. if the last generated value has a timestamp _greater_ than the current timestamp. However, the system is responsible for keeping potential clock adjustments under a second. This is generally achieved by **having the system clock synchronized using the Network Time Protocol (NTP)**, which your systems should be doing anyway. (Note that the timestamps are based on UTC, so daylight savings adjustments do not apply.)
