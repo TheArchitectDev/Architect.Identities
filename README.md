@@ -57,6 +57,12 @@ Third party libraries may provide additional sources through further extension m
 
 The Fluid ID generator can be used without the need for injected services. For example, in Domain-Driven Design (DDD) an entity's ID property should be immutable. Ideally, it does not have a setter at all. We must either inject the ID into the constructor (complicating construction) or make the entity responsible for generating its own ID.
 
-## Fluid requirements
+## Fluid Requirements
 
-Because a Fluid contains a time component, it relies on the host system's clock. This would introduce the risk of collisions if the clock were to be adjusted backwards. To counter this, the generator will wait for up to a second to let the clock catch up if necessary, i.e. if the last generated value has a timestamp _greater_ than the current timestamp. However, the system is responsible for keeping potential clock adjustments under a second. This is generally achieved by **having the system clock synchronized using the Network Time Protocol (NTP)**, which your systems should be doing anyway. (Note that the timestamps are based on UTC, so daylight savings adjustments do not apply.)
+Because a Fluid contains a time component, it relies on the host system's clock. This would introduce the risk of collisions if the clock were to be adjusted backwards. To counter this, the generator will allow the clock to catch up if necessary (i.e. if the last generated value has a timestamp _greater_ than the current timestamp), by up to one second. However, the system is responsible for keeping potential clock adjustments under a second. This is generally achieved by **having the system clock synchronized using the Network Time Protocol (NTP)**, which your systems should be doing anyway. (Note that the timestamps are based on UTC, so daylight savings adjustments do not apply.)
+
+## Attack Surface
+
+We know that a Fluid does not leak volume information like an auto-increment ID does. Still, since is hard to reveal less than a fully random ID, we should consider what information we are revealing.
+
+Most obviously, the timestamp component reveals the entity's creation datetime. Next, the application instance ID component reveals: "there are _likely_ at least this many application instances within the bounded context". Given the ability to receive new IDs at will and sufficient determination, an attacker could also determine which entities are created by the same applications and how many instances of such applications are reachable. Finally, the counter component lets a determined attacker discover the latter as well, and at what rate these instances are _currently_ producing any entities. Note that applications usually create various entities, and this does not reveal how the production rates are distributed across them.
