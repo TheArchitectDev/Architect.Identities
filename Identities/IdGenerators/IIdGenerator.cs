@@ -4,13 +4,20 @@ namespace Architect.Identities
 	public interface IIdGenerator
 	{
 		/// <summary>
-		/// Returns a new unsigned ID value.
+		/// <para>
+		/// Returns a new signed ID value.
+		/// </para>
+		/// <para>
+		/// Note that ID values are generally unsigned, but various components (such as Azure SQL) lack support for unsigned types.
+		/// </para>
 		/// </summary>
-		ulong CreateId();
+		long CreateId();
 
 		/// <summary>
-		/// Returns a new signed ID value.
+		/// <para>
+		/// Returns a new unsigned ID value.
+		/// </para>
 		/// </summary>
-		long CreateSignedId();
+		ulong CreateUnsignedId();
 	}
 }

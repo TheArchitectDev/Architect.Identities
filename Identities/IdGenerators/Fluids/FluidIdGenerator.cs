@@ -107,9 +107,9 @@ namespace Architect.Identities
 			Console.WriteLine($"{nameof(Fluid)} has {yearsRemaining} ({signedYearsRemaining}) years of capacity remaining, until {maxDateTime:yyyy-MM-dd} ({signedMaxDateTime:yyyy-MM-dd}) for unsigned (signed) ID storage.");
 		}
 
-		public ulong CreateId() => this.CreateFluid();
+		public long CreateId() => this.CreateFluid();
 
-		public long CreateSignedId() => this.CreateFluid();
+		public ulong CreateUnsignedId() => this.CreateFluid();
 
 		public Fluid CreateFluid()
 		{

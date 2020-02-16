@@ -31,13 +31,14 @@ namespace Architect.Identities
 		public static bool operator !=(Fluid self, int other) => !(self == other); // Mainly to enable "!= 0"
 		public int CompareTo(Fluid other) => this.IntegralValue.CompareTo(other.IntegralValue);
 
-		public ulong IntegralValue { get; }
+		private ulong IntegralValue { get; }
 
 		/// <summary>
 		/// Returns false if the value is equal to the default of 0, or true if it is greater.
 		/// </summary>
 		public bool HasValue => this.IntegralValue != default;
-
+		
+		// #TODO: Use AmbientScope
 		/// <summary>
 		/// Returns a new locally unique identifier.
 		/// </summary>
@@ -49,17 +50,16 @@ namespace Architect.Identities
 		/// <summary>
 		/// Interprets the given integral value as a Fluid.
 		/// </summary>
-		public Fluid(ulong integralValue)
+		internal Fluid(ulong integralValue)
 		{
-			if (integralValue == 0) throw new ArgumentException($"Value must not be 0. Use {nameof(Create)}() to create new values.");
 			this.IntegralValue = integralValue;
 		}
 
 		/// <summary>
 		/// Interprets the given integral value as a Fluid.
 		/// </summary>
-		public Fluid(long integralValue)
-			: this(integralValue >= 0 ? (ulong)integralValue : throw new ArgumentException($"Value must be positive. Use {nameof(Create)}() to create new values."))
+		internal Fluid(long integralValue)
+			: this(integralValue >= 0 ? (ulong)integralValue : throw new ArgumentException($"The value must not be negative."))
 		{
 		}
 
@@ -67,7 +67,7 @@ namespace Architect.Identities
 		public static implicit operator ulong(Fluid fluid) => fluid.IntegralValue;
 		public static implicit operator Fluid(long longValue) => new Fluid(longValue);
 		public static implicit operator long(Fluid fluid) => fluid.IntegralValue > Int64.MaxValue
-			? throw new OverflowException($"{nameof(Fluid)} {fluid} overflows {nameof(Int64)}.{nameof(Int64.MaxValue)}.")
+			? throw new OverflowException($"{nameof(Fluid)} {fluid} cannot be converted to {nameof(Int64)} because it overflows {nameof(Int64)}.{nameof(Int64.MaxValue)}.")
 			: (long)fluid.IntegralValue;
 	}
 }

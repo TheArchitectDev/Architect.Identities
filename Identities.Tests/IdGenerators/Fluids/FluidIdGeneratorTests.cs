@@ -28,10 +28,10 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		private static readonly FluidBitDistribution BitDistribution = new FluidBitDistribution(timestampBitCount: 43, applicationInstanceIdBitCount: 11, counterBitCount: 10);
 
 		private static ulong GetMilliseconds(DateTime dateTime, DateTime epoch) => (ulong)(dateTime - epoch).TotalMilliseconds;
-		private static ulong GetMilliseconds(Fluid fluid) => fluid.IntegralValue >> BitDistribution.ApplicationInstanceIdBitCount >> BitDistribution.CounterBitCount;
-		private static ushort GetApplicationInstanceId(Fluid fluid) => (ushort)(fluid.IntegralValue << BitDistribution.TimestampAndUnusedBitCount >> BitDistribution.TimestampAndUnusedBitCount
+		private static ulong GetMilliseconds(Fluid fluid) => (ulong)fluid >> BitDistribution.ApplicationInstanceIdBitCount >> BitDistribution.CounterBitCount;
+		private static ushort GetApplicationInstanceId(Fluid fluid) => (ushort)((ulong)fluid << BitDistribution.TimestampAndUnusedBitCount >> BitDistribution.TimestampAndUnusedBitCount
 																																		>> BitDistribution.CounterBitCount);
-		private static ulong GetCounterValue(Fluid fluid) => fluid.IntegralValue << BitDistribution.TimestampAndUnusedBitCount << BitDistribution.ApplicationInstanceIdBitCount
+		private static ulong GetCounterValue(Fluid fluid) => (ulong)fluid << BitDistribution.TimestampAndUnusedBitCount << BitDistribution.ApplicationInstanceIdBitCount
 															>> BitDistribution.TimestampAndUnusedBitCount >> BitDistribution.ApplicationInstanceIdBitCount;
 
 		[Fact]
@@ -235,7 +235,7 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 
 			var fluid = factory.CreateFluid();
 
-			Assert.Equal(GetMilliseconds(ClockValue, factory.Epoch), fluid.IntegralValue);
+			Assert.Equal(GetMilliseconds(ClockValue, factory.Epoch), (ulong)fluid);
 		}
 
 		[Fact]
@@ -390,7 +390,7 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 			var applicationInstanceId = (ulong)ApplicationInstanceId << BitDistribution.CounterBitCount;
 			const ulong counterValue = 0;
 			var expectedValue = milliseconds | applicationInstanceId | counterValue;
-			Assert.Equal(expectedValue, fluid.IntegralValue);
+			Assert.Equal(expectedValue, (ulong)fluid);
 		}
 
 
