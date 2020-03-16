@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>1701;1702;1705;1573;CS1591</NoWarn>
+    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
+    <NoWarn>1573</NoWarn>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
