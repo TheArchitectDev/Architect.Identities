@@ -7,14 +7,16 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>1701;1702;1705;1573;CS1591</NoWarn>
+    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
+    <NoWarn>1573</NoWarn>
+    <ReleaseNotes></ReleaseNotes
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <Description>Provides various tools related to IDs.
 
 This package features the Fluid ID generator, which generates Flexible, Locally Unique IDs. A Fluid is intended to replace a pair of auto-increment ID + UUID. It is 64-bit and incremental (i.e. suitable as a primary key) and does not leak the critical information that an auto-increment ID does.
