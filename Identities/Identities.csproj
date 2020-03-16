@@ -9,6 +9,7 @@
   <PropertyGroup>
     <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
     <NoWarn>1573</NoWarn>
+    <ReleaseNotes></ReleaseNotes
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
