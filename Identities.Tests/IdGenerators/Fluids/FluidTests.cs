@@ -9,33 +9,33 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		public void Construct_Parameterless_ShouldHoldZeroValue()
 		{
 			var fluid = new Fluid();
-			Assert.Equal(0UL, fluid.IntegralValue);
+			Assert.Equal(0UL, (ulong)fluid);
 		}
 
 		[Fact]
-		public void Construct_WithZeroUlong_ShouldThrow()
+		public void Construct_WithZeroUlong_ShouldSucceed()
 		{
-			Assert.Throws<ArgumentException>(() => new Fluid(0UL));
+			_ = new Fluid(0UL);
 		}
 
 		[Fact]
-		public void Construct_WithZeroLong_ShouldThrow()
+		public void Construct_WithZeroLong_ShouldSucceed()
 		{
-			Assert.Throws<ArgumentException>(() => new Fluid(0L));
+			_ = new Fluid(0L);
 		}
 
 		[Fact]
 		public void Construct_WithLong_ShouldHoldThatValue()
 		{
 			var fluid = new Fluid(123L);
-			Assert.StrictEqual(123L, (long)fluid.IntegralValue);
+			Assert.StrictEqual(123L, (long)(ulong)fluid);
 		}
 
 		[Fact]
 		public void Construct_WithUlong_ShouldHoldThatValue()
 		{
 			var fluid = new Fluid(123UL);
-			Assert.StrictEqual(123UL, fluid.IntegralValue);
+			Assert.StrictEqual(123UL, (ulong)fluid);
 		}
 
 		[Fact]
@@ -73,6 +73,46 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 			var fluid1 = new Fluid(123L);
 			var fluid2 = new Fluid(123UL);
 			Assert.True(fluid1.Equals(fluid2));
+		}
+
+		[Fact]
+		public void GenericEquals_BetweenZeroFluids_ShouldReturnTrue()
+		{
+			var fluid1 = new Fluid(0L);
+			var fluid2 = new Fluid(0UL);
+			Assert.True(fluid1.Equals(fluid2));
+		}
+
+		[Fact]
+		public void GenericEquals_BetweenDefaultAndZeroFluids_ShouldReturnTrue()
+		{
+			var fluid1 = default(Fluid);
+			var fluid2 = new Fluid(0);
+			Assert.True(fluid1.Equals(fluid2));
+		}
+
+		[Fact]
+		public void EqualityOperator_BetweenZeroFluids_ShouldReturnTrue()
+		{
+			var fluid1 = new Fluid(0L);
+			var fluid2 = new Fluid(0UL);
+			Assert.True(fluid1 == fluid2);
+		}
+		
+		[Fact]
+		public void EqualityOperator_BetweenDefaultAndZeroFluids_ShouldReturnTrue()
+		{
+			var fluid1 = new Fluid(default);
+			var fluid2 = new Fluid(0);
+			Assert.True(fluid1 == fluid2);
+		}
+		
+		[Fact]
+		public void EqualityOperator_BetweenDefaultFluidAndDefaultLong_ShouldReturnTrue()
+		{
+			var fluid = default(Fluid);
+			var longValue = default(long);
+			Assert.True(fluid == longValue);
 		}
 
 		[Fact]
@@ -141,6 +181,13 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 
 		[Fact]
+		public void EqualityOperator_AgainstNegativeInt_ShouldReturnFalse()
+		{
+			var fluid = new Fluid();
+			Assert.False(fluid == -1);
+		}
+
+		[Fact]
 		public void CompareTo_AgainstEqualValue_ShouldReturn0()
 		{
 			var fluid1 = new Fluid(1);
@@ -193,10 +240,28 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 
 		[Fact]
-		public void CastToLong_WithUlongMaxValue_ShouldThrowOverflowException()
+		public void CastToLong_WithGreaterThanLongMaxValue_ShouldThrowOverflowException()
 		{
-			var fluid = new Fluid(UInt64.MaxValue);
+			var fluid = new Fluid(Int64.MaxValue + 1UL);
 			Assert.Throws<OverflowException>(() => (long)fluid);
+		}
+
+		[Fact]
+		public void ImplicitCastFromUlong_WithZeroValue_ShouldSucceed()
+		{
+			Fluid _ = 0UL;
+		}
+
+		[Fact]
+		public void ImplicitCastFromLong_WithZeroValue_ShouldSucceed()
+		{
+			Fluid _ = 0L;
+		}
+
+		[Fact]
+		public void CastFromLong_WithNegativeValue_ShouldThrowArgumentException()
+		{
+			Assert.Throws<ArgumentException>(() => (Fluid)(-1L));
 		}
 	}
 }

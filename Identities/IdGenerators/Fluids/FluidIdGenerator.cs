@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using Architect.Identities.Helpers;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -10,11 +9,6 @@ namespace Architect.Identities
 	{
 		public static DateTime GetUtcNow() => DateTime.UtcNow;
 		internal static readonly DateTime DefaultEpoch = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
-
-		internal static FluidIdGenerator Default => DefaultValue ?? throw new InvalidOperationException($"{nameof(Fluid)} was not configured. Call {nameof(FluidExtensions)}.{nameof(FluidExtensions.UseFluid)} on startup.");
-		internal static FluidIdGenerator? DefaultValue = TestDetector.IsTestRun
-			? new FluidIdGenerator(isProduction: false, GetUtcNow, applicationInstanceId: 1)
-			: null;
 
 		private Func<DateTime> Clock { get; }
 		private Action<int> SleepAction { get; }
@@ -107,9 +101,9 @@ namespace Architect.Identities
 			Console.WriteLine($"{nameof(Fluid)} has {yearsRemaining} ({signedYearsRemaining}) years of capacity remaining, until {maxDateTime:yyyy-MM-dd} ({signedMaxDateTime:yyyy-MM-dd}) for unsigned (signed) ID storage.");
 		}
 
-		public ulong CreateId() => this.CreateFluid();
+		public long CreateId() => this.CreateFluid();
 
-		public long CreateSignedId() => this.CreateFluid();
+		public ulong CreateUnsignedId() => this.CreateFluid();
 
 		public Fluid CreateFluid()
 		{

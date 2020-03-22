@@ -5,7 +5,7 @@ using Architect.Identities.Helpers;
 namespace Architect.Identities
 {
 	/// <summary>
-	/// Once registered, this type provides static, service-free access to deterministic conversion between local and public IDs.
+	/// Once registered, this type provides static, injection-free access to deterministic conversion between local and public IDs.
 	/// This allows local IDs to be kept hidden, with public IDs directly based on them, without the bookkeeping that comes with unrelated public IDs.
 	/// </summary>
 	public static class PublicIdentityConverter
