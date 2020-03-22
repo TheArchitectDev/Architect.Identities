@@ -1,6 +1,4 @@
 ﻿using System;
-using Architect.Identities.Helpers;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -31,28 +29,18 @@ namespace Architect.Identities
 			var epoch = options.Epoch;
 			var bitDistribution = options.BitDistribution;
 
-			// Unit tests may hit this without having the dependency registered, which is fine, since we always use a fallback value for unit tests
-			var applicationInstanceIdSource = TestDetector.IsTestRun
-				? serviceProvider.GetService<IApplicationInstanceIdSource>()
-				: serviceProvider.GetRequiredService<IApplicationInstanceIdSource>();
-
-			var applicationInstanceId = TestDetector.IsTestRun
-				? applicationInstanceIdSource?.ContextUniqueApplicationInstanceId.Value ?? FluidIdGenerator.Default.ApplicationInstanceId
-				: applicationInstanceIdSource.ContextUniqueApplicationInstanceId.Value; // Might throw if the app instance id source is unreachable
-
 			var hostEnvironment = serviceProvider.GetRequiredService<IHostEnvironment>();
+			var applicationInstanceIdSource = serviceProvider.GetRequiredService<IApplicationInstanceIdSource>();
+
+			var applicationInstanceId = applicationInstanceIdSource.ContextUniqueApplicationInstanceId.Value; // Might throw if the app instance ID source is unreachable
 
 			// Throw on value 0 in production
 			if (applicationInstanceId == 0 && hostEnvironment.IsProduction())
 				throw new Exception($"{nameof(IApplicationInstanceIdSource)} {applicationInstanceIdSource} provided invalid production value {applicationInstanceId}.");
 
-			// Throw if the app instance id is too great for us
+			// Throw if the app instance ID is too great for our bit distribution
 			if (applicationInstanceId > bitDistribution.MaxApplicationInstanceId)
 				throw new Exception($"{nameof(IApplicationInstanceIdSource)} {applicationInstanceIdSource} provided value {applicationInstanceId}, but the current bit distribution allows a maximum of {bitDistribution.MaxApplicationInstanceId}.");
-
-			// Throw if trying to change the factory after startup
-			if (FluidIdGenerator.DefaultValue != null && serviceProvider.GetService<IHostApplicationLifetime>()?.ApplicationStarted.IsCancellationRequested == true)
-				throw new InvalidOperationException($"{nameof(Fluid)} must not be re-initialized after startup.");
 
 			var instance = new FluidIdGenerator(hostEnvironment.IsProduction(), FluidIdGenerator.GetUtcNow, applicationInstanceId, epoch, bitDistribution);
 
@@ -108,38 +96,6 @@ namespace Architect.Identities
 		{
 			options.BitDistribution = new FluidBitDistribution(timestampBitCount, applicationInstanceIdBitCount, counterBitCount);
 			return options;
-		}
-
-		#endregion
-
-		#region Configuration
-
-		/// <summary>
-		/// Enables static, service-free access to the registered FluidIdGenerator through the <see cref="Fluid"/> class.
-		/// </summary>
-		public static IApplicationBuilder UseFluidIdGenerator(this IApplicationBuilder applicationBuilder)
-		{
-			UseFluidIdGenerator(applicationBuilder.ApplicationServices);
-			return applicationBuilder;
-		}
-
-		/// <summary>
-		/// Enables static, service-free access to the registered FluidIdGenerator through the <see cref="Fluid"/> class.
-		/// </summary>
-		public static IHost UseFluidIdGenerator(this IHost host)
-		{
-			UseFluidIdGenerator(host.Services);
-			return host;
-		}
-
-		/// <summary>
-		/// Enables static, service-free access to the registered FluidIdGenerator through the <see cref="Fluid"/> class.
-		/// </summary>
-		public static IServiceProvider UseFluidIdGenerator(this IServiceProvider serviceProvider)
-		{
-			var generator = serviceProvider.GetRequiredService<FluidIdGenerator>();
-			FluidIdGenerator.DefaultValue = generator;
-			return serviceProvider;
 		}
 
 		#endregion

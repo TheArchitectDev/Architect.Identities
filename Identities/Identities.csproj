@@ -7,14 +7,16 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <NoWarn>1701;1702;1705;1573;CS1591</NoWarn>
+    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
+    <!-- NoWarn: 1591=MissingXmlComments -->
+    <NoWarn>1573;1591</NoWarn>
     <LangVersion>latest</LangVersion>
     <Nullable>Enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0</Version>
+    <Version>1.0.0-RC1</Version>
     <Description>
 Provides various tools related to IDs.
 
@@ -32,17 +34,20 @@ Furthermore, this package features various ApplicationInstanceIdSource implement
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageTags>ID, IDs, identity, identities, UUID, GUID, auto-increment, entity, entities</PackageTags>
     <PackageReleaseNotes>
+- Breaking change: Static access is now done through IdGeneratorScope.Current.Generator, using the Ambient Context pattern. It is registered using IdGeneratorExtensions.UseIdGeneratorScope().
+
 - Breaking change: IIdGenerator was optimized for use with Azure, which has several components that do not work with ulong. IIdGenerator.CreateId() now creates a long, CreateSignedId() was removed, and the new CreateUnsignedId() creates a ulong.
 
 - Breaking change: Conversions between Fluids and integral values must now always be done with casts, for consistency. Fluid's public constructors are no longer available, nor is its IntegralValue property.
 
 - Breaking change: Converting from a zero integral value to Fluid is now supported, resulting in the same value as default(Fluid) instead of throwing.
 
-- Upped Azure.Storage.Blobs dependency version, as it fixed a SAS issue.
+- Upped Azure.Storage.Blobs dependency version, as it fixed an issue related to SAS.
   </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Architect.AmbientContexts" Version="1.0.0-RC2" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.0" />

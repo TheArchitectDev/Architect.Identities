@@ -80,7 +80,7 @@ namespace Architect.Identities
 		#region Configuration
 
 		/// <summary>
-		/// Enables static, service-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
 		/// </summary>
 		public static IApplicationBuilder UsePublicIdentities(this IApplicationBuilder applicationBuilder)
 		{
@@ -89,7 +89,7 @@ namespace Architect.Identities
 		}
 
 		/// <summary>
-		/// Enables static, service-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
 		/// </summary>
 		public static IHost UsePublicIdentities(this IHost host)
 		{
@@ -98,7 +98,7 @@ namespace Architect.Identities
 		}
 
 		/// <summary>
-		/// Enables static, service-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
 		/// </summary>
 		public static IServiceProvider UsePublicIdentities(IServiceProvider serviceProvider)
 		{

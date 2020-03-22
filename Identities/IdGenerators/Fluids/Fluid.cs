@@ -38,15 +38,6 @@ namespace Architect.Identities
 		/// </summary>
 		public bool HasValue => this.IntegralValue != default;
 		
-		// #TODO: Use AmbientScope
-		/// <summary>
-		/// Returns a new locally unique identifier.
-		/// </summary>
-		public static Fluid Create()
-		{
-			return FluidIdGenerator.Default.CreateFluid();
-		}
-
 		/// <summary>
 		/// Interprets the given integral value as a Fluid.
 		/// </summary>
