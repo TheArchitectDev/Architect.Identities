@@ -376,5 +376,23 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var decodedId = this.Converter.GetLongOrDefault(inputBytes);
 			Assert.True(decodedId == 0);
 		}
+
+		#region Nonsensical input
+
+		[Theory]
+		[InlineData("123456789012345")] // Length 15
+		[InlineData("1234567890123456")] // Length 16 (only allowed for binary input)
+		[InlineData("______________________")] // 22 non-base64 chars
+		[InlineData("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ")] // 32 non-hex chars
+		[InlineData("ëëëëëëëëëëëëëëëëëëëëëëëëëëëëëëëë")] // 16 non-ASCII chars
+		[InlineData("123456789012345678901234567890123")] // 33 chars
+		public void TryGetLong_WithInvalidInput_ShouldReturnFalse(string input)
+		{
+			var decodingSucceeded = this.Converter.TryGetLong(input, out _);
+
+			Assert.False(decodingSucceeded);
+		}
+
+		#endregion
 	}
 }

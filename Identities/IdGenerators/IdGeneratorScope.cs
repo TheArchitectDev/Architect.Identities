@@ -32,7 +32,7 @@ namespace Architect.Identities
 			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGeneratorScope)} on startup.");
 
 		/// <summary>
-		/// Returns an instance if the code executing in a test run.
+		/// Returns an instance if the code is executing in a test run.
 		/// </summary>
 		private static IdGeneratorScope? TestInstance => TestInstanceValue ?? (TestInstanceValue = TestDetector.IsTestRun
 			? new IdGeneratorScope(new FluidIdGenerator(isProduction: false, FluidIdGenerator.GetUtcNow, applicationInstanceId: 1), AmbientScopeOption.NoNesting)
