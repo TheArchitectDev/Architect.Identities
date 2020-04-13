@@ -35,18 +35,6 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 															>> BitDistribution.TimestampAndUnusedBitCount >> BitDistribution.ApplicationInstanceIdBitCount;
 
 		[Fact]
-		public void GetDefaultValue_InUnitTest_ShouldBePopulated()
-		{
-			Assert.NotNull(FluidIdGenerator.Default);
-		}
-
-		[Fact]
-		public void GetDefault_InUnitTest_ShouldSucceed()
-		{
-			_ = FluidIdGenerator.Default;
-		}
-
-		[Fact]
 		public void GetUtcNow_WhenInvoked_ShouldReturnUtcNow()
 		{
 			var getUtcNowResult = FluidIdGenerator.GetUtcNow();

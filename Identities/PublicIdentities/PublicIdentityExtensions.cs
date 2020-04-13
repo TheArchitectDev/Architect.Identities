@@ -80,30 +80,60 @@ namespace Architect.Identities
 		#region Configuration
 
 		/// <summary>
-		/// Enables static, service-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityScope"/> class.
 		/// </summary>
-		public static IApplicationBuilder UsePublicIdentities(this IApplicationBuilder applicationBuilder)
+		public static IApplicationBuilder UsePublicIdentityScope(this IApplicationBuilder applicationBuilder)
 		{
-			UsePublicIdentities(applicationBuilder.ApplicationServices);
+			return UsePublicIdentityScope<IPublicIdentityConverter>(applicationBuilder);
+		}
+
+		/// <summary>
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityScope"/> class.
+		/// </summary>
+		/// <typeparam name="TConverter">The type of the public identity converter to make available.</typeparam>
+		public static IApplicationBuilder UsePublicIdentityScope<TConverter>(this IApplicationBuilder applicationBuilder)
+			where TConverter : IPublicIdentityConverter
+		{
+			UsePublicIdentityScope<TConverter>(applicationBuilder.ApplicationServices);
 			return applicationBuilder;
 		}
 
 		/// <summary>
-		/// Enables static, service-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityScope"/> class.
 		/// </summary>
-		public static IHost UsePublicIdentities(this IHost host)
+		public static IHost UsePublicIdentityScope(this IHost host)
 		{
-			UsePublicIdentities(host.Services);
+			return UsePublicIdentityScope<IPublicIdentityConverter>(host);
+		}
+
+		/// <summary>
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityScope"/> class.
+		/// </summary>
+		/// <typeparam name="TConverter">The type of the public identity converter to make available.</typeparam>
+		public static IHost UsePublicIdentityScope<TConverter>(this IHost host)
+			where TConverter : IPublicIdentityConverter
+		{
+			UsePublicIdentityScope<TConverter>(host.Services);
 			return host;
 		}
 
 		/// <summary>
-		/// Enables static, service-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityConverter"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityScope"/> class.
 		/// </summary>
-		public static IServiceProvider UsePublicIdentities(IServiceProvider serviceProvider)
+		public static IServiceProvider UsePublicIdentityScope(IServiceProvider serviceProvider)
 		{
-			var converter = serviceProvider.GetRequiredService<IPublicIdentityConverter>();
-			PublicIdentityConverter.DefaultValue = converter;
+			return UsePublicIdentityScope<IPublicIdentityConverter>(serviceProvider);
+		}
+
+		/// <summary>
+		/// Enables static, injection-free access to the registered <see cref="IPublicIdentityConverter"/> through the <see cref="PublicIdentityScope"/> class.
+		/// </summary>
+		/// <typeparam name="TConverter">The type of the public identity converter to make available.</typeparam>
+		public static IServiceProvider UsePublicIdentityScope<TConverter>(IServiceProvider serviceProvider)
+			where TConverter : IPublicIdentityConverter
+		{
+			var converter = serviceProvider.GetRequiredService<TConverter>();
+			PublicIdentityScope.SetDefaultValue(converter);
 			return serviceProvider;
 		}
 

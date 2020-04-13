@@ -5,7 +5,7 @@ namespace Architect.Identities
 	{
 		/// <summary>
 		/// <para>
-		/// Returns a new signed ID value.
+		/// Returns a new ID value.
 		/// </para>
 		/// <para>
 		/// Note that ID values are generally unsigned, but various components (such as Azure SQL) lack support for unsigned types.
@@ -15,7 +15,7 @@ namespace Architect.Identities
 
 		/// <summary>
 		/// <para>
-		/// Returns a new unsigned ID value.
+		/// Returns a new ID value, as an unsigned type.
 		/// </para>
 		/// </summary>
 		ulong CreateUnsignedId();

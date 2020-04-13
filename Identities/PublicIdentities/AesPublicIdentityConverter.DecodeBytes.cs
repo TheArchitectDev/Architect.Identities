@@ -60,6 +60,7 @@ namespace Architect.Identities
 
 			return true;
 		}
+
 		public bool TryGetLong(ReadOnlySpan<byte> bytes, out long value)
 		{
 			var didSucceed = this.TryGetUlong(bytes, out var ulongValue);
