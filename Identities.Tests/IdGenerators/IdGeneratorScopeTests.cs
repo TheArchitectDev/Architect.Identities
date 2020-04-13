@@ -5,7 +5,6 @@ using Xunit;
 
 namespace Architect.Identities.Tests.IdGenerators
 {
-
 	public sealed class IdGeneratorScopeTests
 	{
 		/// <summary>
