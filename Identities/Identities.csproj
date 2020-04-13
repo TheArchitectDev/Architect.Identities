@@ -33,7 +33,7 @@ Furthermore, this package features various ApplicationInstanceIdSource implement
     <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>ID, IDs, identity, identities, UUID, GUID, auto-increment, entity, entities</PackageTags>
+    <PackageTags>ID, IDs, identity, identities, Fluid, UUID, GUID, auto-increment, entity, entities</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
