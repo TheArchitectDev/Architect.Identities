@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Architect.Identities.Tests.PublicIdentities
 {
-	public sealed class PublicIdentityExtensions
+	public sealed class PublicIdentityExtensionsTests
 	{
 		[Fact]
 		public void AddPublicIdentities_WithSameKey_ShouldGenerateSameResults()
@@ -36,7 +36,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var key2 = new byte[32];
 			key2[31] = 2;
 
-			var string0 = PublicIdentityConverter.Default.GetPublicString(0);
+			var string0 = PublicIdentityScope.Current.Converter.GetPublicString(0);
 
 			var hostBuilder1 = new HostBuilder();
 			hostBuilder1.ConfigureServices(services => services.AddPublicIdentities(identities => identities.Key(key1)));

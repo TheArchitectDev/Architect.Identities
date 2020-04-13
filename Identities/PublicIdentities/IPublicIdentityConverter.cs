@@ -4,7 +4,7 @@
 namespace Architect.Identities
 {
 	/// <summary>
-	/// Provides deterministic conversion between local and public IDs.
+	/// Provides deterministic conversions between local and public IDs.
 	/// This allows local IDs to be kept hidden, with public IDs directly based on them, without the bookkeeping that comes with unrelated public IDs.
 	/// </summary>
 	public interface IPublicIdentityConverter : IDisposable
