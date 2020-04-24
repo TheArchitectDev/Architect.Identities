@@ -7,7 +7,6 @@ using Azure;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Hosting;
 
-// ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
 	/// <summary>
@@ -89,7 +88,7 @@ namespace Architect.Identities
 			void DeleteBlob(string blobName, bool includeSnapshots);
 		}
 
-		public sealed class BlobContainerRepo : IBlobContainerRepo
+		internal sealed class BlobContainerRepo : IBlobContainerRepo
 		{
 			/// <summary>
 			/// Thread-safe according to Microsoft: poorly documented, but mentioned on Github and in Microsoft's latest design guidelines.

@@ -290,17 +290,36 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 
 		[Fact]
-		public void CreateFluid_With10CounterBitsAnd1025CallsAndStuckClock_ShouldSleep1Second()
+		public void CreateFluid_With10CounterBitsAnd1025CallsAndTemporarilyStuckClock_ShouldSleep1Millisecond()
+		{
+			Debug.Assert(BitDistribution.CounterBitCount == 10);
+
+			var i = 0;
+			var lastI = 0;
+			var clockMilliseconds = 0;
+			DateTime StuckClockUnlesInvokedAgainBySameIteration() => Epoch.AddMilliseconds(clockMilliseconds += i == lastI ? 1 : (lastI = i) - i); // Advances only when invoked multiple times by same iteration
+
+			var sleepMs = 0;
+			var factory = new FluidIdGenerator(isProduction: false, utcClock: StuckClockUnlesInvokedAgainBySameIteration, ApplicationInstanceId, epoch: Epoch, BitDistribution,
+				sleepAction: ms => sleepMs += ms);
+
+			for (i = 0; i < 1025; i++) factory.CreateFluid();
+
+			Assert.Equal(1, sleepMs);
+		}
+
+		[Fact]
+		public void CreateFluid_With10CounterBitsAnd1025CallsAndStuckClock_ShouldThrowOnLastCall()
 		{
 			Debug.Assert(BitDistribution.CounterBitCount == 10);
 
 			var sleepMs = 0;
-			var factory = new FluidIdGenerator(isProduction: false, utcClock: () => Epoch, ApplicationInstanceId, epoch: Epoch, BitDistribution,
+			var factory = new FluidIdGenerator(isProduction: false, utcClock: () => Epoch.AddDays(1), ApplicationInstanceId, epoch: Epoch, BitDistribution,
 				sleepAction: ms => sleepMs += ms);
 
-			for (var i = 0; i < 1025; i++) factory.CreateFluid();
+			for (var i = 0; i < 1024; i++) factory.CreateFluid();
 
-			Assert.True(sleepMs == 1000);
+			Assert.Throws<TimeoutException>(() => factory.CreateFluid());
 		}
 
 		[Fact]
@@ -350,20 +369,35 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 
 		[Fact]
-		public void CreateFluid_TwiceWithRewindingClock_ShouldSleep1Second()
+		public void CreateFluid_TwiceWithRewindingClock1Second_ShouldSleep1Second()
 		{
-			var clockDirection = 0;
-			DateTime AutorewindingClock() => Epoch.AddDays(1).AddMinutes(clockDirection++ < 0 ? -1 : +1); // Go back once, on the second call, then proceed
+			var invocationCount = 0;
+			DateTime AutorewindingClock() => Epoch.AddDays(1).AddSeconds(++invocationCount == 2 ? 0 : invocationCount); // +1, 0, +2, +3, +4, ...
 
 			var sleepMs = 0;
 			var factory = new FluidIdGenerator(isProduction: false, utcClock: AutorewindingClock, ApplicationInstanceId, epoch: Epoch, BitDistribution,
 				sleepAction: ms => sleepMs += ms);
+			invocationCount = 0; // Reset the clock
 
 			factory.CreateFluid();
-			clockDirection = -1; // Make the next one clock invocation return a rewinded datetime
 			factory.CreateFluid();
 
-			Assert.True(sleepMs == 1000); // We would need a minute to catch up, but will never sleep for more than a second
+			Assert.Equal(1000, sleepMs); // We would need a minute to catch up, but will never sleep for more than a second
+		}
+
+		[Fact]
+		public void CreateFluid_TwiceWithRewindingClock2Seconds_ShouldThrow()
+		{
+			var invocationCount = 0;
+			DateTime AutorewindingClock() => Epoch.AddDays(1).AddSeconds(++invocationCount == 2 ? 0 : 2 * invocationCount); // +2, 0, +4, +6, +8, ...
+
+			var sleepMs = 0;
+			var factory = new FluidIdGenerator(isProduction: false, utcClock: AutorewindingClock, ApplicationInstanceId, epoch: Epoch, BitDistribution,
+				sleepAction: ms => sleepMs += ms);
+			invocationCount = 0; // Reset the clock
+
+			factory.CreateFluid();
+			Assert.Throws<TimeoutException>(() => factory.CreateFluid());
 		}
 
 		[Fact]

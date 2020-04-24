@@ -48,11 +48,15 @@ namespace Architect.Identities
 				var databaseConnectionFactory = serviceProvider.GetRequiredService<TDatabaseConnectionFactory>();
 				var exceptionHandler = options.ExceptionHandlerFactory?.Invoke(serviceProvider);
 
-				var instance = ApplicationInstanceIdSourceFactory.Create(applicationLifetime, () => new StandardSqlApplicationInstanceIdSource(
+				var instance = new StandardSqlApplicationInstanceIdSource(
 					GetConnectionFromFactory,
 					databaseName,
 					applicationLifetime,
-					exceptionHandler));
+					exceptionHandler);
+
+				// As the value is likely application-critical, enforce its resolution if the application has not started yet
+				if (!applicationLifetime.ApplicationStarted.IsCancellationRequested) _ = instance.ContextUniqueApplicationInstanceId.Value;
+
 				return instance;
 
 				// Local function that returns a new DbConnection based on the registered connection factory, the function that gets a connection from it, and the optional connection string

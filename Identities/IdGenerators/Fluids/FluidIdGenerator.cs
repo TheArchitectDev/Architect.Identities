@@ -92,13 +92,13 @@ namespace Architect.Identities
 			// So provide a rough minimum
 			var appInstanceIdPercentageUsed = this.MaxApplicationInstanceId == 0UL ? 0UL : this.ApplicationInstanceId * 10UL / this.MaxApplicationInstanceId;
 			if (appInstanceIdPercentageUsed >= 5)
-				Console.WriteLine($"{nameof(Fluid)} has used over {10 * appInstanceIdPercentageUsed}% of its available {this.MaxApplicationInstanceId} application instance identifiers.");
+				Console.WriteLine($"{nameof(Fluid)} ID generator has used over {10 * appInstanceIdPercentageUsed}% of its available {this.MaxApplicationInstanceId} application instance identifiers.");
 
 			var maxDateTime = now.AddMilliseconds(maxTimestamp);
 			var signedMaxDateTime = now.AddMilliseconds(maxTimestamp >> 1);
 			var yearsRemaining = maxDateTime.Year - now.Year;
 			var signedYearsRemaining = signedMaxDateTime.Year - now.Year;
-			Console.WriteLine($"{nameof(Fluid)} has {yearsRemaining} ({signedYearsRemaining}) years of capacity remaining, until {maxDateTime:yyyy-MM-dd} ({signedMaxDateTime:yyyy-MM-dd}) for unsigned (signed) ID storage.");
+			Console.WriteLine($"{nameof(Fluid)} ID generator has {signedYearsRemaining} ({yearsRemaining}) years of capacity remaining, until {signedMaxDateTime:yyyy-MM-dd} ({maxDateTime:yyyy-MM-dd}) for signed (unsigned) ID storage.");
 		}
 
 		public long CreateId() => this.CreateFluid();
@@ -137,24 +137,25 @@ namespace Architect.Identities
 				// Ensure that we have reached the required moment in time
 				// This protects us from clock rewinds and from reusing counter values
 				var maxSleepMilliseconds = 1000UL;
-				while (timestamp < requiredTimestamp && maxSleepMilliseconds > 0UL)
+				while (timestamp < requiredTimestamp)
 				{
 					var millisecondsRequired = requiredTimestamp - timestamp;
 
 					// If the clock was turned back a lot, we may need to wait for a long time
 					// This is where NTP is essential, as it can prevent this
-					// If the wait is more than a full second, then we surrunder to the risk of collisions rather than stalling that long
-					if (millisecondsRequired > maxSleepMilliseconds) millisecondsRequired = maxSleepMilliseconds;
+					// If the wait is more than a full second, then we consider the wait too long, and throw, as such a clock change needs to be prevented for this scheme to work
+					if (millisecondsRequired > maxSleepMilliseconds)
+						throw new TimeoutException("Failed to generate an ID because the clock was rewound by more than one second. This exception is thrown instead of introducing long wait times or risking collisions. Use NTP or a similar protocol to prevent significant clock changes.");
 					
-					maxSleepMilliseconds -= millisecondsRequired;
+					maxSleepMilliseconds -= millisecondsRequired; // Consume some of our maximum sleep time, to avoid an endless loop in case the clock keeps on getting rewinded bit-by-bit
 					this.SleepAction((int)millisecondsRequired);
 					timestamp = this.GetMillisecondsSinceEpoch();
 				}
 
 				// Always update the timestamp forward before updating the counter
 				// This keeps (theoretical) exceptions from introducing collisions
-				System.Diagnostics.Debug.Assert(timestamp >= this._previousTimestamp || maxSleepMilliseconds == 0, "The timestamp was rewinded even though we waited.");
-				System.Diagnostics.Debug.Assert(counterValue > this._counter || timestamp > this._previousTimestamp || maxSleepMilliseconds == 0, "Either the counter or the time must advance (or both).");
+				System.Diagnostics.Debug.Assert(timestamp >= this._previousTimestamp, "The timestamp was rewinded even though we waited.");
+				System.Diagnostics.Debug.Assert(counterValue > this._counter || timestamp > this._previousTimestamp, "Either the counter or the time must advance (or both).");
 				this._previousTimestamp = timestamp;
 				this._counter = counterValue;
 			}

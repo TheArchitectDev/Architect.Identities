@@ -110,22 +110,9 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		}
 
 		[Fact]
-		public void CreateThroughFactory_Regularly_ShouldSucceed()
+		public void GetContextUniqueApplicationInstanceIdValue_Regularly_ShouldSucceed()
 		{
-			ApplicationInstanceIdSourceFactory.Create(this.HostApplicationLifetime, () => this.Source);
-
-			Assert.Empty(this.ExceptionHandler.Invocations);
-		}
-
-		[Fact]
-		public void CreateThroughFactory_WithExceptionButAlreadyStarted_ShouldSucceed()
-		{
-			// There should be no exception, because the factory does not invoke anything if the application is already running
-			this.Host.Start();
-
-			this.Repo.ShouldThrow = true;
-
-			ApplicationInstanceIdSourceFactory.Create(this.HostApplicationLifetime, () => this.Source);
+			var _ = this.Source.ContextUniqueApplicationInstanceId.Value;
 
 			Assert.Empty(this.ExceptionHandler.Invocations);
 		}
@@ -135,7 +122,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		{
 			this.Repo.ShouldThrow = true;
 
-			Assert.ThrowsAny<Exception>(() => ApplicationInstanceIdSourceFactory.Create(this.HostApplicationLifetime, () => this.Source));
+			Assert.ThrowsAny<Exception>(() => this.Source.ContextUniqueApplicationInstanceId.Value);
 
 			Assert.Equal(1, this.ExceptionHandler.Invocations.Count);
 		}
@@ -146,7 +133,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 			this.Repo.ShouldThrow = true;
 
 			Assert.ThrowsAny<Exception>(() => _ = this.Source.ContextUniqueApplicationInstanceId.Value);
-			
+
 			Assert.Equal(1, this.ExceptionHandler.Invocations.Count);
 		}
 

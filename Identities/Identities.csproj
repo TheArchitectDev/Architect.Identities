@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC2</Version>
+    <Version>1.0.0-RC4</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 Provides various tools related to IDs.
@@ -25,7 +25,7 @@ This package features the Fluid ID generator, which generates Flexible, Locally-
 
 The package also provides PublicIdentities, a set of tools for converting local IDs to public IDs and back. When a Fluid is still considered to leak too much information to be exposed publically, or when using auto-increment IDs, PublicIdentities can help out. This subsystem converts 64-bit (or smaller) IDs into deterministic, reversible public IDs that are indistinguishable from random noise without possession of the configured key. Using the key, public IDs can be converted back to the original IDs. These public IDs can replace UUIDs, without the additional bookkeeping.
 
-Furthermore, this package features various ApplicationInstanceIdSource implementations. These implementations provide a unique ID to each distinct application (or instance thereof) within a chosen bounded context, by using a centralized storage component, such as a SQL database or an Azure Blob Storage Container. The Fluid ID generator relies on this feature to ensure that generated IDs are unique.
+Furthermore, this package features various ApplicationInstanceIdSource implementations. These implementations provide a unique ID to each distinct application (or instance thereof) within a chosen bounded context, by using a centralized storage component, such as a database. (An Azure Storage Blob Container implementation is available in a separate package.) The Fluid ID generator relies on this feature to guarantee that generated IDs are unique.
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
@@ -33,12 +33,11 @@ Furthermore, this package features various ApplicationInstanceIdSource implement
     <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>ID, IDs, identity, identities, Fluid, UUID, GUID, auto-increment, entity, entities</PackageTags>
+    <PackageTags>ID, IDs, identity, identities, Fluid, generator, generation, IdGenerator, UUID, GUID, auto-increment, entity, entities, PublicIdentities, IdGeneratorScope, flexible, locally, unique</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Architect.AmbientContexts" Version="[1.0.0-*, 2.0.0)" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.0" />

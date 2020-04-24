@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Identities.Azure\Identities.Azure.csproj" />
     <ProjectReference Include="..\Identities\Identities.csproj" />
   </ItemGroup>
 
