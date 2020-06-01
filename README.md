@@ -8,6 +8,10 @@ The package also provides **PublicIdentities**, a set of tools for converting lo
 
 Furthermore, this package features various **ApplicationInstanceIdSource** implementations. These implementations provide a unique ID to each distinct application (or instance thereof) within a chosen bounded context, by using a centralized storage component, such as a SQL database or an Azure Blob Storage Container. The Fluid ID generator relies on this feature to ensure that generated IDs are unique.
 
+## Using CompanyUniqueId
+
+TODO
+
 ## Registering and Using an IIdGenerator
 
 ```C#

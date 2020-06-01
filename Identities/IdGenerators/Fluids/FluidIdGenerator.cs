@@ -11,6 +11,9 @@ namespace Architect.Identities
 		internal static readonly DateTime DefaultEpoch = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
 
 		private Func<DateTime> Clock { get; }
+		/// <summary>
+		/// Can be invoked to cause the current thread sleep for the given number of milliseconds.
+		/// </summary>
 		private Action<int> SleepAction { get; }
 
 		internal ushort ApplicationInstanceId { get; }

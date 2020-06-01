@@ -22,7 +22,7 @@ namespace Architect.Identities.Example
 	/// </summary>
 	public sealed class UserEntityWithAmbientContext
 	{
-		public override string ToString() => $"{{User created with 'new': UserName={{{this.UserName}}} FullName={{{this.FullName}}} Id={this.Id}}}";
+		public override string ToString() => $"{{User easily created with 'new': UserName={{{this.UserName}}} FullName={{{this.FullName}}} Id={this.Id}}}";
 
 		/// <summary>
 		/// Guarantueed to be unique within the Bounded Context, regardless which instance of which application on which server created it.

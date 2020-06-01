@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -29,7 +29,7 @@ This package allows Azure blob storage to be used as the synchronization mechani
     <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>ID, IDs, identity, identities, Fluid, UUID, GUID, auto-increment, entity, entities, Azure, blob, storage</PackageTags>
+    <PackageTags>Azure, blob, storage, container, ID, IDs, identity, identities, Fluid, generator, generation, IdGenerator, UUID, GUID, auto-increment, entity, entities, PublicIdentities, IdGeneratorScope, flexible, locally, unique</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
