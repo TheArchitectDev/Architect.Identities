@@ -35,7 +35,7 @@ namespace Architect.Identities
 	/// </para>
 	/// <para>
 	/// Collisions between generated values are extremely unlikely. They may happen worldwide, but they are not expected within a single organization.
-	/// If 24K values were generated in a single millisecond, the probability of a collision would be less than 1/1M, or 1 collision per 500 billion values generated.
+	/// If 24K values were generated in a single millisecond, the probability of a collision would be less than 1/1M, or 1 collision per 24 billion values generated.
 	/// Realistically, the values will be spread out across many more milliseconds, making the probability drastically lower.
 	/// </para>
 	/// </summary>
@@ -126,11 +126,11 @@ namespace Architect.Identities
 		/// Returns an ID decoded from the given alphanumeric short string representation.
 		/// </para>
 		/// <para>
-		/// Returns the default value if the input span is too short, if it does not contain a properly encoded value, or if the encoded value does not represent a proper ID value.
+		/// Returns null if the input span is too short, if it does not contain a properly encoded value, or if the encoded value does not represent a proper ID value.
 		/// </para>
 		/// </summary>
 		/// <param name="bytes">Input bytes, the first 16 of which are read.</param>
-		public static decimal FromShortStringOrDefault(ReadOnlySpan<byte> bytes)
+		public static decimal? FromShortStringOrDefault(ReadOnlySpan<byte> bytes)
 		{
 			return CompanyUniqueIdEncoder.FromShortStringOrDefault(bytes);
 		}
@@ -140,11 +140,11 @@ namespace Architect.Identities
 		/// Returns an ID decoded from the given alphanumeric short string representation.
 		/// </para>
 		/// <para>
-		/// Returns the default value if the input span is too short, if it does not contain a properly encoded value, or if the encoded value does not represent a proper ID value.
+		/// Returns null if the input span is too short, if it does not contain a properly encoded value, or if the encoded value does not represent a proper ID value.
 		/// </para>
 		/// </summary>
 		/// <param name="chars">Input chars, the first 16 of which are read.</param>
-		public static decimal FromShortStringOrDefault(ReadOnlySpan<char> chars)
+		public static decimal? FromShortStringOrDefault(ReadOnlySpan<char> chars)
 		{
 			return CompanyUniqueIdEncoder.FromShortStringOrDefault(chars);
 		}
@@ -155,7 +155,7 @@ namespace Architect.Identities
 		/// Both the short form (such as from <see cref="ToShortString(decimal)"/>) and regular decimal strings (from <see cref="Decimal.ToString()"/>) are supported.
 		/// </para>
 		/// <para>
-		/// Returns false if the input is not either of the supported encodings of a proper ID value.
+		/// Returns false if the input is not a proper ID value encoded using any of the supported encodings.
 		/// </para>
 		/// </summary>
 		/// <param name="bytes">Input bytes, the first 16 of which are read.</param>
@@ -171,7 +171,7 @@ namespace Architect.Identities
 		/// Both the short form (such as from <see cref="ToShortString(decimal)"/>) and regular decimal strings (from <see cref="Decimal.ToString()"/>) are supported.
 		/// </para>
 		/// <para>
-		/// Returns false if the input is not either of the supported encodings of a proper ID value.
+		/// Returns false if the input is not a proper ID value encoded using any of the supported encodings.
 		/// </para>
 		/// </summary>
 		/// <param name="chars">Input chars, the first 16 of which are read.</param>
@@ -187,11 +187,11 @@ namespace Architect.Identities
 		/// Both the short form (such as from <see cref="ToShortString(decimal)"/>) and regular decimal strings (from <see cref="Decimal.ToString()"/>) are supported.
 		/// </para>
 		/// <para>
-		/// Returns the default value if the input is not either of the supported encodings of a proper ID value.
+		/// Returns null if the input is not a proper ID value encoded using any of the supported encodings.
 		/// </para>
 		/// </summary>
 		/// <param name="bytes">Input bytes, the first 16 of which are read.</param>
-		public static decimal FromStringOrDefault(ReadOnlySpan<byte> bytes)
+		public static decimal? FromStringOrDefault(ReadOnlySpan<byte> bytes)
 		{
 			return CompanyUniqueIdEncoder.FromStringOrDefault(bytes);
 		}
@@ -202,11 +202,11 @@ namespace Architect.Identities
 		/// Both the short form (such as from <see cref="ToShortString(decimal)"/>) and regular decimal strings (from <see cref="Decimal.ToString()"/>) are supported.
 		/// </para>
 		/// <para>
-		/// Returns the default value if the input is not either of the supported encodings of a proper ID value.
+		/// Returns null if the input is not a proper ID value encoded using any of the supported encodings.
 		/// </para>
 		/// </summary>
 		/// <param name="chars">Input chars, the first 16 of which are read.</param>
-		public static decimal FromStringOrDefault(ReadOnlySpan<char> chars)
+		public static decimal? FromStringOrDefault(ReadOnlySpan<char> chars)
 		{
 			return CompanyUniqueIdEncoder.FromStringOrDefault(chars);
 		}

@@ -5,35 +5,47 @@ namespace Architect.Identities
 {
 	internal sealed partial class AesPublicIdentityConverter
 	{
-		public ulong GetUlongOrDefault(ReadOnlySpan<char> chars) => this.TryGetUlong(chars, out var value) ? value : default;
-		public long GetLongOrDefault(ReadOnlySpan<char> chars) => this.TryGetLong(chars, out var value) ? value : default;
+		public ulong? GetUlongOrDefault(ReadOnlySpan<char> chars) => this.TryGetUlong(chars, out var value) ? value : (ulong?)null;
+		public long? GetLongOrDefault(ReadOnlySpan<char> chars) => this.TryGetLong(chars, out var value) ? value : (long?)null;
+		public decimal? GetDecimalOrDefault(ReadOnlySpan<char> chars) => this.TryGetDecimal(chars, out var value) ? value : (decimal?)null;
+
+		/// <summary>
+		/// Converts the given chars to bytes.
+		/// Does not validate the input length, since that is done further down the chain.
+		/// </summary>
+		/// <param name="chars">The characters to convert to bytes. Characters beyond the 33rd are ignored.</param>
+		/// <param name="bytes33">The output span, by ref. Should be 33 bytes long. Will be sliced down to the input span size.</param>
+		private void GetBytes(ReadOnlySpan<char> chars, ref Span<byte> bytes33)
+		{
+			System.Diagnostics.Debug.Assert(bytes33.Length == 33);
+
+			// Ignore (and have the caller ignore) unused bytes
+			bytes33 = bytes33.Slice(0, Math.Min(bytes33.Length, chars.Length));
+
+			// Convert the chars to bytes
+			for (var i = 0; i < bytes33.Length; i++)
+				bytes33[i] = (byte)chars[i];
+		}
 
 		public bool TryGetUlong(ReadOnlySpan<char> chars, out ulong value)
 		{
-			// Allow only valid textual input lengths
-			// This also protects us against allocating oversized arrays
-			if (chars.Length != 32 && chars.Length != 22)
-			{
-				value = default;
-				return false;
-			}
-
-			System.Diagnostics.Debug.Assert(chars.Length <= 32, "The above protection against allocating oversized arrays was removed.");
-
-			// Convert the chars to bytes, into a temporary byte[]
-			Span<byte> bytes = stackalloc byte[chars.Length];
-			var i = 0;
-			foreach (var chr in chars) bytes[i++] = (byte)chr;
-
+			Span<byte> bytes = stackalloc byte[33];
+			GetBytes(chars, ref bytes);
 			return this.TryGetUlong(bytes, out value);
 		}
 
 		public bool TryGetLong(ReadOnlySpan<char> chars, out long value)
 		{
-			var didSucceed = this.TryGetUlong(chars, out var ulongValue);
-			if (ulongValue > Int64.MaxValue) didSucceed = false;
-			value = (long)ulongValue;
-			return didSucceed;
+			Span<byte> bytes = stackalloc byte[33];
+			GetBytes(chars, ref bytes);
+			return this.TryGetLong(bytes, out value);
+		}
+
+		public bool TryGetDecimal(ReadOnlySpan<char> chars, out decimal value)
+		{
+			Span<byte> bytes = stackalloc byte[33];
+			GetBytes(chars, ref bytes);
+			return this.TryGetDecimal(bytes, out value);
 		}
 	}
 }

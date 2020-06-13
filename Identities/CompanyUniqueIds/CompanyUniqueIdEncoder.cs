@@ -2,6 +2,7 @@
 using System.Buffers.Binary;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Architect.Identities.Helpers;
 using Architect.Identities.PublicIdentities.Encodings;
 
 // ReSharper disable once CheckNamespace
@@ -13,23 +14,31 @@ namespace Architect.Identities
 	internal static class CompanyUniqueIdEncoder
 	{
 		internal const decimal MaxDecimalValue = 99999_99999_99999_99999_99999_999m; // 28 digits
-		internal static readonly int MaxDecimalHiComponent = Decimal.GetBits(MaxDecimalValue)[2];
+
+		static CompanyUniqueIdEncoder()
+		{
+			// Ensure that decimals are still structured the same way
+			// This prevents the application from generating incorrect string representations in this extremely unlikely scenario, allowing a fix to be created
+			DecimalStructure.ThrowIfDecimalStructureIsUnexpected();
+		}
 
 		public static void ToShortString(decimal id, Span<byte> bytes)
 		{
 			if (bytes.Length < 16) throw new IndexOutOfRangeException("At least 16 output bytes are required.");
 			bytes = bytes[..16];
 
+			if (id < 0m) throw new ArgumentOutOfRangeException();
+
 			// Extract the components (yes, decimal composition is weird)
 			var decimals = MemoryMarshal.CreateReadOnlySpan(ref id, length: 1);
 			var components = MemoryMarshal.Cast<decimal, int>(decimals);
-			var signAndScale = components[0];
-			var hi = components[1];
-			var lo = components[2];
-			var mid = components[3];
+			var signAndScale = DecimalStructure.GetSignAndScale(components);
+			var hi = DecimalStructure.GetHi(components);
+			var lo = DecimalStructure.GetLo(components);
+			var mid = DecimalStructure.GetMid(components);
 
 			// Validate format and range
-			if (signAndScale != 0m || hi > MaxDecimalHiComponent)
+			if (id > MaxDecimalValue || signAndScale != 0m)
 				throw new ArgumentException($"Unexpected input value. Pass only values created by {nameof(CompanyUniqueId)}.{nameof(CompanyUniqueId.CreateId)}.", nameof(id));
 
 			// Abuse the caller's output span as input space
@@ -91,13 +100,14 @@ namespace Architect.Identities
 			var mid = BinaryPrimitives.ReadInt32BigEndian(outputBytes[8..]);
 			var lo = BinaryPrimitives.ReadInt32BigEndian(outputBytes[12..]);
 
-			if (signAndScale != 0m || hi > MaxDecimalHiComponent)
+			id = new decimal(lo: lo, mid: mid, hi: hi, isNegative: false, scale: 0);
+
+			if (signAndScale != 0 || id > MaxDecimalValue)
 			{
 				id = default;
 				return false;
 			}
 
-			id = new decimal(lo: lo, mid: mid, hi: hi, isNegative: false, scale: 0);
 			return true;
 		}
 
@@ -109,14 +119,14 @@ namespace Architect.Identities
 			return TryFromShortString(bytes, out id);
 		}
 
-		public static decimal FromShortStringOrDefault(ReadOnlySpan<byte> bytes)
+		public static decimal? FromShortStringOrDefault(ReadOnlySpan<byte> bytes)
 		{
-			return TryFromShortString(bytes, out var id) ? id : default;
+			return TryFromShortString(bytes, out var id) ? id : (decimal?)null;
 		}
 
-		public static decimal FromShortStringOrDefault(ReadOnlySpan<char> chars)
+		public static decimal? FromShortStringOrDefault(ReadOnlySpan<char> chars)
 		{
-			return TryFromShortString(chars, out var id) ? id : default;
+			return TryFromShortString(chars, out var id) ? id : (decimal?)null;
 		}
 
 		public static bool TryFromString(ReadOnlySpan<byte> bytes, out decimal id)
@@ -145,14 +155,14 @@ namespace Architect.Identities
 			return Decimal.TryParse(chars, NumberStyles.None, provider: null, out id);
 		}
 
-		public static decimal FromStringOrDefault(ReadOnlySpan<byte> bytes)
+		public static decimal? FromStringOrDefault(ReadOnlySpan<byte> bytes)
 		{
-			return TryFromString(bytes, out var id) ? id : default;
+			return TryFromString(bytes, out var id) ? id : (decimal?)null;
 		}
 
-		public static decimal FromStringOrDefault(ReadOnlySpan<char> chars)
+		public static decimal? FromStringOrDefault(ReadOnlySpan<char> chars)
 		{
-			return TryFromString(chars, out var id) ? id : default;
+			return TryFromString(chars, out var id) ? id : (decimal?)null;
 		}
 	}
 }

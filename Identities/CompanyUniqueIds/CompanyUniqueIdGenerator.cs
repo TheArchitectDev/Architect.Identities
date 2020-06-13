@@ -37,17 +37,17 @@ namespace Architect.Identities
 		private Action<int> SleepAction { get; }
 
 		/// <summary>
-		/// The previous UTC datetime an ID was created.
+		/// The previous UTC timestamp (in milliseconds since the epoch) on which an ID was created (or 0 initially).
 		/// </summary>
-		internal DateTime PreviousCreationDateTime { get; private set; }
+		private ulong PreviousCreationTimestamp { get; set; }
 		/// <summary>
-		/// The number of contiguous IDs created thus far on the <see cref="PreviousCreationDateTime"/>.
+		/// The number of contiguous IDs created thus far on the <see cref="PreviousCreationTimestamp"/>.
 		/// </summary>
-		internal uint CurrentTimestampCreationCount { get; private set; }
+		private uint CurrentTimestampCreationCount { get; set; }
 		/// <summary>
 		/// The random sequence used during the previous ID creation.
 		/// </summary>
-		internal ulong PreviousRandomSequence { get; private set; }
+		private ulong PreviousRandomSequence { get; set; }
 
 		/// <summary>
 		/// A lock object used to govern access to the mutable properties.
@@ -62,8 +62,8 @@ namespace Architect.Identities
 
 		public decimal CreateId()
 		{
-			var (utcNow, randomSequence) = this.CreateValues();
-			return this.CreateCore(utcNow, randomSequence);
+			var (timestamp, randomSequence) = this.CreateValues();
+			return this.CreateCore(timestamp, randomSequence);
 		}
 
 		/// <summary>
@@ -74,42 +74,51 @@ namespace Architect.Identities
 		/// Creates the values required to create an ID.
 		/// </para>
 		/// </summary>
-		private (DateTime UtcNow, ulong RandomSequence) CreateValues()
+		private (ulong Timestamp, ulong RandomSequence) CreateValues()
 		{
 			lock (this._lockObject)
 			{
-				var utcNow = this.Clock();
+				var timestamp = this.GetTimestamp();
 
 				// If the clock has not advanced since the previous invocation
-				if (utcNow == this.PreviousCreationDateTime)
+				if (timestamp == this.PreviousCreationTimestamp)
 				{
 					// If we can create more contiguous values, advance the count and create the next value
 					if (this.CurrentTimestampCreationCount < RateLimitPerTimestamp)
 					{
 						this.PreviousRandomSequence = this.CreateIncrementalRandomSequence(this.PreviousRandomSequence);
 						this.CurrentTimestampCreationCount++;
-
-						return (utcNow, this.PreviousRandomSequence);
+						return (timestamp, this.PreviousRandomSequence);
 					}
 					// Otherwise, sleep until the clock has advanced
 					else
 					{
-						utcNow = this.AwaitUpdatedClockValue();
+						timestamp = this.AwaitUpdatedClockValue();
 					}
 				}
 
 				// Update the previous timestamp and reset the counter
-				this.PreviousCreationDateTime = utcNow;
+				this.PreviousCreationTimestamp = timestamp;
 				this.CurrentTimestampCreationCount = 1U;
 				this.PreviousRandomSequence = this.CreateRandomSequence();
 
-				return (utcNow, this.PreviousRandomSequence);
+				return (timestamp, this.PreviousRandomSequence);
 			}
 		}
 
 		/// <summary>
+		/// Returns the UTC timestamp in milliseconds since the epoch.
+		/// </summary>
+		private ulong GetTimestamp()
+		{
+			var utcNow = this.Clock();
+			var millisecondsSinceEpoch = (ulong)(utcNow - DateTime.UnixEpoch).TotalMilliseconds;
+			return millisecondsSinceEpoch;
+		}
+
+		/// <summary>
 		/// <para>
-		/// Sleeps until the clock has changed onto another millisecond and then returns that UTC datetime value.
+		/// Sleeps until the clock has changed onto another millisecond and then returns that timestamp.
 		/// </para>
 		/// <para>
 		/// May cause the current thread to sleep.
@@ -118,14 +127,14 @@ namespace Architect.Identities
 		/// Intended for use inside lock. Reads object state, but does not mutate it.
 		/// </para>
 		/// </summary>
-		internal DateTime AwaitUpdatedClockValue()
+		internal ulong AwaitUpdatedClockValue()
 		{
-			DateTime utcNow;
+			ulong timestamp;
 			do
 			{
 				this.SleepAction(1);
-			} while ((utcNow = this.Clock()) == this.PreviousCreationDateTime);
-			return utcNow;
+			} while ((timestamp = this.GetTimestamp()) == this.PreviousCreationTimestamp);
+			return timestamp;
 		}
 
 		/// <summary>
@@ -194,9 +203,9 @@ namespace Architect.Identities
 		/// Creates a new ID based on the given values.
 		/// </para>
 		/// </summary>
-		/// <param name="utcNow">The current UTC datetime.</param>
+		/// <param name="timestamp">The UTC timestamp in milliseconds since the epoch.</param>
 		/// <param name="randomSequence">A random sequence whose 2 low bytes are zeros. This is checked to ensure that the caller has understood what will be used.</param>
-		internal decimal CreateCore(DateTime utcNow, ulong randomSequence)
+		internal decimal CreateCore(ulong timestamp, ulong randomSequence)
 		{
 			// 93 bits fit into 28 decimals
 			// 96 bits: [3 unused bits] [45 time bits] [48 random bits]
@@ -205,14 +214,12 @@ namespace Architect.Identities
 
 			// Populate the left half with the timestamp
 			{
-				var millisecondsSinceEpoch = (ulong)(utcNow - DateTime.UnixEpoch).TotalMilliseconds;
-
 				// The 64-bit timestamp's 19 high bits must be zero, leaving the low 45 bits to be used
-				if (millisecondsSinceEpoch >> 45 != 0UL)
+				if (timestamp >> 45 != 0UL)
 					throw new InvalidOperationException($"{nameof(CompanyUniqueId)} has run out of available time bits."); // Year 3084
 
 				// Write the time component into the first 8 bytes (64 bits: 16 padding to write a ulong, 3 unused, 45 used)
-				BinaryPrimitives.WriteUInt64BigEndian(bytes, millisecondsSinceEpoch);
+				BinaryPrimitives.WriteUInt64BigEndian(bytes, timestamp);
 			}
 
 			bytes = bytes[2..]; // Disregard the left padding

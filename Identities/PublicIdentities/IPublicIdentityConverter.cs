@@ -14,7 +14,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
+		/// The output format looks like a UUID to the naked eye.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -27,7 +27,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
+		/// The output format looks like a UUID to the naked eye.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -37,11 +37,24 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		public void GetPublicString(long id, Span<byte> asciiOutput);
+		/// <summary>
+		/// <para>
+		/// Encodes the given ID as 32 uppercase hexadecimal characters.
+		/// The output format looks like a UUID to the naked eye.
+		/// </para>
+		/// <para>
+		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
+		/// </para>
+		/// <para>
+		/// This overload is allocation-free.
+		/// </para>
+		/// </summary>
+		public void GetPublicString(decimal id, Span<byte> asciiOutput);
 
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
+		/// The output is shorter than that of the regular (non-short) method, but the casing matters.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -54,7 +67,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
+		/// The output is shorter than that of the regular (non-short) method, but the casing matters.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -64,6 +77,19 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		public void GetPublicShortString(long id, Span<byte> asciiOutput);
+		/// <summary>
+		/// <para>
+		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
+		/// The output is shorter than that of the regular (non-short) method, but the casing matters.
+		/// </para>
+		/// <para>
+		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
+		/// </para>
+		/// <para>
+		/// This overload is allocation-free.
+		/// </para>
+		/// </summary>
+		public void GetPublicShortString(decimal id, Span<byte> asciiOutput);
 
 		/// <summary>
 		/// <para>
@@ -89,6 +115,18 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		public void GetPublicBytes(long id, Span<byte> outputBytes);
+		/// <summary>
+		/// <para>
+		/// Encodes the given ID as 16 bytes.
+		/// </para>
+		/// <para>
+		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
+		/// </para>
+		/// <para>
+		/// This overload is allocation-free.
+		/// </para>
+		/// </summary>
+		public void GetPublicBytes(decimal id, Span<byte> outputBytes);
 
 		#endregion
 
@@ -97,7 +135,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
+		/// The output format looks like a UUID to the naked eye.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -110,7 +148,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
+		/// The output format looks like a UUID to the naked eye.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -120,11 +158,24 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		public string GetPublicString(long id);
+		/// <summary>
+		/// <para>
+		/// Encodes the given ID as 32 uppercase hexadecimal characters.
+		/// The output format looks like a UUID to the naked eye.
+		/// </para>
+		/// <para>
+		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
+		/// </para>
+		/// <para>
+		/// This overload allocates (only) the resulting string.
+		/// </para>
+		/// </summary>
+		public string GetPublicString(decimal id);
 
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
+		/// The output is shorter than that of the regular (non-short) method, but the casing matters.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -137,7 +188,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// <para>
 		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
+		/// The output is shorter than that of the regular (non-short) method, but the casing matters.
 		/// </para>
 		/// <para>
 		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
@@ -147,6 +198,19 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		public string GetPublicShortString(long id);
+		/// <summary>
+		/// <para>
+		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
+		/// The output is shorter than that of the regular (non-short) method, but the casing matters.
+		/// </para>
+		/// <para>
+		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
+		/// </para>
+		/// <para>
+		/// This overload allocates (only) the resulting string.
+		/// </para>
+		/// </summary>
+		public string GetPublicShortString(decimal id);
 
 		#endregion
 
@@ -159,14 +223,14 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
+		/// This overload returns the source value on success, or null on failure.
 		/// </para>
 		/// </summary>
 		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
-		public ulong GetUlongOrDefault(ReadOnlySpan<byte> bytes);
+		public ulong? GetUlongOrDefault(ReadOnlySpan<byte> bytes);
 		/// <summary>
 		/// <para>
 		/// Decodes the given public identifier back to its source value, if it is valid.
@@ -174,14 +238,29 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
+		/// This overload returns the source value on success, or null on failure.
 		/// </para>
 		/// </summary>
 		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
-		public long GetLongOrDefault(ReadOnlySpan<byte> bytes);
+		public long? GetLongOrDefault(ReadOnlySpan<byte> bytes);
+		/// <summary>
+		/// <para>
+		/// Decodes the given public identifier back to its source value, if it is valid.
+		/// </para>
+		/// <para>
+		/// The public identifier contains a checksum that is used to securely identify its validity.
+		/// Without the key, one random valid input value can be guessed for every 2^32 values attempted.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
+		/// </para>
+		/// <para>
+		/// This overload returns the source value on success, or null on failure.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
+		public decimal? GetDecimalOrDefault(ReadOnlySpan<byte> bytes);
 
 		/// <summary>
 		/// <para>
@@ -190,7 +269,7 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
 		/// This overload returns whether the operation succeeded, and outputs the source value on success.
@@ -206,7 +285,7 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
 		/// This overload returns whether the operation succeeded, and outputs the source value on success.
@@ -215,6 +294,22 @@ namespace Architect.Identities
 		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
 		/// <param name="value">The interpreted value, or 0.</param>
 		public bool TryGetLong(ReadOnlySpan<byte> bytes, out long value);
+		/// <summary>
+		/// <para>
+		/// Decodes the given public identifier back to its source value, if it is valid.
+		/// </para>
+		/// <para>
+		/// The public identifier contains a checksum that is used to securely identify its validity.
+		/// Without the key, one random valid input value can be guessed for every 2^32 values attempted.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
+		/// </para>
+		/// <para>
+		/// This overload returns whether the operation succeeded, and outputs the source value on success.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
+		/// <param name="value">The interpreted value, or 0.</param>
+		public bool TryGetDecimal(ReadOnlySpan<byte> bytes, out decimal value);
 
 		#endregion
 
@@ -227,14 +322,14 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
+		/// This overload returns the source value on success, or null on failure.
 		/// </para>
 		/// </summary>
 		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
-		public ulong GetUlongOrDefault(ReadOnlySpan<char> chars);
+		public ulong? GetUlongOrDefault(ReadOnlySpan<char> chars);
 		/// <summary>
 		/// <para>
 		/// Decodes the given public identifier back to its source value, if it is valid.
@@ -242,14 +337,29 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
+		/// This overload returns the source value on success, or null on failure.
 		/// </para>
 		/// </summary>
 		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
-		public long GetLongOrDefault(ReadOnlySpan<char> chars);
+		public long? GetLongOrDefault(ReadOnlySpan<char> chars);
+		/// <summary>
+		/// <para>
+		/// Decodes the given public identifier back to its source value, if it is valid.
+		/// </para>
+		/// <para>
+		/// The public identifier contains a checksum that is used to securely identify its validity.
+		/// Without the key, one random valid input value can be guessed for every 2^32 values attempted.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
+		/// </para>
+		/// <para>
+		/// This overload returns the source value on success, or null on failure.
+		/// </para>
+		/// </summary>
+		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
+		public decimal? GetDecimalOrDefault(ReadOnlySpan<char> chars);
 
 		/// <summary>
 		/// <para>
@@ -258,7 +368,7 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
 		/// This overload returns whether the operation succeeded, and outputs the source value on success.
@@ -274,7 +384,7 @@ namespace Architect.Identities
 		/// <para>
 		/// The public identifier contains a checksum that is used to securely identify its validity.
 		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
 		/// </para>
 		/// <para>
 		/// This overload returns whether the operation succeeded, and outputs the source value on success.
@@ -283,6 +393,22 @@ namespace Architect.Identities
 		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
 		/// <param name="value">The interpreted value, or 0.</param>
 		public bool TryGetLong(ReadOnlySpan<char> chars, out long value);
+		/// <summary>
+		/// <para>
+		/// Decodes the given public identifier back to its source value, if it is valid.
+		/// </para>
+		/// <para>
+		/// The public identifier contains a checksum that is used to securely identify its validity.
+		/// Without the key, one random valid input value can be guessed for every 2^32 values attempted.
+		/// The resulting output value is then random, i.e. with extremely high probability it is not an existing ID.
+		/// </para>
+		/// <para>
+		/// This overload returns whether the operation succeeded, and outputs the source value on success.
+		/// </para>
+		/// </summary>
+		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
+		/// <param name="value">The interpreted value, or 0.</param>
+		public bool TryGetDecimal(ReadOnlySpan<char> chars, out decimal value);
 
 		#endregion
 	}

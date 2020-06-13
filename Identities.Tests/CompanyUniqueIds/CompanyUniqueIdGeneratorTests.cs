@@ -10,6 +10,10 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 	public sealed class CompanyUniqueIdGeneratorTests
 	{
 		private static readonly DateTime FixedUtcDateTime = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
+		private static readonly ulong FixedTimestamp = GetTimestamp(FixedUtcDateTime);
+		private static readonly ulong EpochTimestamp = 0UL;
+
+		private static ulong GetTimestamp(DateTime utcDateTime) => (ulong)(utcDateTime - DateTime.UnixEpoch).TotalMilliseconds;
 
 		/// <summary>
 		/// A generator with the default dependencies.
@@ -53,7 +57,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateCore_Regularly_ShouldUseEpochToCalculateMilliseconds()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(DateTime.UnixEpoch, randomSequence: default);
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, randomSequence: default);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
@@ -66,22 +70,23 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			const int dateTimeBitCount = 45;
 
 			var firstOverflowingDateTime = DateTime.UnixEpoch.AddMilliseconds(1UL << dateTimeBitCount);
-			var maxPermittedDateTime = firstOverflowingDateTime.AddMilliseconds(-1);
+			var firstOverflowingTimestamp = GetTimestamp(firstOverflowingDateTime);
 
-			this.DefaultIdGenerator.CreateCore(maxPermittedDateTime, randomSequence: default); // Should not throw
-			Assert.Throws<InvalidOperationException>(() => this.DefaultIdGenerator.CreateCore(firstOverflowingDateTime, randomSequence: default));
+			var maxPermittedDateTime = firstOverflowingDateTime.AddMilliseconds(-1);
+			var maxPermittedTimestamp = GetTimestamp(maxPermittedDateTime);
+
+			this.DefaultIdGenerator.CreateCore(maxPermittedTimestamp, randomSequence: default); // Should not throw
+			Assert.Throws<InvalidOperationException>(() => this.DefaultIdGenerator.CreateCore(firstOverflowingTimestamp, randomSequence: default));
 		}
 
 		[Fact]
 		public void CreateCore_Regularly_ShouldStoreTimestampMillisecondsInHigh6Bytes()
 		{
-			var expectedMilliseconds = (ulong)(FixedUtcDateTime - DateTime.UnixEpoch).TotalMilliseconds;
-
-			var id = this.DefaultIdGenerator.CreateCore(FixedUtcDateTime, randomSequence: default);
+			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, randomSequence: default);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
-			Assert.Equal(expectedMilliseconds, milliseconds);
+			Assert.Equal(FixedTimestamp, milliseconds);
 		}
 
 		[Fact]
@@ -90,7 +95,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			const ulong fixedRandomSequence = UInt64.MaxValue >> 16 << 16; // The low 2 bytes should be zeros and will remain unused
 			const ulong expectedRandomSequence = fixedRandomSequence >> 16; // Only 6 bytes will be used
 
-			var id = this.DefaultIdGenerator.CreateCore(DateTime.UnixEpoch, fixedRandomSequence);
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, fixedRandomSequence);
 
 			var resultingRandomSequence = ExtractRandomSequenceComponent(id);
 
@@ -166,6 +171,19 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		}
 
 		[Fact]
+		public void CreateId_SubsequentlyBeyondRateLimit_ShouldReturnIncrementalValues()
+		{
+			var generator = new CompanyUniqueIdGenerator();
+
+			var results = new List<decimal>();
+			for (var i = 0; i < 10 + CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
+				results.Add(generator.CreateId());
+
+			for (var i = 1; i < results.Count; i++)
+				Assert.True(results[i] > results[i - 1]);
+		}
+
+		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestampWithinRateLimit_ShouldReturnIncrementalValues()
 		{
 			var generator = new CompanyUniqueIdGenerator(utcClock: () => FixedUtcDateTime);
@@ -214,6 +232,23 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			var results = new List<ulong>();
 			for (var i = 0; i < 100; i++)
 				results.Add(ExtractTimestampComponent(generator.CreateId()));
+
+			for (var i = 1; i < results.Count; i++)
+				Assert.True(results[i] > results[i - 1]);
+		}
+
+		/// <summary>
+		/// Test correct behavior where the clock is increasing (such as just 1 tick) but not increasing by a full millisecond.
+		/// </summary>
+		[Fact]
+		public void CreateId_SubsequentlyOnSameMillisecondButDifferentTick_ShouldReturnIncrementalRandomSequenceComponents()
+		{
+			var dateTime = FixedUtcDateTime;
+			var generator = new CompanyUniqueIdGenerator(utcClock: () => dateTime = dateTime.AddTicks(1));
+
+			var results = new List<ulong>();
+			for (var i = 0; i < CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
+				results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);

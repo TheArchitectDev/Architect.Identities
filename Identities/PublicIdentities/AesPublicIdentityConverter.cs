@@ -24,17 +24,18 @@ namespace Architect.Identities
 		private byte[] EncryptorInputBlock { get; } = new byte[16];
 		private byte[] EncryptorOutputBlock { get; } = new byte[16];
 		private Span<ulong> EncryptorInputUlongSpan => MemoryMarshal.Cast<byte, ulong>(this.EncryptorInputBlock);
+		private Span<decimal> EncryptorInputDecimalSpan => MemoryMarshal.Cast<byte, decimal>(this.EncryptorInputBlock);
+		private Span<int> EncryptorInputDecimalComponentSpan => MemoryMarshal.Cast<byte, int>(this.EncryptorInputBlock);
 		private byte[] DecryptorInputBlock { get; } = new byte[16];
 		private byte[] DecryptorOutputBlock { get; } = new byte[16];
 		private Span<ulong> DecryptorOutputUlongSpan => MemoryMarshal.Cast<byte, ulong>(this.DecryptorOutputBlock);
+		private Span<decimal> DecryptorOutputDecimalSpan => MemoryMarshal.Cast<byte, decimal>(this.DecryptorOutputBlock);
 		#endregion
 
-		public void Dispose()
-		{
-			this.Encryptor.Dispose();
-			this.Decryptor.Dispose();
-			this.Aes.Dispose();
-		}
+		/// <summary>
+		/// Converts the given long to ulong, or throws an <see cref="ArgumentOutOfRangeException"/> if it is negative.
+		/// </summary>
+		private static ulong LongToUlong(long id) => id >= 0 ? (ulong)id : throw new ArgumentOutOfRangeException();
 
 		public AesPublicIdentityConverter(ReadOnlySpan<byte> aesKey)
 		{
@@ -50,6 +51,13 @@ namespace Architect.Identities
 			};
 			this.Encryptor = this.Aes.CreateEncryptor();
 			this.Decryptor = this.Aes.CreateDecryptor();
+		}
+
+		public void Dispose()
+		{
+			this.Encryptor.Dispose();
+			this.Decryptor.Dispose();
+			this.Aes.Dispose();
 		}
 	}
 }

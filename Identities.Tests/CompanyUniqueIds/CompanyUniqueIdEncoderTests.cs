@@ -39,7 +39,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			};
 		}
 
-		private static decimal[] ResultForAllDecodings(byte[] bytes)
+		private static decimal?[] ResultForAllDecodings(byte[] bytes)
 		{
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
@@ -66,16 +66,16 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			{
 				CompanyUniqueIdEncoder.TryFromShortString(bytes, out _),
 				CompanyUniqueIdEncoder.TryFromShortString(chars, out _),
-				CompanyUniqueIdEncoder.FromShortStringOrDefault(bytes) != 0m,
-				CompanyUniqueIdEncoder.FromShortStringOrDefault(chars) != 0m,
+				CompanyUniqueIdEncoder.FromShortStringOrDefault(bytes) != null,
+				CompanyUniqueIdEncoder.FromShortStringOrDefault(chars) != null,
 				CompanyUniqueIdEncoder.TryFromString(bytes, out _),
 				CompanyUniqueIdEncoder.TryFromString(chars, out _),
-				CompanyUniqueIdEncoder.FromStringOrDefault(bytes) != 0m,
-				CompanyUniqueIdEncoder.FromStringOrDefault(chars) != 0m,
+				CompanyUniqueIdEncoder.FromStringOrDefault(bytes) != null,
+				CompanyUniqueIdEncoder.FromStringOrDefault(chars) != null,
 			};
 		}
 
-		private static decimal[] ResultForAllFlexibleDecodings(byte[] bytes)
+		private static decimal?[] ResultForAllFlexibleDecodings(byte[] bytes)
 		{
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
@@ -98,8 +98,8 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			{
 				CompanyUniqueIdEncoder.TryFromString(bytes, out _),
 				CompanyUniqueIdEncoder.TryFromString(chars, out _),
-				CompanyUniqueIdEncoder.FromStringOrDefault(bytes) != 0m,
-				CompanyUniqueIdEncoder.FromStringOrDefault(chars) != 0m,
+				CompanyUniqueIdEncoder.FromStringOrDefault(bytes) != null,
+				CompanyUniqueIdEncoder.FromStringOrDefault(chars) != null,
 			};
 		}
 
@@ -134,7 +134,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void AllEncodingMethods_WithOverflow_ShouldThrow()
 		{
-			var id = new decimal(lo: 1, mid: 1, hi: 1 + CompanyUniqueIdEncoder.MaxDecimalHiComponent, isNegative: false, scale: 0);
+			var id = 1 + CompanyUniqueIdEncoder.MaxDecimalValue;
 			var results = CheckIfThrowsForAllEncodings(id, new byte[16]);
 			Assert.Equal(results.Length, results.Count(didThrow => didThrow));
 		}
@@ -142,7 +142,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void AllEncodingMethods_WithMaximumDecimalValue_ShouldSucceed()
 		{
-			var id = new decimal(lo: Int32.MaxValue, mid: Int32.MaxValue, hi: CompanyUniqueIdEncoder.MaxDecimalHiComponent, isNegative: false, scale: 0);
+			var id = CompanyUniqueIdEncoder.MaxDecimalValue;
 			var results = CheckIfThrowsForAllEncodings(id, new byte[16]);
 			Assert.Equal(results.Length, results.Count(didThrow => !didThrow));
 		}
@@ -154,7 +154,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			var two = 2m;
 			var three = (decimal)UInt64.MaxValue - 1;
 			var four = (decimal)UInt64.MaxValue;
-			var five = new decimal(lo: Int32.MaxValue, mid: Int32.MaxValue, hi: CompanyUniqueIdEncoder.MaxDecimalHiComponent, isNegative: false, scale: 0);
+			var five = CompanyUniqueIdEncoder.MaxDecimalValue;
 
 			var a = CompanyUniqueIdEncoder.ToShortString(one);
 			var b = CompanyUniqueIdEncoder.ToShortString(two);

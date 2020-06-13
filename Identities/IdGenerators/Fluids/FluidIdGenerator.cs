@@ -188,7 +188,7 @@ namespace Architect.Identities
 
 		internal ulong GetMillisecondsSinceEpoch()
 		{
-			return (ulong)this.Clock().Subtract(this.Epoch).TotalMilliseconds;
+			return (ulong)(this.Clock() - this.Epoch).TotalMilliseconds;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]

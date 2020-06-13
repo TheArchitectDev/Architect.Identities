@@ -7,7 +7,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 	/// The static subject under test merely acts as a wrapper, rather than implementing the functionality by itself.
 	/// This test class merely confirms that its methods succeed, covering them. All other assertions are done in tests on the implementing types.
 	/// </summary>
-	public sealed partial class CompanyUniqueIdTests
+	public sealed class CompanyUniqueIdTests
 	{
 		private static readonly decimal SampleId = 447835050025542181830910637m;
 		private static readonly string SampleShortString = "1drbWFYI4a3pLliX";
