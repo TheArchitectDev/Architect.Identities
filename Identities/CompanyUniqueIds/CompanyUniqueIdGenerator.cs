@@ -76,6 +76,9 @@ namespace Architect.Identities
 		/// </summary>
 		private (ulong Timestamp, ulong RandomSequence) CreateValues()
 		{
+			// The random number generator is likely to lock, so doing this outside of our own lock is likely to increase throughput
+			var randomSequence = CreateRandomSequence();
+
 			lock (this._lockObject)
 			{
 				var timestamp = this.GetTimestamp();
@@ -86,7 +89,7 @@ namespace Architect.Identities
 					// If we can create more contiguous values, advance the count and create the next value
 					if (this.CurrentTimestampCreationCount < RateLimitPerTimestamp)
 					{
-						this.PreviousRandomSequence = this.CreateIncrementalRandomSequence(this.PreviousRandomSequence);
+						this.PreviousRandomSequence = this.CreateIncrementalRandomSequence(this.PreviousRandomSequence, randomSequence);
 						this.CurrentTimestampCreationCount++;
 						return (timestamp, this.PreviousRandomSequence);
 					}
@@ -100,9 +103,9 @@ namespace Architect.Identities
 				// Update the previous timestamp and reset the counter
 				this.PreviousCreationTimestamp = timestamp;
 				this.CurrentTimestampCreationCount = 1U;
-				this.PreviousRandomSequence = this.CreateRandomSequence();
+				this.PreviousRandomSequence = randomSequence;
 
-				return (timestamp, this.PreviousRandomSequence);
+				return (timestamp, randomSequence);
 			}
 		}
 
@@ -139,25 +142,15 @@ namespace Architect.Identities
 
 		/// <summary>
 		/// <para>
-		/// Pure function.
+		/// Pure function (although the random number generator may use locking internally).
 		/// </para>
 		/// <para>
-		/// Creates a new 48-bit random sequence, aligned to the high bits, i.e. the low two bytes are zero.
+		/// Returns a new 48-bit (6-byte) random sequence.
 		/// </para>
 		/// </summary>
-		private ulong CreateRandomSequence()
+		private RandomSequence6 CreateRandomSequence()
 		{
-			Span<byte> bytes = stackalloc byte[8];
-
-			// Zero out the bottom bits
-			bytes[^1] = 0;
-			bytes[^2] = 0;
-
-			// Fill the relevant 6 bytes (48 bits) with random data
-			RandomNumberGenerator.Fill(bytes[..^2]);
-
-			var randomSequence = BinaryPrimitives.ReadUInt64BigEndian(bytes);
-			return randomSequence;
+			return RandomSequence6.Create();
 		}
 
 		/// <summary>
@@ -165,11 +158,11 @@ namespace Architect.Identities
 		/// Pure function.
 		/// </para>
 		/// <para>
-		/// Creates a new 48-bit random sequence based on the given previous one, aligned to the high bits, i.e. with the low two bytes set to zero.
+		/// Creates a new 48-bit random sequence based on the given previous one and new one.
 		/// Adds new randomness while maintaining the incremental property in most cases.
 		/// </para>
 		/// </summary>
-		private ulong CreateIncrementalRandomSequence(ulong previousRandomSequence)
+		private ulong CreateIncrementalRandomSequence(ulong previousRandomSequence, RandomSequence6 newRandomSequence)
 		{
 			// Fill the relevant 6 bytes (48 bits) with incremented random data
 			// Balance unpredictability with incrementalness
@@ -177,22 +170,12 @@ namespace Architect.Identities
 			// 16 remaining bits to overflow into provide less than 1 in 1 million chance of wraparound (which would merely break incrementalness, which does not matter if it happens infrequently)
 			// The wraparound chance was tested empirically, as the math is rather complex
 			var randomSequence = previousRandomSequence;
-			var randomIncrement = CreateRandomIncrement();
-			System.Diagnostics.Debug.Assert(randomIncrement < 1UL << 32, "The increment should not have exceeded 32 bits.");
+			var randomIncrement = (ulong)(uint)newRandomSequence; // Keep 4 of the 6 random bytes
 			unchecked
 			{
 				randomSequence += randomIncrement << 16; // The two low bytes are padding
 			}
 			return randomSequence;
-
-			// Local function that returns a random 32-bit increment value
-			static ulong CreateRandomIncrement()
-			{
-				Span<byte> randomBytes = stackalloc byte[4];
-				RandomNumberGenerator.Fill(randomBytes);
-				var randomIncrement = MemoryMarshal.Read<uint>(randomBytes);
-				return randomIncrement;
-			}
 		}
 
 		/// <summary>
