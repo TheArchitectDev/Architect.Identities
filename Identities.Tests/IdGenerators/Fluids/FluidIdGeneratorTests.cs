@@ -386,10 +386,29 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 
 		[Fact]
-		public void CreateFluid_TwiceWithRewindingClock2Seconds_ShouldThrow()
+		public void CreateFluid_TwiceWithRewindingClockMaxAllowedMilliseconds_ShouldSleepThatLong()
 		{
-			var invocationCount = 0;
-			DateTime AutorewindingClock() => Epoch.AddDays(1).AddSeconds(++invocationCount == 2 ? 0 : 2 * invocationCount); // +2, 0, +4, +6, +8, ...
+			var invocationCount = 0UL;
+			DateTime AutorewindingClock() =>
+				Epoch.AddDays(1).AddMilliseconds(++invocationCount == 2 ? 0 : FluidIdGenerator.MaxClockCatchupSleepMilliseconds * invocationCount); // E.g. +2000, 0, +4000, +6000, ...
+
+			var sleepMs = 0;
+			var factory = new FluidIdGenerator(isProduction: false, utcClock: AutorewindingClock, ApplicationInstanceId, epoch: Epoch, BitDistribution,
+				sleepAction: ms => sleepMs += ms);
+			invocationCount = 0; // Reset the clock
+
+			factory.CreateFluid();
+			factory.CreateFluid();
+
+			Assert.Equal(FluidIdGenerator.MaxClockCatchupSleepMilliseconds, (ulong)sleepMs);
+		}
+
+		[Fact]
+		public void CreateFluid_TwiceWithRewindingClockMoreThanMaxAllowedMilliseconds_ShouldThrow()
+		{
+			var invocationCount = 0UL;
+			DateTime AutorewindingClock() =>
+				Epoch.AddDays(1).AddMilliseconds(++invocationCount == 2 ? 0 : (1UL + FluidIdGenerator.MaxClockCatchupSleepMilliseconds) * invocationCount); // E.g. +2001, 0, +4002, +6003, ...
 
 			var sleepMs = 0;
 			var factory = new FluidIdGenerator(isProduction: false, utcClock: AutorewindingClock, ApplicationInstanceId, epoch: Epoch, BitDistribution,

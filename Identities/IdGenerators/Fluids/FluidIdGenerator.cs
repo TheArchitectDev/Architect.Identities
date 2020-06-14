@@ -7,6 +7,12 @@ namespace Architect.Identities
 {
 	internal sealed class FluidIdGenerator : IIdGenerator
 	{
+		/// <summary>
+		/// The maximum number of milliseconds we will sleep to let the clock catch up if it was rewound.
+		/// This effectively determines the maximum system clock drift.
+		/// </summary>
+		internal const ulong MaxClockCatchupSleepMilliseconds = 2000;
+
 		public static DateTime GetUtcNow() => DateTime.UtcNow;
 		internal static readonly DateTime DefaultEpoch = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
 
@@ -139,7 +145,7 @@ namespace Architect.Identities
 
 				// Ensure that we have reached the required moment in time
 				// This protects us from clock rewinds and from reusing counter values
-				var maxSleepMilliseconds = 1000UL;
+				var maxSleepMilliseconds = MaxClockCatchupSleepMilliseconds;
 				while (timestamp < requiredTimestamp)
 				{
 					var millisecondsRequired = requiredTimestamp - timestamp;
@@ -150,14 +156,14 @@ namespace Architect.Identities
 					if (millisecondsRequired > maxSleepMilliseconds)
 						throw new TimeoutException("Failed to generate an ID because the clock was rewound by more than one second. This exception is thrown instead of introducing long wait times or risking collisions. Use NTP or a similar protocol to prevent significant clock changes.");
 					
-					maxSleepMilliseconds -= millisecondsRequired; // Consume some of our maximum sleep time, to avoid an endless loop in case the clock keeps on getting rewinded bit-by-bit
+					maxSleepMilliseconds -= millisecondsRequired; // Consume some of our maximum sleep time, to avoid an endless loop in case the clock keeps on getting rewound bit-by-bit
 					this.SleepAction((int)millisecondsRequired);
 					timestamp = this.GetMillisecondsSinceEpoch();
 				}
 
 				// Always update the timestamp forward before updating the counter
 				// This keeps (theoretical) exceptions from introducing collisions
-				System.Diagnostics.Debug.Assert(timestamp >= this._previousTimestamp, "The timestamp was rewinded even though we waited.");
+				System.Diagnostics.Debug.Assert(timestamp >= this._previousTimestamp, "The timestamp indicates clock rewind even though we waited.");
 				System.Diagnostics.Debug.Assert(counterValue > this._counter || timestamp > this._previousTimestamp, "Either the counter or the time must advance (or both).");
 				this._previousTimestamp = timestamp;
 				this._counter = counterValue;
