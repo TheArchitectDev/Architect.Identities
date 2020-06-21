@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC4</Version>
+    <Version>1.0.0-RC5</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 Provides various tools related to IDs.
