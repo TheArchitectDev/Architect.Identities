@@ -12,8 +12,13 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		private static readonly DateTime FixedUtcDateTime = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
 		private static readonly ulong FixedTimestamp = GetTimestamp(FixedUtcDateTime);
 		private static readonly ulong EpochTimestamp = 0UL;
+		private static readonly RandomSequence6 FixedRandomSequence6 = SimulateRandomSequenceWithValue(1UL << 40);
 
 		private static ulong GetTimestamp(DateTime utcDateTime) => (ulong)(utcDateTime - DateTime.UnixEpoch).TotalMilliseconds;
+
+#pragma warning disable CS0618 // Type or member is obsolete -- Obsolete intended to protect against non-test usage
+		private static RandomSequence6 SimulateRandomSequenceWithValue(ulong value) => RandomSequence6.CreatedSimulated(value);
+#pragma warning restore CS0618 // Type or member is obsolete
 
 		/// <summary>
 		/// A generator with the default dependencies.
@@ -37,6 +42,10 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			return milliseconds;
 		}
 
+		/// <summary>
+		/// Extracts the random sequence component from the given ID.
+		/// Returns a ulong with the high 2 bits set to zero.
+		/// </summary>
 		private static ulong ExtractRandomSequenceComponent(decimal id)
 		{
 			// The random portion is the last 6 bytes, so start by extracting the last 8 bytes
@@ -48,8 +57,8 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			BinaryPrimitives.WriteInt32BigEndian(midAndLoBytes[4..], lo);
 			var lowTwoThirds = BinaryPrimitives.ReadUInt64BigEndian(midAndLoBytes);
 
-			// The 2 high bytes belong to the timestamp portion, so shift them off
-			var randomSequence = lowTwoThirds << 16 >> 16; // 16 bits
+			// The high 2 bytes belong to the timestamp portion, so shift them off
+			var randomSequence = lowTwoThirds << 16 >> 16;
 
 			return randomSequence;
 		}
@@ -57,7 +66,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateCore_Regularly_ShouldUseEpochToCalculateMilliseconds()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, randomSequence: default);
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, FixedRandomSequence6);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
@@ -75,14 +84,14 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			var maxPermittedDateTime = firstOverflowingDateTime.AddMilliseconds(-1);
 			var maxPermittedTimestamp = GetTimestamp(maxPermittedDateTime);
 
-			this.DefaultIdGenerator.CreateCore(maxPermittedTimestamp, randomSequence: default); // Should not throw
+			this.DefaultIdGenerator.CreateCore(maxPermittedTimestamp, FixedRandomSequence6); // Should not throw
 			Assert.Throws<InvalidOperationException>(() => this.DefaultIdGenerator.CreateCore(firstOverflowingTimestamp, randomSequence: default));
 		}
 
 		[Fact]
 		public void CreateCore_Regularly_ShouldStoreTimestampMillisecondsInHigh6Bytes()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, randomSequence: default);
+			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, FixedRandomSequence6);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
@@ -92,14 +101,34 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateCore_Regularly_ShouldStoreRandomSequenceInLow6Bytes()
 		{
-			const ulong fixedRandomSequence = UInt64.MaxValue >> 16 << 16; // The low 2 bytes should be zeros and will remain unused
-			const ulong expectedRandomSequence = fixedRandomSequence >> 16; // Only 6 bytes will be used
+			const ulong fixedRandomSequence = UInt64.MaxValue >> 16; // The high 2 bytes should be zero and will remain unused
+			var fixedRandomSequence6 = SimulateRandomSequenceWithValue(fixedRandomSequence);
 
-			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, fixedRandomSequence);
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, fixedRandomSequence6);
 
 			var resultingRandomSequence = ExtractRandomSequenceComponent(id);
 
-			Assert.Equal(expectedRandomSequence, resultingRandomSequence);
+			Assert.Equal(fixedRandomSequence, resultingRandomSequence);
+		}
+
+		/// <summary>
+		/// This tests checks that we do not accidentally output the padding (i.e. cut off actual random bytes).
+		/// </summary>
+		[Fact]
+		public void CreateCore_Regularly_ShouldCutOffPadding()
+		{
+			const ulong fixedRandomSequence = UInt64.MaxValue >> 16; // The high 2 bytes should be zero and will remain unused
+			var fixedRandomSequence6 = SimulateRandomSequenceWithValue(fixedRandomSequence);
+
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, fixedRandomSequence6);
+
+			var resultingRandomSequence = ExtractRandomSequenceComponent(id); // Note: High 2 bytes belong to the timestamp component
+			Span<byte> randomSequence = stackalloc byte[8];
+			BinaryPrimitives.WriteUInt64BigEndian(randomSequence, resultingRandomSequence);
+			randomSequence = randomSequence[2..]; // High 2 bytes belong to the timestamp component
+
+			Assert.False(randomSequence.StartsWith(new byte[2]));
+			Assert.False(randomSequence.EndsWith(new byte[2]));
 		}
 
 		[Fact]

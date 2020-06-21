@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Threading;
 
 // ReSharper disable once CheckNamespace
@@ -47,7 +45,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// The random sequence used during the previous ID creation.
 		/// </summary>
-		private ulong PreviousRandomSequence { get; set; }
+		private RandomSequence6 PreviousRandomSequence { get; set; }
 
 		/// <summary>
 		/// A lock object used to govern access to the mutable properties.
@@ -74,7 +72,7 @@ namespace Architect.Identities
 		/// Creates the values required to create an ID.
 		/// </para>
 		/// </summary>
-		private (ulong Timestamp, ulong RandomSequence) CreateValues()
+		private (ulong Timestamp, RandomSequence6 RandomSequence) CreateValues()
 		{
 			// The random number generator is likely to lock, so doing this outside of our own lock is likely to increase throughput
 			var randomSequence = CreateRandomSequence();
@@ -159,23 +157,18 @@ namespace Architect.Identities
 		/// </para>
 		/// <para>
 		/// Creates a new 48-bit random sequence based on the given previous one and new one.
-		/// Adds new randomness while maintaining the incremental property in most cases.
+		/// Adds new randomness while maintaining the incremental property with very high probability.
 		/// </para>
 		/// </summary>
-		private ulong CreateIncrementalRandomSequence(ulong previousRandomSequence, RandomSequence6 newRandomSequence)
+		private RandomSequence6 CreateIncrementalRandomSequence(RandomSequence6 previousRandomSequence, RandomSequence6 newRandomSequence)
 		{
 			// Fill the relevant 6 bytes (48 bits) with incremented random data
 			// Balance unpredictability with incrementalness
 			// 32 new random bits provides a 1 in 4 billion chance to guess an ID based on a previous one
 			// 16 remaining bits to overflow into provide less than 1 in 1 million chance of wraparound (which would merely break incrementalness, which does not matter if it happens infrequently)
 			// The wraparound chance was tested empirically, as the math is rather complex
-			var randomSequence = previousRandomSequence;
-			var randomIncrement = (ulong)(uint)newRandomSequence; // Keep 4 of the 6 random bytes
-			unchecked
-			{
-				randomSequence += randomIncrement << 16; // The two low bytes are padding
-			}
-			return randomSequence;
+			var incrementalRandomSequence = previousRandomSequence.Add4RandomBytes(newRandomSequence);
+			return incrementalRandomSequence;
 		}
 
 		/// <summary>
@@ -188,7 +181,7 @@ namespace Architect.Identities
 		/// </summary>
 		/// <param name="timestamp">The UTC timestamp in milliseconds since the epoch.</param>
 		/// <param name="randomSequence">A random sequence whose 2 low bytes are zeros. This is checked to ensure that the caller has understood what will be used.</param>
-		internal decimal CreateCore(ulong timestamp, ulong randomSequence)
+		internal decimal CreateCore(ulong timestamp, RandomSequence6 randomSequence)
 		{
 			// 93 bits fit into 28 decimals
 			// 96 bits: [3 unused bits] [45 time bits] [48 random bits]
@@ -209,9 +202,12 @@ namespace Architect.Identities
 
 			// Populate the right half with the random data
 			{
-				System.Diagnostics.Debug.Assert((ushort)randomSequence == 0, "The two low bytes should have been zeros.");
+				var randomSequenceWithHighPadding = (ulong)randomSequence;
+				System.Diagnostics.Debug.Assert(randomSequenceWithHighPadding >> (64 - 16) == 0, "The high 2 bytes should have been zero.");
+				var randomSequenceWithLowPadding = randomSequenceWithHighPadding << 16;
+				System.Diagnostics.Debug.Assert((ushort)randomSequenceWithLowPadding == 0, "The low 2 bytes should have been zero.");
 
-				BinaryPrimitives.WriteUInt64BigEndian(bytes[^8..], randomSequence);
+				BinaryPrimitives.WriteUInt64BigEndian(bytes[^8..], randomSequenceWithLowPadding);
 			}
 
 			bytes = bytes[..^2]; // Disregard the right padding
