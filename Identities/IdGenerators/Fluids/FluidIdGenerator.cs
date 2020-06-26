@@ -8,10 +8,17 @@ namespace Architect.Identities
 	internal sealed class FluidIdGenerator : IIdGenerator
 	{
 		/// <summary>
+		/// <para>
 		/// The maximum number of milliseconds we will sleep to let the clock catch up if it was rewound.
 		/// This effectively determines the maximum system clock drift.
+		/// </para>
+		/// <para>
+		/// Commonly acceptable values are 1000 or 2000 ms.
+		/// For Azure, however, this post seems to indicate outliers of up to 4000 ms, so we should have some margin beyond that, just in case: https://stackoverflow.com/a/6200714.
+		/// It is unclear if Azure smears its corrections, so we will play it safe.
+		/// </para>
 		/// </summary>
-		internal const ulong MaxClockCatchupSleepMilliseconds = 2000;
+		internal const ulong MaxClockCatchupSleepMilliseconds = 5000;
 
 		public static DateTime GetUtcNow() => DateTime.UtcNow;
 		internal static readonly DateTime DefaultEpoch = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
