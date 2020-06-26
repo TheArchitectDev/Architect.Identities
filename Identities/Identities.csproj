@@ -19,13 +19,14 @@
     <Version>1.0.0-RC5</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
-Provides various tools related to IDs.
+This package provides tools for ID management.
 
-This package features the Fluid ID generator, which generates Flexible, Locally-Unique IDs. A Fluid is intended to replace the combination of auto-increment ID and UUID. It is 64-bit and incremental (i.e. efficient as a primary key) and does not leak the sensitive information that an auto-increment ID does.
+Auto-increment IDs expose sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two IDs is silly and cumbersome.
 
-The package also provides PublicIdentities, a set of tools for converting local IDs to public IDs and back. When a Fluid is still considered to leak too much information to be exposed publically, or when using auto-increment IDs, PublicIdentities can help out. This subsystem converts 64-bit (or smaller) IDs into deterministic, reversible public IDs that are indistinguishable from random noise without possession of the configured key. Using the key, public IDs can be converted back to the original IDs. These public IDs can replace UUIDs, without the additional bookkeeping.
-
-Furthermore, this package features various ApplicationInstanceIdSource implementations. These implementations provide a unique ID to each distinct application (or instance thereof) within a chosen bounded context, by using a centralized storage component, such as a database. (An Azure Storage Blob Container implementation is available in a separate package.) The Fluid ID generator relies on this feature to guarantee that generated IDs are unique.
+- For a 93-bit UUID replacement that is *efficient as a primary key* and has *virtually no caveats*, use **CompanyUniqueId**.
+- For a 64-bit UUID replacement that is *extremely efficient as a primary key* but *requires dependency registration and a synchronization mechanism*, use **Fluid**.
+- To expose IDs externally in a sensitive environment *where zero metadata can be leaked*, transform them with **PublicIdentities**.
+- To assign a unique ID to each distinct application or instance thereof, use **ApplicationInstanceIdSource**.
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
@@ -33,7 +34,7 @@ Furthermore, this package features various ApplicationInstanceIdSource implement
     <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>ID, IDs, identity, identities, Fluid, generator, generation, IdGenerator, UUID, GUID, auto-increment, entity, entities, PublicIdentities, IdGeneratorScope, flexible, locally, unique</PackageTags>
+    <PackageTags>ID, IDs, identity, identities, Fluid, company-unique, company, locally, unique, generator, generation, IdGenerator, UUID, GUID, auto-increment, primary, key, entity, entities, PublicIdentities, IdGeneratorScope, flexible</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

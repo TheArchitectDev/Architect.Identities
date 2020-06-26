@@ -41,11 +41,11 @@ namespace Architect.Identities.Example
 			// Like GUIDs, these IDs can be generated from anywhere, without any registrations whatsoever
 			var id1 = CompanyUniqueId.CreateId();
 			var id2 = CompanyUniqueId.CreateId();
-			var id1ShortString = CompanyUniqueId.ToShortString(id1);
-			var id2ShortString = CompanyUniqueId.ToShortString(id2);
+			var id1Alphanumeric = id1.ToAlphanumeric();
+			var id2Alphanumeric = id2.ToAlphanumeric();
 			Console.WriteLine();
-			Console.WriteLine($"Here is company-unique ID generated like a GUID: {id1} (short form: {id1ShortString})");
-			Console.WriteLine($"Here is company-unique ID generated like a GUID: {id2} (short form: {id2ShortString})");
+			Console.WriteLine($"Here is a company-unique ID generated like a GUID: {id1} (alphanumeric form: {id1Alphanumeric})");
+			Console.WriteLine($"Here is a company-unique ID generated like a GUID: {id2} (alphanumeric form: {id2Alphanumeric})");
 		}
 
 		private static void CreateUsersWithDependencyInjection(UserFactory userFactory)
