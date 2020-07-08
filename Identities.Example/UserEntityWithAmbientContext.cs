@@ -32,7 +32,6 @@ namespace Architect.Identities.Example
 		public string UserName { get; }
 		public string FullName { get; private set; }
 
-		// #TODO: Create and test FixedIdGenerator (for testing)
 		/// <summary>
 		/// Constructs a new instance representing the given data.
 		/// </summary>

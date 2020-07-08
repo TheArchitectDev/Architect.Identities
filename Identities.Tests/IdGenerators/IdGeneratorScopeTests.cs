@@ -78,6 +78,18 @@ namespace Architect.Identities.Tests.IdGenerators
 			Assert.False(outerInvocationDetector.WasInvoked);
 		}
 
+		[Fact]
+		public void Current_WithScopedCustomIdGenerator_ShouldHoldExpectedGenerator()
+		{
+			var generator = new CustomIdGenerator(1UL);
+			using (new IdGeneratorScope(generator))
+			{
+				var result = IdGeneratorScope.Current.Generator;
+
+				Assert.Equal(generator, result);
+			}
+		}
+
 		private static IIdGenerator CreateIdGenerator(InvocationDetector invocationDetector)
 		{
 			return new FluidIdGenerator(isProduction: false, utcClock: GetUtcNow, applicationInstanceId: 1);
