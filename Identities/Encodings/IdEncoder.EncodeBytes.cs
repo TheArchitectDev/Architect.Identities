@@ -1,16 +1,24 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Runtime.InteropServices;
+using Architect.Identities.Encodings;
 using Architect.Identities.Helpers;
-using Architect.Identities.PublicIdentities.Encodings;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
-	// #TODO: Summaries (all partials)
-	// #TODO: Test entire class (all partials)
 	public static partial class IdEncoder
 	{
+		/// <summary>
+		/// <para>
+		/// Outputs an 11-character alphanumeric string representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
+		/// </para>
+		/// </summary>
+		/// <param name="id">The positive ID to encode.</param>
+		/// <param name="bytes">At least 11 bytes, to write the alphanumeric representation to.</param>
 		public static void GetAlphanumeric(long id, Span<byte> bytes)
 		{
 			if (id < 0) throw new ArgumentOutOfRangeException(nameof(id));
@@ -18,27 +26,39 @@ namespace Architect.Identities
 			GetAlphanumeric((ulong)id, bytes);
 		}
 
+		/// <summary>
+		/// <para>
+		/// Outputs an 11-character alphanumeric string representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
+		/// </para>
+		/// </summary>
+		/// <param name="id">The ID to encode.</param>
+		/// <param name="bytes">At least 11 bytes, to write the alphanumeric representation to.</param>
 		public static void GetAlphanumeric(ulong id, Span<byte> bytes)
 		{
-			if (bytes.Length < 11) throw new IndexOutOfRangeException("At least 8 output bytes are required.");
+			if (bytes.Length < 11) throw new IndexOutOfRangeException("At least 11 output bytes are required.");
 
-			Span<byte> charBytes = stackalloc byte[22];
-			Span<byte> idBytes = stackalloc byte[16];
-			BinaryPrimitives.WriteUInt64BigEndian(idBytes, 0UL);
-			BinaryPrimitives.WriteUInt64BigEndian(idBytes[^8..], id);
+			// Abuse the caller's output span as input space
+			BinaryPrimitives.WriteUInt64BigEndian(bytes, id);
 
-			Base62.ToBase62Chars(idBytes, charBytes);
-
-			System.Diagnostics.Debug.Assert(charBytes[..11].TrimStart((byte)'0').Length == 0, "The first 11 characters should have each represented zero. Did the input range validation break?");
-
-			// Copy the relevant output into the caller's output span
-			charBytes[^11..].CopyTo(bytes);
+			Base62.ToBase62Chars8(bytes, bytes);
 		}
 
+		/// <summary>
+		/// <para>
+		/// Outputs a 16-character alphanumeric string representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the input is not a proper ID value or if the output span is too short.
+		/// </para>
+		/// </summary>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		/// <param name="bytes">At least 16 bytes, to write the alphanumeric representation to.</param>
 		public static void GetAlphanumeric(decimal id, Span<byte> bytes)
 		{
 			if (bytes.Length < 16) throw new IndexOutOfRangeException("At least 16 output bytes are required.");
-			bytes = bytes[..16];
 
 			if (id < 0m) throw new ArgumentOutOfRangeException();
 
@@ -52,7 +72,7 @@ namespace Architect.Identities
 
 			// Validate format and range
 			if (id > CompanyUniqueIdGenerator.MaxValue || signAndScale != 0m)
-				throw new ArgumentException($"Unexpected input value. Pass only values created by {nameof(CompanyUniqueId)}.{nameof(CompanyUniqueId.CreateId)}.", nameof(id));
+				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 			// Abuse the caller's output span as input space
 			BinaryPrimitives.WriteInt32BigEndian(bytes, 0);
@@ -62,12 +82,29 @@ namespace Architect.Identities
 
 			Span<byte> charBytes = stackalloc byte[22];
 
-			Base62.ToBase62Chars(bytes, charBytes);
+			Base62.ToBase62Chars16(bytes, charBytes);
 
 			System.Diagnostics.Debug.Assert(charBytes[..6].TrimStart((byte)'0').Length == 0, "The first 6 characters should have each represented zero. Did the input range validation break?");
 
 			// Copy the relevant output into the caller's output span
 			charBytes[^16..].CopyTo(bytes);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Outputs a 22-character alphanumeric string representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="Guid"/>.</param>
+		/// <param name="bytes">At least 22 bytes, to write the alphanumeric representation to.</param>
+		public static void GetAlphanumeric(Guid id, Span<byte> bytes)
+		{
+			if (bytes.Length < 22) throw new IndexOutOfRangeException("At least 22 output bytes are required.");
+
+			Span<byte> inputBytes = stackalloc byte[16];
+			if (!id.TryWriteBytes(inputBytes)) throw new InvalidOperationException($"The ID's bytes could not be extracted: {id}.");
+
+			Base62.ToBase62Chars16(inputBytes, bytes);
 		}
 	}
 }

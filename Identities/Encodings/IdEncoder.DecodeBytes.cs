@@ -1,15 +1,22 @@
 ﻿using System;
 using System.Buffers.Binary;
-using System.Globalization;
-using Architect.Identities.PublicIdentities.Encodings;
+using Architect.Identities.Encodings;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
-	// #TODO: Test entire class (all partials)
-	// #TODO: Do we really want to have one method parse numeric AND alphanumeric? Prevents us from being used for auto-increment!!!!!!!!! Which I sometimes use...
 	public static partial class IdEncoder
 	{
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(long, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 11 input characters.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryGetLong(ReadOnlySpan<byte> bytes, out long id)
 		{
 			if (!TryGetUlong(bytes, out var ulongId) || ulongId > Int64.MaxValue)
@@ -22,34 +29,30 @@ namespace Architect.Identities
 			return true;
 		}
 
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(ulong, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 11 input characters.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryGetUlong(ReadOnlySpan<byte> bytes, out ulong id)
 		{
 			// Alphanumeric encodings are exactly 11 characters long
-			// Ulong strings must always be longer than 11 characters (to avoid confusion with alphanumeric ones)
-			// Ulong strings over 20 characters are not ulongs
-			if (bytes.Length < 11 || bytes.Length > 20)
+			if (bytes.Length < 11)
 			{
 				id = default;
 				return false;
 			}
 
-			// Special-case the non-alphanumeric case
-			if (bytes.Length != 11)
-			{
-				Span<char> chars = stackalloc char[bytes.Length];
-				for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
-				return UInt64.TryParse(chars, NumberStyles.None, provider: null, out id);
-			}
-
-			Span<byte> paddedInputBytes = stackalloc byte[22];
-			paddedInputBytes[..^11].Fill((byte)'0'); // Fill with '0' characters
-			bytes[..11].CopyTo(paddedInputBytes[^11..]);
-
-			Span<byte> outputBytes = stackalloc byte[16];
+			Span<byte> outputBytes = stackalloc byte[8];
 
 			try
 			{
-				Base62.FromBase62Chars(paddedInputBytes, outputBytes);
+				Base62.FromBase62Chars11(bytes, outputBytes);
 			}
 			catch (ArgumentException)
 			{
@@ -57,29 +60,29 @@ namespace Architect.Identities
 				return false;
 			}
 
-			id = BinaryPrimitives.ReadUInt64BigEndian(outputBytes[^8..]);
+			id = BinaryPrimitives.ReadUInt64BigEndian(outputBytes);
 			return true;
 		}
 
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(decimal, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 16 input characters.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryGetDecimal(ReadOnlySpan<byte> bytes, out decimal id)
 		{
 			// Alphanumeric encodings are exactly 16 characters long
-			// Decimal strings must always be longer than 16 characters (to avoid confusion with alphanumeric ones)
-			// Decimal strings longer than 28 characters are not proper ID values
-			if (bytes.Length < 16 || bytes.Length > 28)
+			if (bytes.Length < 16)
 			{
 				id = default;
 				return false;
 			}
 
-			// Special-case the non-alphanumeric case
-			if (bytes.Length != 16)
-			{
-				Span<char> chars = stackalloc char[bytes.Length];
-				for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
-				return Decimal.TryParse(chars, NumberStyles.None, provider: null, out id);
-			}
-			
 			Span<byte> paddedInputBytes = stackalloc byte[22];
 			paddedInputBytes[..^16].Fill((byte)'0'); // Fill with '0' characters
 			bytes[..16].CopyTo(paddedInputBytes[^16..]);
@@ -88,7 +91,7 @@ namespace Architect.Identities
 
 			try
 			{
-				Base62.FromBase62Chars(paddedInputBytes, outputBytes);
+				Base62.FromBase62Chars22(paddedInputBytes, outputBytes);
 			}
 			catch (ArgumentException)
 			{
@@ -112,19 +115,95 @@ namespace Architect.Identities
 			return true;
 		}
 
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(Guid, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 22 input characters.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
+		public static bool TryGetGuid(ReadOnlySpan<byte> bytes, out Guid id)
+		{
+			// Alphanumeric encodings are exactly 22 characters long
+			if (bytes.Length < 22)
+			{
+				id = default;
+				return false;
+			}
+
+			Span<byte> outputBytes = stackalloc byte[16];
+
+			try
+			{
+				Base62.FromBase62Chars22(bytes, outputBytes);
+			}
+			catch (ArgumentException)
+			{
+				id = default;
+				return false;
+			}
+
+			id = new Guid(outputBytes);
+			return true;
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(long, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 11 input characters.</param>
 		public static long? GetLongOrDefault(ReadOnlySpan<byte> bytes)
 		{ 
 			return TryGetLong(bytes, out var id) ? id : (long?)null;
 		}
 
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(ulong, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 11 input characters.</param>
 		public static ulong? GetUlongOrDefault(ReadOnlySpan<byte> bytes)
 		{
 			return TryGetUlong(bytes, out var id) ? id : (ulong?)null;
 		}
 
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(decimal, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 16 input characters.</param>
 		public static decimal? GetDecimalOrDefault(ReadOnlySpan<byte> bytes)
 		{
 			return TryGetDecimal(bytes, out var id) ? id : (decimal?)null;
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given UTF-8 alphanumeric string representation, effectively inverting <see cref="GetAlphanumeric(Guid, Span{byte})"/>.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 22 input characters.</param>
+		public static Guid? GetGuidOrDefault(ReadOnlySpan<byte> bytes)
+		{
+			return TryGetGuid(bytes, out var id) ? id : (Guid?)null;
 		}
 	}
 }

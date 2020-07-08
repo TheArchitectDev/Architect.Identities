@@ -11,8 +11,6 @@ namespace Architect.Identities.Tests.Encodings
 		private const decimal SampleId = 447835050025542181830910637m;
 		private const string SampleAlphanumericString = "1drbWFYI4a3pLliX";
 		private static readonly byte[] SampleAlphanumericBytes = Encoding.ASCII.GetBytes(SampleAlphanumericString);
-		private static readonly string SampleNumericString = CompanyUniqueIdGenerator.MaxValue.ToString();
-		private static readonly byte[] SampleNumericStringBytes = Encoding.ASCII.GetBytes(SampleNumericString);
 
 		private static bool Throws(Action action)
 		{
@@ -205,8 +203,11 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<byte> bytes = stackalloc byte[100];
 			SampleAlphanumericBytes.AsSpan().CopyTo(bytes);
-			var success = IdEncoder.TryGetDecimal(bytes, out var result); // Cannot know if input is alphanumeric or numeric
-			Assert.False(success);
+
+			var success = IdEncoder.TryGetDecimal(bytes, out var result);
+
+			Assert.True(success);
+			Assert.Equal(SampleId, result);
 		}
 
 		[Fact]
@@ -214,13 +215,14 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<char> chars = stackalloc char[100];
 			SampleAlphanumericString.AsSpan().CopyTo(chars);
-			var success = IdEncoder.TryGetDecimal(chars, out var result); // Cannot know if input is alphanumeric or numeric
-			Assert.False(success);
+
+			var success = IdEncoder.TryGetDecimal(chars, out var result);
+
+			Assert.True(success);
+			Assert.Equal(SampleId, result);
 		}
 
 		[Theory]
-		[InlineData("00000000000000001", "1")] // Numeric
-		[InlineData("11111111111111111", "11111111111111111")] // Numeric
 		[InlineData("1drbWFYI4a3pLliX", "447835050025542181830910637")] // Alphanumeric
 		public void TryGetDecimal_Regularly_ShouldOutputExpectedResult(string input, string expectedResultString)
 		{
@@ -232,21 +234,17 @@ namespace Architect.Identities.Tests.Encodings
 
 		[Theory]
 		[InlineData(SampleAlphanumericString)]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("1234567890123456789012345678")] // 28 digits
-		[InlineData("9999999999999999999999999999")] // 28 digits
-		[InlineData("999999999999999999999999999900")] // 30 digits
-		[InlineData("0000000000000001")]
+		[InlineData("agbFu5KnEQGxp4QB")]
 		[InlineData("00000000004gfFC4")]
 		[InlineData("00000000004gfFC5")]
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("LygHa16AHYF")] // UInt64.MaxValue
+		[InlineData("LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
+		[InlineData("1234567890$")] // Invalid char
+		[InlineData("12345678,00")] // Invalid char
+		[InlineData("12345678.00")] // Invalid char
+		[InlineData("+12345678901")] // Invalid char
+		[InlineData("-12345678901")] // Invalid char
+		[InlineData("1234567890_")] // Invalid char
 		public void GetDecimalOrDefault_Regularly_ShouldReturnSameResultAsTryGetDecimal(string input)
 		{
 			var expectedResult = IdEncoder.TryGetDecimal(input, out var expectedId)
@@ -285,14 +283,12 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Theory]
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("123456789012345$")]
+		[InlineData("1234567890123,00")]
+		[InlineData("1234567890123.00")]
+		[InlineData("+1234567890123456")]
+		[InlineData("-1234567890123456")]
+		[InlineData("123456789012345_")]
 		public void AllDecodingMethods_WithInvalidCharacters_ShouldFail(string invalidNumericString)
 		{
 			var bytes = new byte[invalidNumericString.Length];
@@ -301,24 +297,6 @@ namespace Architect.Identities.Tests.Encodings
 			var results = SuccessForAllDecodings(bytes);
 
 			Assert.Equal(results.Length, results.Count(success => !success));
-		}
-
-		[Theory]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("1234567890123456789012345678")] // 28 digits
-		[InlineData("9999999999999999999999999999")] // 28 digits
-		[InlineData("0009999999999999999999999999")] // 28 digits with leading zeros
-		public void AllDecodingMethods_WithValidValue_ShouldReturnExpectedResult(string validNumericString)
-		{
-			var expectedResult = Decimal.Parse(validNumericString, NumberStyles.None);
-
-			var bytes = new byte[validNumericString.Length];
-			for (var i = 0; i < bytes.Length; i++) bytes[i] = (byte)validNumericString[i];
-
-			var results = ResultForAllDecodings(bytes);
-
-			foreach (var result in results)
-				Assert.Equal(expectedResult, result);
 		}
 
 		[Fact]
@@ -357,23 +335,9 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void TryGetDecimal_WithNumericStringBytes_ShouldSucceed()
-		{
-			var success = IdEncoder.TryGetDecimal(SampleNumericStringBytes, out _);
-			Assert.True(success);
-		}
-
-		[Fact]
 		public void TryGetDecimal_WithAlphanumericString_ShouldSucceed()
 		{
 			var success = IdEncoder.TryGetDecimal(SampleAlphanumericString, out _);
-			Assert.True(success);
-		}
-
-		[Fact]
-		public void TryGetDecimal_WithNumericString_ShouldSucceed()
-		{
-			var success = IdEncoder.TryGetDecimal(SampleNumericString, out _);
 			Assert.True(success);
 		}
 
@@ -385,24 +349,10 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void GetDecimalOrDefault_WithNumericStringBytes_ShouldReturnExpectedValue()
-		{
-			var result = IdEncoder.GetDecimalOrDefault(SampleNumericStringBytes);
-			Assert.Equal(CompanyUniqueIdGenerator.MaxValue, result);
-		}
-
-		[Fact]
 		public void GetDecimalOrDefault_WithAlphanumericString_ShouldReturnExpectedValue()
 		{
 			var result = IdEncoder.GetDecimalOrDefault(SampleAlphanumericString);
 			Assert.Equal(SampleId, result);
-		}
-
-		[Fact]
-		public void GetDecimalOrDefault_WithNumericString_ShouldReturnExpectedValue()
-		{
-			var result = IdEncoder.GetDecimalOrDefault(SampleNumericString);
-			Assert.Equal(CompanyUniqueIdGenerator.MaxValue, result);
 		}
 	}
 }

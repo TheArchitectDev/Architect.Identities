@@ -1,8 +1,8 @@
 ﻿using System;
-using Architect.Identities.PublicIdentities.Encodings;
+using Architect.Identities.Encodings;
 using Xunit;
 
-namespace Architect.Identities.Tests.PublicIdentities.Encodings
+namespace Architect.Identities.Tests.Encodings
 {
 	public sealed class HexadecimalTests
 	{

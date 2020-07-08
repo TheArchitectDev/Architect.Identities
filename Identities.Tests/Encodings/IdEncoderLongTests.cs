@@ -14,7 +14,7 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData(Int16.MaxValue)]
 		[InlineData(Int32.MaxValue)]
 		[InlineData(Int64.MaxValue)]
-		public void GetAlphaNumeric_Regularly_ShouldReturnSameResultAsForUlong(long id)
+		public void GetAlphanumeric_Regularly_ShouldReturnSameResultAsForUlong(long id)
 		{
 			var expectedResult = IdEncoder.GetAlphanumeric((ulong)id);
 
@@ -44,26 +44,16 @@ namespace Architect.Identities.Tests.Encodings
 
 		[Theory]
 		[InlineData(SampleAlphanumericString)]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("999999999999999999")] // 18 digits
-		[InlineData("1000000000000000000")] // 19 digits
-		[InlineData("99999999999999999999")] // 20 digits invalid
-		[InlineData("1234567890123456789012345678")] // 28 digits invalid
-		[InlineData("9999999999999999999999999999")] // 28 digits invalid
-		[InlineData("999999999999999999999999999900")] // 30 digits invalid
 		[InlineData("00000000001")]
 		[InlineData("000004gfFC4")]
 		[InlineData("000004gfFC5")]
-		[InlineData("AzL8n0Y58m7")] // Int64.MaxValue
 		[InlineData("LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("1234567890$")] // Invalid char
+		[InlineData("12345678,00")] // Invalid char
+		[InlineData("12345678.00")] // Invalid char
+		[InlineData("+12345678901")] // Invalid char
+		[InlineData("-12345678901")] // Invalid char
+		[InlineData("1234567890_")] // Invalid char
 		public void TryGetLong_Regularly_ShouldReturnSameResultAsTryGetUlong(string input)
 		{
 			var expectedSuccess = IdEncoder.TryGetUlong(input, out var expectedResult);
@@ -76,29 +66,18 @@ namespace Architect.Identities.Tests.Encodings
 
 		[Theory]
 		[InlineData(SampleAlphanumericString)]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("999999999999999999")] // 18 digits
-		[InlineData("1000000000000000000")] // 19 digits
-		[InlineData("9999999999999999999")] // 19 digits invalid
-		[InlineData("10000000000000000000")] // 20 digits invalid
-		[InlineData("99999999999999999999")] // 20 digits invalid
-		[InlineData("1234567890123456789012345678")] // 28 digits invalid
-		[InlineData("9999999999999999999999999999")] // 28 digits invalid
-		[InlineData("999999999999999999999999999900")] // 30 digits invalid
 		[InlineData("00000000001")]
 		[InlineData("000004gfFC4")]
 		[InlineData("000004gfFC5")]
 		[InlineData("AzL8n0Y58m7")] // Int64.MaxValue
-		[InlineData("LygHa16AHYF")] // UInt64.MaxValue invalid
+		[InlineData("LygHa16AHYF")] // UInt64.MaxValue
 		[InlineData("LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("1234567890$")] // Invalid char
+		[InlineData("12345678,00")] // Invalid char
+		[InlineData("12345678.00")] // Invalid char
+		[InlineData("+12345678901")] // Invalid char
+		[InlineData("-12345678901")] // Invalid char
+		[InlineData("1234567890_")] // Invalid char
 		public void GetLongOrDefault_Regularly_ShouldReturnSameResultAsTryGetLong(string input)
 		{
 			var expectedResult = IdEncoder.TryGetLong(input, out var expectedId)
@@ -112,29 +91,18 @@ namespace Architect.Identities.Tests.Encodings
 
 		[Theory]
 		[InlineData(SampleAlphanumericString)]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("999999999999999999")] // 18 digits
-		[InlineData("1000000000000000000")] // 19 digits
-		[InlineData("9999999999999999999")] // 19 digits invalid
-		[InlineData("10000000000000000000")] // 20 digits invalid
-		[InlineData("99999999999999999999")] // 20 digits invalid
-		[InlineData("1234567890123456789012345678")] // 28 digits invalid
-		[InlineData("9999999999999999999999999999")] // 28 digits invalid
-		[InlineData("999999999999999999999999999900")] // 30 digits invalid
 		[InlineData("00000000001")]
 		[InlineData("000004gfFC4")]
 		[InlineData("000004gfFC5")]
 		[InlineData("AzL8n0Y58m7")] // Int64.MaxValue
-		[InlineData("LygHa16AHYF")] // UInt64.MaxValue invalid
+		[InlineData("LygHa16AHYF")] // UInt64.MaxValue
 		[InlineData("LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("1234567890$")] // Invalid char
+		[InlineData("12345678,00")] // Invalid char
+		[InlineData("12345678.00")] // Invalid char
+		[InlineData("+12345678901")] // Invalid char
+		[InlineData("-12345678901")] // Invalid char
+		[InlineData("1234567890_")] // Invalid char
 		public void TryGetLong_WithByteInput_ShouldReturnSameResultAsWithStringInput(string inputString)
 		{
 			var expectedSuccess = IdEncoder.TryGetLong(inputString, out var expectedResult);
@@ -150,29 +118,18 @@ namespace Architect.Identities.Tests.Encodings
 
 		[Theory]
 		[InlineData(SampleAlphanumericString)]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("999999999999999999")] // 18 digits
-		[InlineData("1000000000000000000")] // 19 digits
-		[InlineData("9999999999999999999")] // 19 digits invalid
-		[InlineData("10000000000000000000")] // 20 digits invalid
-		[InlineData("99999999999999999999")] // 20 digits invalid
-		[InlineData("1234567890123456789012345678")] // 28 digits invalid
-		[InlineData("9999999999999999999999999999")] // 28 digits invalid
-		[InlineData("999999999999999999999999999900")] // 30 digits invalid
 		[InlineData("00000000001")]
 		[InlineData("000004gfFC4")]
 		[InlineData("000004gfFC5")]
 		[InlineData("AzL8n0Y58m7")] // Int64.MaxValue
-		[InlineData("LygHa16AHYF")] // UInt64.MaxValue invalid
+		[InlineData("LygHa16AHYF")] // UInt64.MaxValue
 		[InlineData("LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("1234567890$")] // Invalid char
+		[InlineData("12345678,00")] // Invalid char
+		[InlineData("12345678.00")] // Invalid char
+		[InlineData("+12345678901")] // Invalid char
+		[InlineData("-12345678901")] // Invalid char
+		[InlineData("1234567890_")] // Invalid char
 		public void GetLongOrDefault_WithByteInput_ShouldReturnSameResultAsWithStringInput(string inputString)
 		{
 			var expectedResult = IdEncoder.GetLongOrDefault(inputString);

@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Globalization;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -11,8 +11,6 @@ namespace Architect.Identities.Tests.Encodings
 		private const ulong SampleId = 1234567890123456789UL;
 		private const string SampleAlphanumericString = "1TCKi1nFuNh";
 		private static readonly byte[] SampleAlphanumericBytes = Encoding.ASCII.GetBytes(SampleAlphanumericString);
-		private static readonly string SampleNumericString = UInt64.MaxValue.ToString();
-		private static readonly byte[] SampleNumericStringBytes = Encoding.ASCII.GetBytes(SampleNumericString);
 
 		private static bool Throws(Action action)
 		{
@@ -46,8 +44,8 @@ namespace Architect.Identities.Tests.Encodings
 
 			return new[]
 			{
-				IdEncoder.TryGetUlong(bytes, out var id) ? id : 0UL,
-				IdEncoder.TryGetUlong(chars, out id) ? id : 0UL,
+				IdEncoder.TryGetUlong(bytes, out var id) ? id : (ulong?)null,
+				IdEncoder.TryGetUlong(chars, out id) ? id : (ulong?)null,
 				IdEncoder.GetUlongOrDefault(bytes),
 				IdEncoder.GetUlongOrDefault(chars),
 			};
@@ -78,15 +76,6 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Assert.Throws<IndexOutOfRangeException>(() => IdEncoder.GetAlphanumeric(SampleId, new byte[10]));
 		}
-
-		// #TODO: Remove
-		//[Fact]
-		//public void AllEncodingMethods_WithSign_ShouldThrow()
-		//{
-		//	var id = -1
-		//	var results = CheckIfThrowsForAllEncodings(id, new byte[11]);
-		//	Assert.Equal(results.Length, results.Count(didThrow => didThrow));
-		//}
 
 		[Fact]
 		public void AllEncodingMethods_WithMaximumValue_ShouldSucceed()
@@ -189,8 +178,11 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<byte> bytes = stackalloc byte[100];
 			SampleAlphanumericBytes.AsSpan().CopyTo(bytes);
+
 			var success = IdEncoder.TryGetUlong(bytes, out var result); // Cannot know if input is alphanumeric or numeric
-			Assert.False(success);
+
+			Assert.True(success);
+			Assert.Equal(SampleId, result);
 		}
 
 		[Fact]
@@ -198,13 +190,14 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<char> chars = stackalloc char[100];
 			SampleAlphanumericString.AsSpan().CopyTo(chars);
+
 			var success = IdEncoder.TryGetUlong(chars, out var result); // Cannot know if input is alphanumeric or numeric
-			Assert.False(success);
+
+			Assert.True(success);
+			Assert.Equal(SampleId, result);
 		}
 
 		[Theory]
-		[InlineData("0000000000000001", 1)] // Numeric
-		[InlineData("1111111111111111", 1111111111111111)] // Numeric
 		[InlineData("1TCKi1nFuNh", 1234567890123456789)] // Alphanumeric
 		[InlineData("LygHa16AHYF", UInt64.MaxValue)] // Alphanumeric
 		public void TryGetUlong_Regularly_ShouldOutputExpectedResult(string input, ulong expectedResult)
@@ -216,26 +209,17 @@ namespace Architect.Identities.Tests.Encodings
 
 		[Theory]
 		[InlineData(SampleAlphanumericString)]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("9999999999999999999")] // 19 digits
-		[InlineData("10000000000000000000")] // 20 digits
-		[InlineData("99999999999999999999")] // 20 digits invalid
-		[InlineData("1234567890123456789012345678")] // 28 digits invalid
-		[InlineData("9999999999999999999999999999")] // 28 digits invalid
-		[InlineData("999999999999999999999999999900")] // 30 digits invalid
 		[InlineData("00000000001")]
 		[InlineData("000004gfFC4")]
 		[InlineData("000004gfFC5")]
 		[InlineData("LygHa16AHYF")] // UInt64.MaxValue
 		[InlineData("LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("1234567890$")] // Invalid char
+		[InlineData("12345678,00")] // Invalid char
+		[InlineData("12345678.00")] // Invalid char
+		[InlineData("+12345678901")] // Invalid char
+		[InlineData("-12345678901")] // Invalid char
+		[InlineData("1234567890_")] // Invalid char
 		public void GetUlongOrDefault_Regularly_ShouldReturnSameResultAsTryGetUlong(string input)
 		{
 			var expectedResult = IdEncoder.TryGetUlong(input, out var expectedId)
@@ -274,14 +258,12 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Theory]
-		[InlineData("12345678901234567$")]
-		[InlineData("12345678901234567a")]
-		[InlineData("12345678901234567,00")]
-		[InlineData("12345678901234567.00")]
-		[InlineData("+12345678901234567")]
-		[InlineData("-12345678901234567")]
-		[InlineData("12345678901234567E2")]
-		[InlineData("12345678901234567_")]
+		[InlineData("1234567890$")]
+		[InlineData("12345678,00")]
+		[InlineData("12345678.00")]
+		[InlineData("+12345678901")]
+		[InlineData("-12345678901")]
+		[InlineData("1234567890_")]
 		public void AllDecodingMethods_WithInvalidCharacters_ShouldFail(string invalidNumericString)
 		{
 			var bytes = new byte[invalidNumericString.Length];
@@ -290,24 +272,6 @@ namespace Architect.Identities.Tests.Encodings
 			var results = SuccessForAllDecodings(bytes);
 
 			Assert.Equal(results.Length, results.Count(success => !success));
-		}
-
-		[Theory]
-		[InlineData("12345678901234567")] // 17 digits
-		[InlineData("9999999999999999999")] // 19 digits
-		[InlineData("12345678901234567890")] // 20 digits
-		[InlineData("00012345678901234567")] // 20 digits with leading zeros
-		public void AllDecodingMethods_WithValidValue_ShouldReturnExpectedResult(string validNumericString)
-		{
-			var expectedResult = UInt64.Parse(validNumericString, NumberStyles.None);
-
-			var bytes = new byte[validNumericString.Length];
-			for (var i = 0; i < bytes.Length; i++) bytes[i] = (byte)validNumericString[i];
-
-			var results = ResultForAllDecodings(bytes);
-
-			foreach (var result in results)
-				Assert.Equal(expectedResult, result);
 		}
 
 		[Fact]
@@ -346,23 +310,9 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void TryGetUlong_WithNumericStringBytes_ShouldSucceed()
-		{
-			var success = IdEncoder.TryGetUlong(SampleNumericStringBytes, out _);
-			Assert.True(success);
-		}
-
-		[Fact]
 		public void TryGetUlong_WithAlphanumericString_ShouldSucceed()
 		{
 			var success = IdEncoder.TryGetUlong(SampleAlphanumericString, out _);
-			Assert.True(success);
-		}
-
-		[Fact]
-		public void TryGetUlong_WithNumericString_ShouldSucceed()
-		{
-			var success = IdEncoder.TryGetUlong(SampleNumericString, out _);
 			Assert.True(success);
 		}
 
@@ -374,24 +324,10 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void GetUlongOrDefault_WithNumericStringBytes_ShouldReturnExpectedValue()
-		{
-			var result = IdEncoder.GetUlongOrDefault(SampleNumericStringBytes);
-			Assert.Equal(UInt64.MaxValue, result);
-		}
-
-		[Fact]
 		public void GetUlongOrDefault_WithAlphanumericString_ShouldReturnExpectedValue()
 		{
 			var result = IdEncoder.GetUlongOrDefault(SampleAlphanumericString);
 			Assert.Equal(SampleId, result);
-		}
-
-		[Fact]
-		public void GetUlongOrDefault_WithNumericString_ShouldReturnExpectedValue()
-		{
-			var result = IdEncoder.GetUlongOrDefault(SampleNumericString);
-			Assert.Equal(UInt64.MaxValue, result);
 		}
 	}
 }

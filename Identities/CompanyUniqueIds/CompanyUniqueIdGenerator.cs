@@ -10,6 +10,9 @@ namespace Architect.Identities
 	/// </summary>
 	internal sealed class CompanyUniqueIdGenerator
 	{
+		/// <summary>
+		/// The maximum ID value that can be generated, and the maximum value to fit in 28 digits.
+		/// </summary>
 		internal const decimal MaxValue = 99999_99999_99999_99999_99999_999m;
 
 		static CompanyUniqueIdGenerator()

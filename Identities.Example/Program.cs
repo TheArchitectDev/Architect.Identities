@@ -6,13 +6,13 @@ using Microsoft.Extensions.Hosting;
 namespace Architect.Identities.Example
 {
 	/// <summary>
-	/// Demonstrates the use of the Identities package and the Flexible, Locally-Unique ID (Fluid) generator.
+	/// Demonstrates some uses of the Identities package: Company-Unique IDs, and the Flexible, Locally-Unique ID (Fluid) generator.
 	/// </summary>
 	internal static class Program
 	{
 		private static async Task Main()
 		{
-			// Demo some code (without having any registrations yet)
+			// Demo some code (without needing any registrations)
 			CreateCompanyUniqueIds();
 
 			// Configure the host
@@ -27,7 +27,7 @@ namespace Architect.Identities.Example
 			await host.StartAsync();
 			Console.WriteLine("The host has been started.");
 
-			// Demo some code
+			// Demo some code that uses the registrations
 			CreateUsersWithDependencyInjection(host.Services.GetRequiredService<UserFactory>());
 			CreateUsersWithAmbientContext();
 
@@ -41,8 +41,8 @@ namespace Architect.Identities.Example
 			// Like GUIDs, these IDs can be generated from anywhere, without any registrations whatsoever
 			var id1 = CompanyUniqueId.CreateId();
 			var id2 = CompanyUniqueId.CreateId();
-			var id1Alphanumeric = id1.ToAlphanumeric();
-			var id2Alphanumeric = id2.ToAlphanumeric();
+			var id1Alphanumeric = id1.ToAlphanumeric(); // IdEncoder can decode
+			var id2Alphanumeric = id2.ToAlphanumeric(); // IdEncoder can decode
 			Console.WriteLine();
 			Console.WriteLine($"Here is a company-unique ID generated like a GUID: {id1} (alphanumeric form: {id1Alphanumeric})");
 			Console.WriteLine($"Here is a company-unique ID generated like a GUID: {id2} (alphanumeric form: {id2Alphanumeric})");
