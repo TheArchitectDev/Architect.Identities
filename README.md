@@ -143,7 +143,8 @@ An application using Fluids **must run on a clock-synchronized system** with clo
 public void ConfigureServices(IServiceCollection services)
 {
 	// Avoid collisions between servers or application instances (using SQL Server, MySQL, or even Azure Blob Storage)
-	services.AddApplicationInstanceIdSource(source => source.UseSqlServer(() => new SqlConnection("ConnectionString")));
+	services.AddApplicationInstanceIdSource(source =>
+		source.UseSqlServer(() => new SqlConnection("ConnectionString")));
 
 	// Register Fluid as the ID generation mechanism
 	services.AddIdGenerator(generator => generator.UseFluid());
@@ -290,7 +291,7 @@ We know that a Fluid does not leak volume information like an auto-increment ID 
 
 ## Public Identities
 
-Sometimes, revealing even the creation timestamp is too much. If the ID represents a bank account, that makes sense.
+Sometimes, revealing even the creation timestamp is too much. For example, if the ID represents a bank account, that makes sense.
 
 Still, it would be good to have only one ID, and one that is efficient as a primary key, at that. To achieve that, we can create a public representation of that ID - one that reveals nothing.
 
@@ -304,7 +305,6 @@ Still, it would be good to have only one ID, and one that is efficient as a prim
 
 ```cs
 // Startup.cs
-
 public void ConfigureServices(IServiceCollection services)
 {
 	const string key = "k7fBDJcQam02hsByaOWPeP2CqeDeGXvrPUkEAQBtAFc="; // Strong 256-bit key
@@ -355,13 +355,14 @@ Without possession of the key, it is extremely hard to forge a valid public iden
 
 When a public identity is converted back into the original ID, its structure is validated. If it is invalid, `null` or `false` is returned, depending on the method used.
 
-For `long` and `ulong` IDs, the chance to forge a valid ID is 1 in 2^64. For `decimal` IDs, the chance is 1 in 2^32. Even if a valid value were to be forged, the resulting internal ID is unlikely to be an existing one.
+For `long` and `ulong` IDs, the chance to forge a valid ID is 1/2^64. For `decimal` IDs, the chance is 1/2^32. Even if a valid value were to be forged, the resulting internal ID is unlikely to be an existing one.
 
 Generally, when an ID is taken as client input, something is loaded based on that ID. As such, it is often best to simply turn an invalid public identity into a nonexistent local ID, such as 0:
 
 ```cs
 // Any invalid input will result in id=0
-long id = publicIdConverter.GetLongOrDefault(IdEncoder.GetGuidOrDefault(publicIdString) ?? Guid.Empty) ?? 0L;
+long id = publicIdConverter.GetLongOrDefault(IdEncoder.GetGuidOrDefault(publicIdString) ?? Guid.Empty)
+	?? 0L;
 
 var entity = this.Repository.GetEntityById(id);
 if (entity is null) return this.NotFound();
