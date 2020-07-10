@@ -11,15 +11,13 @@ namespace Architect.Identities
 		/// Registers a source that provides an id for this application instance.
 		/// Use the options to specify an implementation.
 		/// </summary>
-		public static IServiceCollection AddApplicationInstanceIdSource(this IServiceCollection serviceCollection, Action<Options> sourceOptions)
+		public static IServiceCollection AddApplicationInstanceIdSource(this IServiceCollection services, Action<Options> sourceOptions)
 		{
-			var optionsObject = new Options(serviceCollection);
+			var optionsObject = new Options(services);
 			sourceOptions(optionsObject);
-			if (!serviceCollection.Any(serviceDescriptor => serviceDescriptor.ServiceType == typeof(IApplicationInstanceIdSource)))
-			{
-				throw new Exception($"Use the options to register an {nameof(IApplicationInstanceIdSource)} implementation.");
-			}
-			return serviceCollection;
+			if (!services.Any(service => service.ServiceType == typeof(IApplicationInstanceIdSource)))
+				throw new ArgumentException($"Use the options to register an {nameof(IApplicationInstanceIdSource)} implementation.");
+			return services;
 		}
 
 		/// <summary>
@@ -29,7 +27,7 @@ namespace Architect.Identities
 		{
 			public IServiceCollection Services { get; }
 
-			internal Func<IServiceProvider, Action<Exception>?>? ExceptionHandlerFactory { get; set; }
+			public Func<IServiceProvider, Action<Exception>?>? ExceptionHandlerFactory { get; set; }
 
 			internal Options(IServiceCollection services)
 			{
@@ -79,7 +77,7 @@ namespace Architect.Identities
 		/// The exception handler can be used to provide custom alerting in case of failure.
 		/// </para>
 		/// <para>
-		/// The simplest approach is to register a method defined in the Startup class.
+		/// The simplest usage is to register a method defined in the Startup class.
 		/// </para>
 		/// </summary>
 		/// <param name="exceptionHandlerFactory">Takes the service provider and returns an action that handles an exception.</param>

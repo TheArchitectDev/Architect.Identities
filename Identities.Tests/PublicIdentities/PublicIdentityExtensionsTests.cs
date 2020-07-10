@@ -18,14 +18,14 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var hostBuilder1 = new HostBuilder();
 			hostBuilder1.ConfigureServices(services => services.AddPublicIdentities(identities => identities.Key(key1)));
 			using var host1 = hostBuilder1.Build();
-			var string1 = host1.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicString(0);
+			var guid1 = host1.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicRepresentation(0UL);
 
 			var hostBuilder2 = new HostBuilder();
 			hostBuilder2.ConfigureServices(services => services.AddPublicIdentities(identities => identities.Key(key2)));
 			using var host2 = hostBuilder2.Build();
-			var string2 = host2.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicString(0);
+			var guid2 = host2.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicRepresentation(0UL);
 
-			Assert.Equal(string1, string2); // A second custom key gives the same result as an identical first custom key
+			Assert.Equal(guid1, guid2); // A second custom key gives the same result as an identical first custom key
 		}
 
 		[Fact]
@@ -36,20 +36,20 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var key2 = new byte[32];
 			key2[31] = 2;
 
-			var string0 = PublicIdentityScope.Current.Converter.GetPublicString(0);
+			var guid0 = PublicIdentityScope.Current.Converter.GetPublicRepresentation(0UL);
 
 			var hostBuilder1 = new HostBuilder();
 			hostBuilder1.ConfigureServices(services => services.AddPublicIdentities(identities => identities.Key(key1)));
 			using var host1 = hostBuilder1.Build();
-			var string1 = host1.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicString(0);
+			var guid1 = host1.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicRepresentation(0UL);
 
 			var hostBuilder2 = new HostBuilder();
 			hostBuilder2.ConfigureServices(services => services.AddPublicIdentities(identities => identities.Key(key2)));
 			using var host2 = hostBuilder2.Build();
-			var string2 = host2.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicString(0);
+			var guid2 = host2.Services.GetRequiredService<IPublicIdentityConverter>().GetPublicRepresentation(0UL);
 
-			Assert.NotEqual(string0, string1); // A custom key gives a different result than the default unit test key
-			Assert.NotEqual(string1, string2); // A second custom key gives a different result than the first custom key
+			Assert.NotEqual(guid0, guid1); // A custom key gives a different result than the default unit test key
+			Assert.NotEqual(guid1, guid2); // A second custom key gives a different result than the first custom key
 		}
 	}
 }

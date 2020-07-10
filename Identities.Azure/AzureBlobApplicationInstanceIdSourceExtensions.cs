@@ -3,7 +3,6 @@ using Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-// ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
 	public static class AzureBlobApplicationInstanceIdSourceExtensions
@@ -55,10 +54,14 @@ namespace Architect.Identities
 				var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
 				var exceptionHandler = options.ExceptionHandlerFactory?.Invoke(serviceProvider);
 
-				var instance = ApplicationInstanceIdSourceFactory.Create(applicationLifetime, () => new AzureBlobApplicationInstanceIdSource(
+				var instance = new AzureBlobApplicationInstanceIdSource(
 					new AzureBlobApplicationInstanceIdSource.BlobContainerRepo(blobContainerClient),
 					applicationLifetime,
-					exceptionHandler));
+					exceptionHandler);
+
+				// As the value is likely application-critical, enforce its resolution if the application has not started yet
+				if (!applicationLifetime.ApplicationStarted.IsCancellationRequested) _ = instance.ContextUniqueApplicationInstanceId.Value;
+
 				return instance;
 			}
 		}

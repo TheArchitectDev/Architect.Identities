@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identities.Tests", "Identit
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{40ADCE6A-4A53-4F2B-8152-140CA2E363C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identities.Example", "Identities.Example\Identities.Example.csproj", "{FEE561A3-FE36-4F52-ACD8-BEA4E3409A21}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identities.Azure", "Identities.Azure\Identities.Azure.csproj", "{ED90CF45-7A88-4929-A87B-4714DEB4A495}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +27,14 @@ Global
 		{0000C4C4-7D1F-43B1-9BA1-806CC6F7DAE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0000C4C4-7D1F-43B1-9BA1-806CC6F7DAE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0000C4C4-7D1F-43B1-9BA1-806CC6F7DAE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEE561A3-FE36-4F52-ACD8-BEA4E3409A21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEE561A3-FE36-4F52-ACD8-BEA4E3409A21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEE561A3-FE36-4F52-ACD8-BEA4E3409A21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEE561A3-FE36-4F52-ACD8-BEA4E3409A21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED90CF45-7A88-4929-A87B-4714DEB4A495}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED90CF45-7A88-4929-A87B-4714DEB4A495}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED90CF45-7A88-4929-A87B-4714DEB4A495}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED90CF45-7A88-4929-A87B-4714DEB4A495}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

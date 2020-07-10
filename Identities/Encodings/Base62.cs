@@ -2,16 +2,43 @@
 using System.Linq;
 using System.Text;
 
-namespace Architect.Identities.PublicIdentities.Encodings
+namespace Architect.Identities.Encodings
 {
+	/// <summary>
+	/// A limited base62 encoder, aimed at simplicity, efficiency, and useful endianness.
+	/// </summary>
 	internal static class Base62
 	{
 		private static Base62Alphabet DefaultAlphabet { get; } = new Base62Alphabet(Encoding.ASCII.GetBytes("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"));
 
-		public static void ToBase62Chars(ReadOnlySpan<byte> bytes, Span<byte> chars)
+		/// <summary>
+		/// <para>
+		/// Converts the given 8 bytes to 11 base62 chars.
+		/// </para>
+		/// </summary>
+		public static void ToBase62Chars8(ReadOnlySpan<byte> bytes, Span<byte> chars)
 		{
-			System.Diagnostics.Debug.Assert(bytes.Length == 16);
-			System.Diagnostics.Debug.Assert(chars.Length == 22);
+			System.Diagnostics.Debug.Assert(bytes.Length >= 8);
+			System.Diagnostics.Debug.Assert(chars.Length >= 11);
+
+			var forwardAlphabet = DefaultAlphabet.ForwardAlphabet;
+
+			EncodeBlock(forwardAlphabet, bytes, chars);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Converts the given 16 bytes to 22 base62 chars.
+		/// </para>
+		/// <para>
+		/// The input and output spans must not overlap. This is asserted in debug mode.
+		/// </para>
+		/// </summary>
+		public static void ToBase62Chars16(ReadOnlySpan<byte> bytes, Span<byte> chars)
+		{
+			System.Diagnostics.Debug.Assert(bytes.Length >= 16);
+			System.Diagnostics.Debug.Assert(chars.Length >= 22);
+			System.Diagnostics.Debug.Assert(!bytes.Overlaps(chars), "The input and output spans must not overlap, as the first block's output will overwrite the second block of input.");
 
 			var forwardAlphabet = DefaultAlphabet.ForwardAlphabet;
 
@@ -41,12 +68,35 @@ namespace Architect.Identities.PublicIdentities.Encodings
 		}
 
 		/// <summary>
-		/// Throws on invalid input.
+		/// <para>
+		/// Converts the given 11 base62 chars to 8 bytes.
+		/// </para>
+		/// <para>
+		/// Throws <see cref="ArgumentException"/> on invalid input.
+		/// </para>
 		/// </summary>
-		public static void FromBase62Chars(ReadOnlySpan<byte> chars, Span<byte> bytes)
+		public static void FromBase62Chars11(ReadOnlySpan<byte> chars, Span<byte> bytes)
 		{
-			System.Diagnostics.Debug.Assert(chars.Length == 22);
-			System.Diagnostics.Debug.Assert(bytes.Length == 16);
+			System.Diagnostics.Debug.Assert(chars.Length >= 11);
+			System.Diagnostics.Debug.Assert(bytes.Length >= 8);
+
+			var reverseAlphabet = DefaultAlphabet.ReverseAlphabet;
+
+			DecodeBlock(reverseAlphabet, chars, bytes);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Converts the given 22 base62 chars to 16 bytes.
+		/// </para>
+		/// <para>
+		/// Throws <see cref="ArgumentException"/> on invalid input.
+		/// </para>
+		/// </summary>
+		public static void FromBase62Chars22(ReadOnlySpan<byte> chars, Span<byte> bytes)
+		{
+			System.Diagnostics.Debug.Assert(chars.Length >= 22);
+			System.Diagnostics.Debug.Assert(bytes.Length >= 16);
 
 			var reverseAlphabet = DefaultAlphabet.ReverseAlphabet;
 

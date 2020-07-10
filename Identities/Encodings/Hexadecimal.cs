@@ -2,8 +2,11 @@
 using System.Linq;
 using System.Text;
 
-namespace Architect.Identities.PublicIdentities.Encodings
+namespace Architect.Identities.Encodings
 {
+	/// <summary>
+	/// A simple hexadecimal encoder, aimed at simplicity and efficiency.
+	/// </summary>
 	internal static class Hexadecimal
 	{
 		private static HexAlphabet DefaultAlphabet { get; } = new HexAlphabet(Encoding.ASCII.GetBytes("0123456789ABCDEF"));

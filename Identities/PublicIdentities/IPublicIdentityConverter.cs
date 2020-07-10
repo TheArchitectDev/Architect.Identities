@@ -9,281 +9,86 @@ namespace Architect.Identities
 	/// </summary>
 	public interface IPublicIdentityConverter : IDisposable
 	{
-		#region Encode to bytes
+		/// <summary>
+		/// <para>
+		/// Returns a 16-byte public representation of the given ID.
+		/// </para>
+		/// <para>
+		/// The public representation is shaped much like a <see cref="Guid"/> and is indistinguishable from random noise.
+		/// Only with possession of the configured key can it be converted back to the original ID.
+		/// </para>
+		/// <para>
+		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
+		/// </para>
+		/// </summary>
+		public Guid GetPublicRepresentation(long id)
+		{
+			if (id < 0) throw new ArgumentOutOfRangeException(nameof(id));
+			return GetPublicRepresentation((ulong)id);
+		}
+		/// <summary>
+		/// <para>
+		/// Returns a 16-byte public representation of the given ID.
+		/// </para>
+		/// <para>
+		/// The public representation is shaped much like a <see cref="Guid"/> and is indistinguishable from random noise.
+		/// Only with possession of the configured key can it be converted back to the original ID.
+		/// </para>
+		/// <para>
+		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
+		/// </para>
+		/// </summary>
+		public Guid GetPublicRepresentation(ulong id);
+		/// <summary>
+		/// <para>
+		/// Returns a 16-byte public representation of the given ID.
+		/// </para>
+		/// <para>
+		/// The public representation is shaped much like a <see cref="Guid"/> and is indistinguishable from random noise.
+		/// Only with possession of the configured key can it be converted back to the original ID.
+		/// </para>
+		/// <para>
+		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
+		/// </para>
+		/// </summary>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		public Guid GetPublicRepresentation(decimal id);
 
 		/// <summary>
 		/// <para>
-		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
+		/// Outputs the original ID represented by the given public ID.
 		/// </para>
 		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload is allocation-free.
+		/// This method returns false if the input value was not created by the same converter using the same configuration.
 		/// </para>
 		/// </summary>
-		public void GetPublicString(ulong id, Span<byte> asciiOutput);
+		public bool TryGetLong(Guid publicId, out long id)
+		{
+			if (!TryGetUlong(publicId, out var ulongId) || ulongId > Int64.MaxValue)
+			{
+				id = default;
+				return false;
+			}
+			id = (long)ulongId;
+			return true;
+		}
 		/// <summary>
 		/// <para>
-		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
+		/// Outputs the original ID represented by the given public ID.
 		/// </para>
 		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload is allocation-free.
+		/// This method returns false if the input value was not created by the same converter using the same configuration.
 		/// </para>
 		/// </summary>
-		public void GetPublicString(long id, Span<byte> asciiOutput);
-
+		public bool TryGetUlong(Guid publicId, out ulong id);
 		/// <summary>
 		/// <para>
-		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
+		/// Outputs the original ID represented by the given public ID.
 		/// </para>
 		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload is allocation-free.
+		/// This method returns false if the input value was not created by the same converter using the same configuration.
 		/// </para>
 		/// </summary>
-		public void GetPublicShortString(ulong id, Span<byte> asciiOutput);
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload is allocation-free.
-		/// </para>
-		/// </summary>
-		public void GetPublicShortString(long id, Span<byte> asciiOutput);
-
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 16 bytes.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload is allocation-free.
-		/// </para>
-		/// </summary>
-		public void GetPublicBytes(ulong id, Span<byte> outputBytes);
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 16 bytes.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload is allocation-free.
-		/// </para>
-		/// </summary>
-		public void GetPublicBytes(long id, Span<byte> outputBytes);
-
-		#endregion
-
-		#region Encode to string
-
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload allocates (only) the resulting string.
-		/// </para>
-		/// </summary>
-		public string GetPublicString(ulong id);
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 32 uppercase hexadecimal characters.
-		/// The output format looks like a UUID v4 to the naked eye.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload allocates (only) the resulting string.
-		/// </para>
-		/// </summary>
-		public string GetPublicString(long id);
-
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload allocates (only) the resulting string.
-		/// </para>
-		/// </summary>
-		public string GetPublicShortString(ulong id);
-		/// <summary>
-		/// <para>
-		/// Encodes the given ID as 22 alphanumeric characters (case-sensitive).
-		/// The output is shorter than that of the regular (non-short) method, but the casing matters, the format is less common, and it is less efficient to produce.
-		/// </para>
-		/// <para>
-		/// The output is deterministic and reversible given the key, but otherwise indistinguishable from random noise (i.e. crypto-random).
-		/// </para>
-		/// <para>
-		/// This overload allocates (only) the resulting string.
-		/// </para>
-		/// </summary>
-		public string GetPublicShortString(long id);
-
-		#endregion
-
-		#region Decode from bytes
-
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
-		/// </para>
-		/// </summary>
-		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
-		public ulong GetUlongOrDefault(ReadOnlySpan<byte> bytes);
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
-		/// </para>
-		/// </summary>
-		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
-		public long GetLongOrDefault(ReadOnlySpan<byte> bytes);
-
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns whether the operation succeeded, and outputs the source value on success.
-		/// </para>
-		/// </summary>
-		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
-		/// <param name="value">The interpreted value, or 0.</param>
-		public bool TryGetUlong(ReadOnlySpan<byte> bytes, out ulong value);
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns whether the operation succeeded, and outputs the source value on success.
-		/// </para>
-		/// </summary>
-		/// <param name="bytes">A sequence of 32 ASCII characters (regular representation) or 22 ASCII characters (short representation) or 16 bytes.</param>
-		/// <param name="value">The interpreted value, or 0.</param>
-		public bool TryGetLong(ReadOnlySpan<byte> bytes, out long value);
-
-		#endregion
-
-		#region Decode from chars
-
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
-		/// </para>
-		/// </summary>
-		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
-		public ulong GetUlongOrDefault(ReadOnlySpan<char> chars);
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns the source value on success, or 0 on failure. It should be used only where source value 0 is a nonexistent value.
-		/// </para>
-		/// </summary>
-		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
-		public long GetLongOrDefault(ReadOnlySpan<char> chars);
-
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns whether the operation succeeded, and outputs the source value on success.
-		/// </para>
-		/// </summary>
-		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
-		/// <param name="value">The interpreted value, or 0.</param>
-		public bool TryGetUlong(ReadOnlySpan<char> chars, out ulong value);
-		/// <summary>
-		/// <para>
-		/// Decodes the given public identifier back to its source value, if it is valid.
-		/// </para>
-		/// <para>
-		/// The public identifier contains a checksum that is used to securely identify its validity.
-		/// Without the key, one random valid input value can be guessed for every 2^64 values attempted.
-		/// The resulting output value is then random, i.e. with very high probability it is not an existing ID.
-		/// </para>
-		/// <para>
-		/// This overload returns whether the operation succeeded, and outputs the source value on success.
-		/// </para>
-		/// </summary>
-		/// <param name="chars">A sequence of 32 characters (regular representation) or 22 characters (short representation).</param>
-		/// <param name="value">The interpreted value, or 0.</param>
-		public bool TryGetLong(ReadOnlySpan<char> chars, out long value);
-
-		#endregion
+		public bool TryGetDecimal(Guid publicId, out decimal id);
 	}
 }
