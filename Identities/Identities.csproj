@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC5</Version>
+    <Version>1.0.0-RC6</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 This package provides tools for ID management.
