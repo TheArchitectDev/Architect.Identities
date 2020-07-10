@@ -9,7 +9,7 @@ Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are
 - For a 96-bit UUID replacement that is *efficient as a primary key* and has *virtually no caveats*, use **[CompanyUniqueId](#company-unique-ids)**.
 - For a 64-bit UUID replacement that is *extremely efficient as a primary key* but *requires dependency registration and a synchronization mechanism*, use **[Fluid](#fluid)**.
 - To expose IDs externally in a sensitive environment *where zero metadata can be leaked*, transform them with **[PublicIdentities](#public-identities)**.
-- To assign a unique ID to each distinct application or instance thereof, use **[ApplicationInstanceIdSource](#application-instance-id-sources)**.
+- To assign a unique ID to each distinct application or instance thereof, use an **[ApplicationInstanceIdSource](#application-instance-id-sources)**.
 
 ## Introduction
 
