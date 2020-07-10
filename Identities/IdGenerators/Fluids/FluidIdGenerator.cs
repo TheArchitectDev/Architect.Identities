@@ -161,7 +161,7 @@ namespace Architect.Identities
 					// This is where NTP is essential, as it can prevent this
 					// If the wait is more than a full second, then we consider the wait too long, and throw, as such a clock change needs to be prevented for this scheme to work
 					if (millisecondsRequired > maxSleepMilliseconds)
-						throw new TimeoutException("Failed to generate an ID because the clock was rewound by more than one second. This exception is thrown instead of introducing long wait times or risking collisions. Use NTP or a similar protocol to prevent significant clock changes.");
+						throw new TimeoutException($"Failed to generate an ID because the clock was rewound by more than {MaxClockCatchupSleepMilliseconds} milliseconds. This exception is thrown instead of introducing exceedingly long wait times or risking collisions. Use NTP or a similar protocol to prevent significant clock changes.");
 					
 					maxSleepMilliseconds -= millisecondsRequired; // Consume some of our maximum sleep time, to avoid an endless loop in case the clock keeps on getting rewound bit-by-bit
 					this.SleepAction((int)millisecondsRequired);
