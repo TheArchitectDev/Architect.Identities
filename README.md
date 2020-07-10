@@ -271,7 +271,7 @@ The package offers various application instance ID sources. Most sources use som
 - `UseSqlServer`. This source uses a SQL Server or Azure SQL database, creating the application instance ID tracking table if it does not yet exist.
 - `UseMySql`. This source uses a MySQL database, creating the application instance ID tracking table if it does not yet exist.
 - `UseStandardSql`. This source works with most SQL databases, allowing other databases to be used without the need for custom extensions. However, since table creation syntax rarely follows the standard, this method throws an exception if the required table does not exist. The exception provides an example `CREATE TABLE` query to guide you in the right direction.
-- `UseAzureBlobStorageContainer`. Offered in a separate package (TODO: link). This source uses an Azure blob storage container to store application instance IDs that are in use.
+- `UseAzureBlobStorageContainer`. Offered in a [separate package](https://www.nuget.org/packages/Architect.Identities.Azure). This source uses an Azure blob storage container to store application instance IDs that are in use.
 
 Third party libraries may provide additional sources through further extension methods.
 
