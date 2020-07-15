@@ -28,9 +28,9 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 				results.Add(RandomSequence6.Create());
 
 			var sumValuesPerByte = new int[6];
+			Span<byte> bytes = stackalloc byte[8];
 			foreach (var result in results)
 			{
-				Span<byte> bytes = stackalloc byte[8];
 				BinaryPrimitives.WriteUInt64BigEndian(bytes, result);
 				for (var i = 0; i < 6; i++)
 					sumValuesPerByte[i] += bytes[2 + i];
