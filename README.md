@@ -37,6 +37,7 @@ When to use the [DistributedId](#distributed-ids) instead:
 - If you are unsure whether your servers are running a clock synchronization mechanism (such as NTP).
 - If the application lacks access to at least a SQL database _or_ Azure. (More effort would be required to provide the Fluid's synchronization mechanism.)
 - If the application lacks Dependency Injection.
+- If the application regularly experiences unclean shutdown.
 
 ## Distributed IDs
 
