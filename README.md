@@ -43,7 +43,7 @@ When to use the [DistributedId](#distributed-ids) instead:
 
 A DistributedId is a UUID replacement represented as a `decimal`. It can be generated on-the-fly without any prerequisites, and is _significantly_ more efficient than a random UUID as a primary key in a database.
 
-Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 50 billion IDs generated.
+Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 35 billion IDs generated.
 
 DistributedIds are designed to be unique within a logical context, such as a database table or Bounded Context. This forms the most common boundary within which uniqueness is required. Any number of distributed applications may contribute new IDs to such a context.
 
@@ -84,7 +84,7 @@ Use `DECIMAL(28, 0)` to store a DistributedId in a SQL database.
 #### Trade-offs
 
 - Reveals its creation timestamp in milliseconds.
-- Is rate-limited to 64 generated IDs per millisecond (i.e. 64K IDs per second) on average per application instance.
+- Is rate-limited to 128 generated IDs per millisecond (i.e. 128K IDs per second) on average per application instance.
 - Is context-unique rather than globally unique.
 - Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, see [Fluid](#fluid).)
 - Is unpleasant to use with SQLite, which truncates decimals to 8 bytes.
@@ -117,11 +117,13 @@ Having multiple application instances generate IDs introduces a chance of collis
 
 ##### The degenerate worst case
 
-- On average, with 2 application instances, there is under **1 collision per 500 billion IDs**. (That is 500,000,000,000, a 5 with 11 zeros. For reference, it takes 2 billion IDs to exhaust an `int` primary key.)
-- On average, with 10 application instances, there is under **1 collision 50 billion IDs**.
-- On average, with 100 application instances, there is under **1 collision per 5 billion IDs**.
+These are the statistics under the worst possible circumstances:
 
-**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In general, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the probability of a collision.
+- On average, with 2 application instances, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. For reference, it takes 2 billion IDs to exhaust an `int` primary key.)
+- On average, with 10 application instances, there is **1 collision 350 billion IDs**.
+- On average, with 100 application instances, there is **1 collision per 35 billion IDs**.
+
+**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the probability of a collision.
 
 ##### What if I want certainty?
 

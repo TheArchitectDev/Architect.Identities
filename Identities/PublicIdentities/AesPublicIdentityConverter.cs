@@ -107,7 +107,7 @@ namespace Architect.Identities
 			var decimalComponents = MemoryMarshal.Cast<byte, int>(idBytes);
 
 			// Invalid input if sign-and-scale component (4 bytes) are non-zero or max value is exceeded
-			if (!TryGetIdBytes(publicId, idBytes) || DecimalStructure.GetSignAndScale(decimalComponents) != 0 || (id = decimals[0]) > CompanyUniqueIdGenerator.MaxValue)
+			if (!TryGetIdBytes(publicId, idBytes) || DecimalStructure.GetSignAndScale(decimalComponents) != 0 || (id = decimals[0]) > DistributedIdGenerator.MaxValue)
 			{
 				id = default;
 				return false;
@@ -154,7 +154,7 @@ namespace Architect.Identities
 			{
 				this.EncryptorInputDecimalSpan[0] = id;
 
-				if (id > CompanyUniqueIdGenerator.MaxValue || DecimalStructure.GetSignAndScale(this.EncryptorInputDecimalComponentSpan) != 0m)
+				if (id > DistributedIdGenerator.MaxValue || DecimalStructure.GetSignAndScale(this.EncryptorInputDecimalComponentSpan) != 0m)
 					throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 				// The first 4 bytes are always zero, and the last 12 bytes we overwrite

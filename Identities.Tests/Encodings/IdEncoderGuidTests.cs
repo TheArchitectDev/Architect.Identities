@@ -112,7 +112,7 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void AllEncodingMethods_WithMaximumValue_ShouldSucceed()
 		{
-			var id = CompanyUniqueIdGenerator.MaxValue;
+			var id = DistributedIdGenerator.MaxValue;
 			var results = CheckIfThrowsForAllEncodings(id, new byte[22]);
 			Assert.Equal(results.Length, results.Count(didThrow => !didThrow));
 		}

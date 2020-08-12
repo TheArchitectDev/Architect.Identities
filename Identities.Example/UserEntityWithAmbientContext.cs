@@ -38,7 +38,7 @@ namespace Architect.Identities.Example
 		public UserEntityWithAmbientContext(string userName, string fullName)
 		{
 			// Use the currently registered IdGeneratorScope to obtain a new ID
-			this.Id = IdGeneratorScope.Current.Generator.CreateId();
+			this.Id = IdGeneratorScope.CurrentGenerator.CreateId();
 
 			this.UserName = userName ?? throw new ArgumentNullException(nameof(userName));
 			this.FullName = fullName ?? throw new ArgumentNullException(nameof(fullName));

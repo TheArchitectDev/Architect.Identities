@@ -1,21 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Reflection;
 using Architect.AmbientContexts;
 
 namespace Architect.Identities.Helpers
 {
 	/// <summary>
-	/// Provides information about test environments.
+	/// Provides information about being in a test host.
 	/// </summary>
 	internal sealed class TestDetector : AmbientScope<TestDetector>
 	{
 		static TestDetector()
 		{
-			SetDefaultScope(new TestDetector(IsTestFrameworkLoaded(), AmbientScopeOption.NoNesting));
+			SetDefaultScope(new TestDetector(IsRunningInTestHost(), AmbientScopeOption.NoNesting));
 		}
-
-		private static readonly HashSet<string> TestFrameworkNames = new HashSet<string>() { "Xunit.", "Nunit.", "VisualStudio.TestTools.", "VisualStudio.TestPlatform." };
 
 		private static TestDetector Current => GetAmbientScope()!;
 
@@ -48,13 +45,31 @@ namespace Architect.Identities.Helpers
 		}
 
 		/// <summary>
-		/// Returns true if any one of a specific set of test frameworks is currently loaded in the current AppDomain.
+		/// Returns true if the current process appears to be a known test host.
 		/// </summary>
-		private static bool IsTestFrameworkLoaded()
+		private static bool IsRunningInTestHost()
 		{
-			// Only look at loaded assemblies, without loading anything new
-			return AppDomain.CurrentDomain.GetAssemblies()
-				.Any(assembly => TestFrameworkNames.Any(name => assembly.FullName != null && assembly.FullName.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0));
+			const string testHostName = "testhost";
+
+			try
+			{
+				var process = System.Diagnostics.Process.GetCurrentProcess();
+				var isTestHost = process.ProcessName.Contains(testHostName, StringComparison.OrdinalIgnoreCase);
+				return isTestHost;
+			}
+			catch
+			{
+				try
+				{
+					var entryAssembly = Assembly.GetEntryAssembly();
+					var isTestHost = entryAssembly?.ManifestModule.Name.Contains(testHostName, StringComparison.OrdinalIgnoreCase) == true;
+					return isTestHost;
+				}
+				catch
+				{
+					return false;
+				}
+			}
 		}
 	}
 }

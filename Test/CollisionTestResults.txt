@@ -1,0 +1,44 @@
+﻿Collision test results
+======================
+
+The first number is the bit count of the initial random sequence each timestamp.
+The second number is the bit count of the increment for subsequent random sequences on the same timestamp.
+Note that the INCREMENT bit count is leading. (Only adding a bit to the increment is almost as effective as adding a bit to both. But only adding a bit to the initial is not.)
+
+2 simultaneous application instances:
+24/18: 406K
+26/20: 1.6M	*4  (+2 bits)
+28/22: 6.3M	*4  (+2 bits)
+30/24: 28M	*4  (+2 bits)
+34/28: 416M	*16 (+4 bits)
+48/42: 6800B	(INTERPOLATED ONLY)
+35/28: 500M
+48/41: 4000B	(INTERPOLATED ONLY)
+
+10 simultaneous application instances:
+24/18: 44K
+26/20: 198K	*4  (+2 bits)
+28/22: 707K	*4  (+2 bits)
+30/24: 3M	*4  (+2 bits)
+34/28: 46M	*16 (+4 bits)
+48/42: 738B
+48/42: After 1502 minutes: 524692289 iterations, 626.132.225.770 IDs, 1 collisions: 1 in 626.132.225.770
+48/42: After 2665 minutes: 932835926 iterations, 1.113.183.436.850 IDs, 1 collisions: 1 in 1.113.183.436.850
+37/30: 170M
+39/32: 700M *4	(+2 bits)
+48/41: 358B		(INTERPOLATED ONLY)
+
+100 simultaneous application instances:
+24/18: 4K	*4
+26/20: 16K	*4  (+2 bits)
+28/22: 63K	*4  (+2 bits)
+30/24: 256K	*4  (+2 bits)
+34/28: 4.3M	*16 (+4 bits)
+48/41: 34B
+48/41: (9 in ~315B: 1 in 35B)
+48/42: 67B
+48/42: After 855 minutes: 51304977 iterations, 331.775.677.658 IDs, 3 collisions: 1 in 110.591.892.552.
+48/42: After 2210 minutes: 79902785 iterations, 953.505.581.604 IDs, 14 collisions: 1 in 68.107.541.543
+48/42: After 2310 minutes: 83800893 iterations, 1.000.023.086.681 IDs, 14 collisions: 1 in 71.430.220.
+(With double rate, double collisions:)
+(After 533 minutes: 19057726 iterations, 242.564.619.371 IDs, 6 collisions: 1 in 40.427.436.561)

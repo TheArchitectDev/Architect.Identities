@@ -51,7 +51,7 @@ namespace Architect.Identities
 		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
 		/// </para>
 		/// </summary>
-		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
 		public Guid GetPublicRepresentation(decimal id);
 
 		/// <summary>

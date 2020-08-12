@@ -120,7 +120,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 		public void GetPublicRepresentation_WithOversizedDecimalId_ShouldThrow()
 		{
 			// ArgumentException indicates that input did not come from the expected creation method
-			var id = 1 + CompanyUniqueIdGenerator.MaxValue;
+			var id = 1 + DistributedIdGenerator.MaxValue;
 			Assert.Throws<ArgumentException>(() => this.Converter.GetPublicRepresentation(id));
 		}
 
@@ -240,7 +240,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 		[Fact]
 		public void GetPublicRepresentation_WithOversizedDecimalInput_ShouldThrow()
 		{
-			Assert.Throws<ArgumentException>(() => this.Converter.GetPublicRepresentation(1m + CompanyUniqueIdGenerator.MaxValue));
+			Assert.Throws<ArgumentException>(() => this.Converter.GetPublicRepresentation(1m + DistributedIdGenerator.MaxValue));
 		}
 
 		[Fact]
@@ -255,7 +255,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 		[Fact]
 		public void GetPublicRepresentation_WithMaximumDecimalInput_ShouldSucceed()
 		{
-			this.Converter.GetPublicRepresentation(CompanyUniqueIdGenerator.MaxValue);
+			this.Converter.GetPublicRepresentation(DistributedIdGenerator.MaxValue);
 		}
 
 		[Theory]

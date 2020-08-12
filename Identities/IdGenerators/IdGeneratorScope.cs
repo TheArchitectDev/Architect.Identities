@@ -27,22 +27,28 @@ namespace Architect.Identities
 		/// Returns the currently accessible <see cref="IdGeneratorScope"/>.
 		/// The scope is configured from the outside, such as from startup.
 		/// </summary>
-		public static IdGeneratorScope Current => GetAmbientScope() ??
+		internal static IdGeneratorScope Current => GetAmbientScope() ??
 			TestInstance ??
 			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGeneratorScope)} on startup.");
 
 		/// <summary>
+		/// Returns the <see cref="IIdGenerator"/> of the currently accessible <see cref="IdGeneratorScope"/>.
+		/// The scope is configured from the outside, such as from startup.
+		/// </summary>
+		public static IIdGenerator CurrentGenerator => Current.Generator;
+
+		/// <summary>
 		/// Returns an instance if the code is executing in a test run.
 		/// </summary>
-		private static IdGeneratorScope? TestInstance => TestInstanceValue ?? (TestInstanceValue = TestDetector.IsTestRun
+		private static IdGeneratorScope? TestInstance => TestInstanceValue ??= TestDetector.IsTestRun
 			? new IdGeneratorScope(new FluidIdGenerator(isProduction: false, FluidIdGenerator.GetUtcNow, applicationInstanceId: 1), AmbientScopeOption.NoNesting)
-			: null);
+			: null;
 		private static IdGeneratorScope? TestInstanceValue;
 
 		/// <summary>
 		/// The registered ID generator.
 		/// </summary>
-		public IIdGenerator Generator { get; }
+		internal IIdGenerator Generator { get; }
 
 		/// <summary>
 		/// Establishes the given ID generator as the ambient one until the scope is disposed.
