@@ -42,7 +42,7 @@ CREATE TABLE {TableName} (
 ;
 ";
 			command.ExecuteNonQuery();
-			this.Source = new StandardSqlApplicationInstanceIdSource(this.CreateDbConnection,databaseName: null, this.HostApplicationLifetime);
+			this.Source = new StandardSqlApplicationInstanceIdSource(this.CreateDbConnection, databaseName: null, this.HostApplicationLifetime);
 		}
 
 		public void Dispose()
