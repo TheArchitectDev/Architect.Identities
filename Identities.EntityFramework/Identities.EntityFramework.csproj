@@ -28,7 +28,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
   // ...
   
   // For all decimal columns named *Id or *ID
-  modelBuilder.StoreDecimalIdsWithCorrectPrecision(this);
+  modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext: this);
 }
 
 Or per individual property:
