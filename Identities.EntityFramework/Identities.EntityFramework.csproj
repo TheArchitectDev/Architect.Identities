@@ -1,0 +1,73 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>Architect.Identities.EntityFramework</AssemblyName>
+    <RootNamespace>Architect.Identities.EntityFramework</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
+    <!-- NoWarn: 1591=MissingXmlComments -->
+    <NoWarn>1573;1591</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>Enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version>1.0.0-RC1</Version>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <Description>
+This package provides EntityFramework extensions for the Architect.Identities package.
+
+Easily configure the column type for decimal ID columns:
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+  // ...
+  
+  // For all decimal columns named *Id or *ID
+  modelBuilder.StoreDecimalIdsWithCorrectPrecision(this);
+}
+
+Or per individual property:
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+  // ...
+  
+  modelBuilder.Entity&lt;Order&gt;(entity =>
+  {
+    entity.Property(e => e.Id)
+      .ValueGeneratedNever()
+      .StoreWithDecimalIdPrecision(dbContext: this);
+    
+    // ..
+  });
+}
+
+The extensions in this package special-case SQLite, which requires different treatment.
+    </Description>
+    <Copyright>The Architect</Copyright>
+    <Company>The Architect</Company>
+    <Authors>TheArchitectDev, Timovzl</Authors>
+    <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageTags>Entity, Framework, EntityFramework, EF, Core, EfCore, ID, IDs, identity, identities, Fluid, distributed, locally, unique, locally-unique, generator, generation, IdGenerator, UUID, GUID, auto-increment, primary, key, entity, entities, PublicIdentities, IdGeneratorScope, flexible</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
