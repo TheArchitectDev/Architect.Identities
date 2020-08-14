@@ -47,7 +47,7 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
   });
 }
 
-The extensions in this package special-case SQLite, which requires different treatment.
+The extensions in this package special-case SQLite, which requires special treatment.
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
