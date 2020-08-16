@@ -1,9 +1,6 @@
 using System;
 using System.Linq;
-using System.Reflection;
-using System.Reflection.Emit;
-using Architect.Identities;
-using Architect.Identities.EntityFramework;
+using Architect.Identities.EntityFramework.IntegrationTests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -110,84 +107,5 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		}
 
 		private static int GetSignAndScale(decimal dec) => Decimal.GetBits(dec)[3]; // Decimal.GetBits() contains the sign-and-scale portion of a decimal
-
-		public sealed class TestEntity
-		{
-			public decimal Id { get; }
-			public string Name { get; }
-			public decimal Number { get; }
-			public decimal ForeignId { get; }
-			public decimal ForeignID { get; } // Deliberate spelling
-			public decimal DoesNotHaveIdSuffix { get; }
-
-			public TestEntity(string name = "TestName", decimal number = 0.1234567890123456789012345678m)
-			{
-				this.Id = DistributedId.CreateId();
-
-				this.Name = name;
-				this.Number = number;
-				this.ForeignId = 1234567890123456789012345678m;
-				this.ForeignID = 1234567890123456789012345678m;
-				this.DoesNotHaveIdSuffix = 1234567890123456789012345678m;
-			}
-		}
-
-		public class TestDbContext : DbContext // Must be public, unsealed for Create method's reflection
-		{
-			private static ModuleBuilder ModuleBuilder { get; } = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("UniqueTestDbContextAssembly"), AssemblyBuilderAccess.Run)
-				.DefineDynamicModule("UniqueTestDbContextModule");
-
-			public DbSet<TestEntity> Entities { get; protected set; }
-			public Action<ModelBuilder, DbContext> OnModelCreatingAction { get; }
-
-			public static TestDbContext Create(Action<ModelBuilder, DbContext> onModelCreating = null)
-			{
-				// Must construct a runtime subtype, because otherwise EF caches the result of OnModelCreating
-
-				var typeBuilder = ModuleBuilder.DefineType($"{nameof(TestDbContext)}_{Guid.NewGuid()}",
-					TypeAttributes.Sealed | TypeAttributes.Class | TypeAttributes.Public, typeof(TestDbContext));
-
-				var baseConstructor = typeof(TestDbContext).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(Action<ModelBuilder, DbContext>) }, modifiers: null);
-				var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(Action<ModelBuilder, DbContext>) });
-				var ilGenerator = ctorBuilder.GetILGenerator();
-				ilGenerator.Emit(OpCodes.Ldarg_0);
-				ilGenerator.Emit(OpCodes.Ldarg_1);
-				ilGenerator.Emit(OpCodes.Call, baseConstructor);
-				ilGenerator.Emit(OpCodes.Ret);
-
-				var type = typeBuilder.CreateType();
-
-				var instance = (TestDbContext)Activator.CreateInstance(type, new[] { onModelCreating });
-				return instance;
-			}
-
-			protected TestDbContext(Action<ModelBuilder, DbContext> onModelCreating = null)
-				: base(new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
-			{
-				this.OnModelCreatingAction = onModelCreating ?? ((modelBuilder, dbContext) => { });
-
-				this.Database.OpenConnection();
-				this.Database.EnsureCreated();
-			}
-
-			protected override void OnModelCreating(ModelBuilder modelBuilder)
-			{
-				base.OnModelCreating(modelBuilder);
-
-				modelBuilder.Entity<TestEntity>(entity =>
-				{
-					entity.Property(e => e.Id)
-						.ValueGeneratedNever();
-
-					entity.Property(e => e.Name);
-
-					entity.Property(e => e.Number);
-
-					entity.HasKey(e => e.Id);
-				});
-
-				this.OnModelCreatingAction(modelBuilder, this);
-			}
-		}
 	}
 }

@@ -11,7 +11,7 @@ namespace Architect.Identities.Tests.EntityFramework
 		{
 			// Assert that no SQLite assemblies are loaded (except System.Data.SQLite, which seems to be quite standard)
 			var anySqliteAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly =>
-				assembly.FullName?.Contains("SQLite", StringComparison.OrdinalIgnoreCase) == true && !assembly.FullName.Contains("System.Data.SQLite", StringComparison.OrdinalIgnoreCase));
+				assembly.FullName?.Contains("SQLite", StringComparison.OrdinalIgnoreCase) == true);
 			if (anySqliteAssembly != null) throw new Exception("SQLite was inadvertently loaded in this unit test library.");
 		}
 
