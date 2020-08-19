@@ -18,7 +18,8 @@ namespace Test
 	/// The random data originates from a cryptographically-secure pseudorandom number generator (CSPRNG).
 	/// </para>
 	/// <para>
-	/// Although technically an instance can be created using the default constructor, all public operations (e.g. cast or <see cref="Add40RandomBits(RandomSequence6)"/>) will throw for such an instance.
+	/// Although technically an instance can be created using the default constructor,
+	/// all public operations (e.g. cast or <see cref="TryAddRandomBits(RandomSequence6, out RandomSequence6)"/>) will throw for such an instance.
 	/// </para>
 	/// </summary>
 	internal readonly struct RandomSequence6
@@ -124,33 +125,6 @@ namespace Test
 
 			result = new RandomSequence6(value);
 			return true;
-		}
-
-		// #TODO: Remove
-		/// <summary>
-		/// <para>
-		/// Returns a new instance that contains the current one's value with 40 bytes of random data from the given one added to it.
-		/// </para>
-		/// <para>
-		/// Overflow is impossible on the first 224 invocations. If more invocations are performed and overflow occurs, an exception is thrown.
-		/// </para>
-		/// </summary>
-		public RandomSequence6 AddRandomBits(RandomSequence6 additionalRandomSource)
-		{
-			var value = this.Value;
-			var randomIncrement = additionalRandomSource.Value & (~0UL >> (64 - 40)); // Keep 40 of the additional random bytes
-
-			if (randomIncrement == 0U) randomIncrement = 1U; // Avoid incrementing by 0, which would introduce a collision
-
-			unchecked // Cannot overflow the available 8 bytes anyway
-			{
-				value += randomIncrement;
-			}
-
-			// Throw on overflow
-			if (value > UInt64.MaxValue >> 16) throw new OverflowException($"The method was invoked too many times on the same instance, resulting in overflow.");
-
-			return new RandomSequence6(value);
 		}
 
 		/// <summary>
