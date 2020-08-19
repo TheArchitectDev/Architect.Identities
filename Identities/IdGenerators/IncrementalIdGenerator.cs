@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 
-namespace Architect.Identities.IdGenerators
+// ReSharper disable once CheckNamespace
+namespace Architect.Identities
 {
 	/// <summary>
 	/// <para>
