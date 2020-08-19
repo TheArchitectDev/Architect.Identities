@@ -38,7 +38,7 @@ namespace Architect.Identities.Tests.IdGenerators
 				Assert.Throws<InvalidOperationException>(() => IdGeneratorScope.Current);
 			}
 
-			Assert.Contains("testhost", System.Reflection.Assembly.GetEntryAssembly().ManifestModule.Name, StringComparison.OrdinalIgnoreCase);
+			Assert.Contains("NONSENSE", System.Reflection.Assembly.GetEntryAssembly().ManifestModule.Name, StringComparison.OrdinalIgnoreCase);
 			if (!TestDetector.IsTestRun) throw new Exception("Test detector failed to detect test run.");
 
 			Assert.NotNull(IdGeneratorScope.Current);
