@@ -51,25 +51,29 @@ namespace Architect.Identities.Helpers
 		{
 			const string testHostName = "testhost";
 
+			var isTestHost = false;
+
 			try
 			{
 				var process = System.Diagnostics.Process.GetCurrentProcess();
-				var isTestHost = process.ProcessName.Contains(testHostName, StringComparison.OrdinalIgnoreCase);
-				return isTestHost;
+				isTestHost |= process.ProcessName.Contains(testHostName, StringComparison.OrdinalIgnoreCase);
 			}
 			catch
 			{
-				try
-				{
-					var entryAssembly = Assembly.GetEntryAssembly();
-					var isTestHost = entryAssembly?.ManifestModule.Name.Contains(testHostName, StringComparison.OrdinalIgnoreCase) == true;
-					return isTestHost;
-				}
-				catch
-				{
-					return false;
-				}
+				// We did our best to detect a test host
 			}
+
+			try
+			{
+				var entryAssembly = Assembly.GetEntryAssembly();
+				isTestHost |= entryAssembly?.ManifestModule.Name.Contains(testHostName, StringComparison.OrdinalIgnoreCase) == true;
+			}
+			catch
+			{
+				// We did our best to detect a test host
+			}
+
+			return isTestHost;
 		}
 	}
 }
