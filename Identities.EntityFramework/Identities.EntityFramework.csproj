@@ -25,8 +25,16 @@ Easily configure the column type to use for decimal ID columns:
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-  // ...
+  modelBuilder.Entity&lt;Order&gt;(entity =>
+  {
+    entity.Property(o => o.Id)
+      .ValueGeneratedNever();
+    
+    entity.HasKey(o => o.Id);
+  });
   
+  // Other entities ...
+
   // For all mapped decimal columns named *Id or *ID
   modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext: this);
 }
@@ -35,8 +43,6 @@ Or per individual property:
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-  // ...
-  
   modelBuilder.Entity&lt;Order&gt;(entity =>
   {
     entity.Property(e => e.Id)
