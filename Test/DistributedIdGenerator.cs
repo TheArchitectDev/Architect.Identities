@@ -1,27 +1,28 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Threading;
+using Architect.Identities;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Test
 {
 	/// <summary>
-	/// Used to implement <see cref="CompanyUniqueId"/> in a testable way.
+	/// Used to implement <see cref="DistributedId"/> in a testable way.
 	/// </summary>
-	internal sealed class CompanyUniqueIdGenerator
+	internal sealed class DistributedIdGenerator
 	{
 		/// <summary>
 		/// The maximum ID value that can be generated, and the maximum value to fit in 28 digits.
 		/// </summary>
 		internal const decimal MaxValue = 99999_99999_99999_99999_99999_999m;
 
-		static CompanyUniqueIdGenerator()
+		static DistributedIdGenerator()
 		{
 			if (!Environment.Is64BitOperatingSystem)
-				throw new NotSupportedException($"{nameof(CompanyUniqueId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
+				throw new NotSupportedException($"{nameof(DistributedId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
 
 			if (!BitConverter.IsLittleEndian)
-				throw new NotSupportedException($"{nameof(CompanyUniqueId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
+				throw new NotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
 		}
 
 		private static DateTime GetUtcNow() => DateTime.UtcNow;
@@ -29,7 +30,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// A single application instance will aim to create no more than this many IDs on a single timestamp.
 		/// </summary>
-		internal const uint RateLimitPerTimestamp = 1000;
+		internal const uint RateLimitPerTimestamp = 225;
 
 		private Func<DateTime> Clock { get; }
 		/// <summary>
@@ -55,7 +56,7 @@ namespace Architect.Identities
 		/// </summary>
 		private readonly object _lockObject = new object();
 
-		internal CompanyUniqueIdGenerator(Func<DateTime>? utcClock = null, Action<int>? sleepAction = null)
+		internal DistributedIdGenerator(Func<DateTime>? utcClock = null, Action<int>? sleepAction = null)
 		{
 			this.Clock = utcClock ?? GetUtcNow;
 			this.SleepAction = sleepAction ?? Thread.Sleep;
@@ -88,11 +89,11 @@ namespace Architect.Identities
 				if (timestamp == this.PreviousCreationTimestamp)
 				{
 					// If we can create more contiguous values, advance the count and create the next value
-					if (this.CurrentTimestampCreationCount < RateLimitPerTimestamp)
+					if (this.TryCreateIncrementalRandomSequence(this.PreviousRandomSequence, randomSequence, out var largerRandomSequence))
 					{
-						this.PreviousRandomSequence = this.CreateIncrementalRandomSequence(this.PreviousRandomSequence, randomSequence);
+						this.PreviousRandomSequence = largerRandomSequence;
 						this.CurrentTimestampCreationCount++;
-						return (timestamp, this.PreviousRandomSequence);
+						return (timestamp, largerRandomSequence);
 					}
 					// Otherwise, sleep until the clock has advanced
 					else
@@ -154,24 +155,9 @@ namespace Architect.Identities
 			return RandomSequence6.Create();
 		}
 
-		/// <summary>
-		/// <para>
-		/// Pure function.
-		/// </para>
-		/// <para>
-		/// Creates a new 48-bit random sequence based on the given previous one and new one.
-		/// Adds new randomness while maintaining the incremental property with very high probability.
-		/// </para>
-		/// </summary>
-		private RandomSequence6 CreateIncrementalRandomSequence(RandomSequence6 previousRandomSequence, RandomSequence6 newRandomSequence)
+		private bool TryCreateIncrementalRandomSequence(RandomSequence6 previousRandomSequence, RandomSequence6 newRandomSequence, out RandomSequence6 largerRandomSequence)
 		{
-			// Fill the relevant 6 bytes (48 bits) with incremented random data
-			// Balance unpredictability with incrementalness
-			// 32 new random bits provides a 1 in 4 billion chance to guess an ID based on a previous one
-			// 16 remaining bits to overflow into provide less than 1 in 1 million chance of wraparound (which would merely break incrementalness, which does not matter if it happens infrequently)
-			// The wraparound chance was tested empirically, as the math is rather complex
-			var incrementalRandomSequence = previousRandomSequence.Add4RandomBytes(newRandomSequence);
-			return incrementalRandomSequence;
+			return previousRandomSequence.TryAddRandomBits(newRandomSequence, out largerRandomSequence);
 		}
 
 		/// <summary>
@@ -195,7 +181,7 @@ namespace Architect.Identities
 			{
 				// The 64-bit timestamp's 19 high bits must be zero, leaving the low 45 bits to be used
 				if (timestamp >> 45 != 0UL)
-					throw new InvalidOperationException($"{nameof(CompanyUniqueId)} has run out of available time bits."); // Year 3084
+					throw new InvalidOperationException($"{nameof(DistributedId)} has run out of available time bits."); // Year 3084
 
 				// Write the time component into the first 8 bytes (64 bits: 16 padding to write a ulong, 3 unused, 45 used)
 				BinaryPrimitives.WriteUInt64BigEndian(bytes, timestamp);

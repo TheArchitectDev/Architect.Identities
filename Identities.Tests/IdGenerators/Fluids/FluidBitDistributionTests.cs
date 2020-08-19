@@ -12,9 +12,9 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 		
 		[Fact]
-		public void Construct_With63TotalBits_ShouldSucceed()
+		public void Construct_With63TotalBits_ShouldThrow()
 		{
-			new FluidBitDistribution(42, 11, 10);
+			Assert.Throws<ArgumentException>(() => new FluidBitDistribution(42, 11, 10));
 		}
 		
 		[Fact]
@@ -54,19 +54,11 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		}
 		
 		[Fact]
-		public void GetTimestampAndUnusedBitCount_WithNoUnusedBits_ShouldReturnExpectedValue()
+		public void GetTimestampBitCount_Regularly_ShouldReturnExpectedValue()
 		{
 			var distribution = new FluidBitDistribution(43, 11, 10);
 
-			Assert.Equal(43, distribution.TimestampAndUnusedBitCount);
-		}
-		
-		[Fact]
-		public void GetTimestampAndUnusedBitCount_WithOneUnusedBit_ShouldReturnExpectedValue()
-		{
-			var distribution = new FluidBitDistribution(42, 11, 10);
-
-			Assert.Equal(43, distribution.TimestampAndUnusedBitCount);
+			Assert.Equal(43, distribution.TimestampBitCount);
 		}
 		
 		[Fact]

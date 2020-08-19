@@ -96,7 +96,7 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void AllEncodingMethods_WithOverflow_ShouldThrow()
 		{
-			var id = 1 + CompanyUniqueIdGenerator.MaxValue;
+			var id = 1 + DistributedIdGenerator.MaxValue;
 			var results = CheckIfThrowsForAllEncodings(id, new byte[16]);
 			Assert.Equal(results.Length, results.Count(didThrow => didThrow));
 		}
@@ -104,7 +104,7 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void AllEncodingMethods_WithMaximumValue_ShouldSucceed()
 		{
-			var id = CompanyUniqueIdGenerator.MaxValue;
+			var id = DistributedIdGenerator.MaxValue;
 			var results = CheckIfThrowsForAllEncodings(id, new byte[16]);
 			Assert.Equal(results.Length, results.Count(didThrow => !didThrow));
 		}
@@ -116,7 +116,7 @@ namespace Architect.Identities.Tests.Encodings
 			var two = 2m;
 			var three = (decimal)UInt64.MaxValue - 1;
 			var four = (decimal)UInt64.MaxValue;
-			var five = CompanyUniqueIdGenerator.MaxValue;
+			var five = DistributedIdGenerator.MaxValue;
 
 			var a = IdEncoder.GetAlphanumeric(one);
 			var b = IdEncoder.GetAlphanumeric(two);
@@ -148,7 +148,7 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void GetAlphanumeric_WithMaximumValue_ShouldReturnExpectedResult()
 		{
-			var shortString = IdEncoder.GetAlphanumeric(CompanyUniqueIdGenerator.MaxValue);
+			var shortString = IdEncoder.GetAlphanumeric(DistributedIdGenerator.MaxValue);
 
 			Assert.Equal("agbFu5KnEQGxp4QB", shortString);
 		}

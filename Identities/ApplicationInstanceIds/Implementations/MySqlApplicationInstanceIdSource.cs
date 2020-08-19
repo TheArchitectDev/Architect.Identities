@@ -54,10 +54,10 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
 			command.Parameters.Add(parameter);
 
 			command.CommandText = $@"
-# Acquire exclusive lock on record 0 (regardless of prior existence)
+-- Acquire exclusive lock on record 0 (regardless of prior existence)
 REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, NOW(3));
 
-# Insert smallest available id
+-- Insert smallest available ID
 INSERT INTO {databaseName}{DefaultTableName}
 SELECT 1 + id, @ApplicationName, @ServerName, NOW(3)
 FROM {databaseName}{DefaultTableName} aii
@@ -66,14 +66,14 @@ ORDER BY id
 LIMIT 1
 ;
 
-# Get the inserted id
+-- Get the inserted ID
 SELECT id
 FROM {databaseName}{DefaultTableName}
 WHERE application_name = @ApplicationName AND server_name = @ServerName AND id <> 0
 AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{DefaultTableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
 ;
 
-# Release the lock
+-- Release the lock
 DELETE FROM {databaseName}{DefaultTableName} WHERE id = 0;
 ";
 		}

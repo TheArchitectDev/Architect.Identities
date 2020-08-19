@@ -15,7 +15,6 @@ namespace Architect.Identities
 		public byte ApplicationInstanceIdBitCount { get; }
 		public byte CounterBitCount { get; }
 
-		public byte TimestampAndUnusedBitCount => (byte)(64 - this.ApplicationInstanceIdBitCount - this.CounterBitCount);
 		public byte TotalBitCount => (byte)(this.TimestampBitCount + this.ApplicationInstanceIdBitCount + this.CounterBitCount);
 
 		public ulong MaxTimestamp => (1UL << this.TimestampBitCount) - 1;
@@ -24,9 +23,9 @@ namespace Architect.Identities
 
 		public FluidBitDistribution(byte timestampBitCount, byte applicationInstanceIdBitCount, byte counterBitCount)
 		{
-			if (timestampBitCount + applicationInstanceIdBitCount + counterBitCount != 63 && timestampBitCount + applicationInstanceIdBitCount + counterBitCount != 64)
+			if (timestampBitCount + applicationInstanceIdBitCount + counterBitCount != 64)
 			{
-				throw new ArgumentException("The bit counts must add up to 63 or 64.");
+				throw new ArgumentException("The bit counts must add up to 64.");
 			}
 			if (timestampBitCount > 63)
 			{

@@ -24,7 +24,7 @@ namespace Architect.Identities
 		/// Returns a 16-character alphanumeric representation of the given <see cref="decimal"/> ID.
 		/// </para>
 		/// </summary>
-		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
 		public static string ToAlphanumeric(this decimal id) => IdEncoder.GetAlphanumeric(id);
 		/// <summary>
 		/// <para>
@@ -55,7 +55,7 @@ namespace Architect.Identities
 		/// Outputs a 16-character alphanumeric representation of the given <see cref="decimal"/> ID.
 		/// </para>
 		/// </summary>
-		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
 		/// <param name="bytes">At least 16 bytes, to write the alphanumeric representation to.</param>
 		public static void ToAlphanumeric(this decimal id, Span<byte> bytes) => IdEncoder.GetAlphanumeric(id, bytes);
 		/// <summary>

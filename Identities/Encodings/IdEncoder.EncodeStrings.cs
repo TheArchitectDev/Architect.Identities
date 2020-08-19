@@ -43,7 +43,7 @@ namespace Architect.Identities
 		/// Throws if the input is not a proper ID value.
 		/// </para>
 		/// </summary>
-		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
 		public static string GetAlphanumeric(decimal id)
 		{
 			return String.Create(16, id, (charSpan, theId) =>

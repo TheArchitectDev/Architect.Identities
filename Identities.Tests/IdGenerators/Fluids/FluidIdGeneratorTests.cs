@@ -29,10 +29,10 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 
 		private static ulong GetMilliseconds(DateTime dateTime, DateTime epoch) => (ulong)(dateTime - epoch).TotalMilliseconds;
 		private static ulong GetMilliseconds(Fluid fluid) => (ulong)fluid >> BitDistribution.ApplicationInstanceIdBitCount >> BitDistribution.CounterBitCount;
-		private static ushort GetApplicationInstanceId(Fluid fluid) => (ushort)((ulong)fluid << BitDistribution.TimestampAndUnusedBitCount >> BitDistribution.TimestampAndUnusedBitCount
+		private static ushort GetApplicationInstanceId(Fluid fluid) => (ushort)((ulong)fluid << BitDistribution.TimestampBitCount >> BitDistribution.TimestampBitCount
 																																		>> BitDistribution.CounterBitCount);
-		private static ulong GetCounterValue(Fluid fluid) => (ulong)fluid << BitDistribution.TimestampAndUnusedBitCount << BitDistribution.ApplicationInstanceIdBitCount
-															>> BitDistribution.TimestampAndUnusedBitCount >> BitDistribution.ApplicationInstanceIdBitCount;
+		private static ulong GetCounterValue(Fluid fluid) => (ulong)fluid << BitDistribution.TimestampBitCount << BitDistribution.ApplicationInstanceIdBitCount
+															>> BitDistribution.TimestampBitCount >> BitDistribution.ApplicationInstanceIdBitCount;
 
 		[Fact]
 		public void GetUtcNow_WhenInvoked_ShouldReturnUtcNow()
@@ -213,17 +213,6 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 			var milliseconds = factory.GetMillisecondsSinceEpoch();
 
 			Assert.Equal(1UL, milliseconds);
-		}
-
-		[Fact]
-		public void CreateFluid_WithNoApplicationInstanceIdAndNoCounter_ShouldEqualTimestamp()
-		{
-			var factory = new FluidIdGenerator(isProduction: false, Clock, applicationInstanceId: 0, Epoch,
-				new FluidBitDistribution(timestampBitCount: 63, applicationInstanceIdBitCount: 0, counterBitCount: 0));
-
-			var fluid = factory.CreateFluid();
-
-			Assert.Equal(GetMilliseconds(ClockValue, factory.Epoch), (ulong)fluid);
 		}
 
 		[Fact]

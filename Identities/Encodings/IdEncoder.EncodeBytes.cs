@@ -54,7 +54,7 @@ namespace Architect.Identities
 		/// Throws if the input is not a proper ID value or if the output span is too short.
 		/// </para>
 		/// </summary>
-		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="CompanyUniqueId.CreateId"/>.</param>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
 		/// <param name="bytes">At least 16 bytes, to write the alphanumeric representation to.</param>
 		public static void GetAlphanumeric(decimal id, Span<byte> bytes)
 		{
@@ -71,7 +71,7 @@ namespace Architect.Identities
 			var mid = DecimalStructure.GetMid(components);
 
 			// Validate format and range
-			if (id > CompanyUniqueIdGenerator.MaxValue || signAndScale != 0m)
+			if (id > DistributedIdGenerator.MaxValue || signAndScale != 0m)
 				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 			// Abuse the caller's output span as input space

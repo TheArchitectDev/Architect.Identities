@@ -6,14 +6,14 @@ using Microsoft.Extensions.Hosting;
 namespace Architect.Identities.Example
 {
 	/// <summary>
-	/// Demonstrates some uses of the Identities package: Company-Unique IDs, and the Flexible, Locally-Unique ID (Fluid) generator.
+	/// Demonstrates some uses of the Identities package: DistributedIds, and the Flexible, Locally-Unique ID (Fluid) generator.
 	/// </summary>
 	internal static class Program
 	{
 		private static async Task Main()
 		{
 			// Demo some code (without needing any registrations)
-			CreateCompanyUniqueIds();
+			CreateDistributedIds();
 
 			// Configure the host
 			Console.WriteLine();
@@ -36,16 +36,16 @@ namespace Architect.Identities.Example
 			Console.ReadKey(intercept: true);
 		}
 
-		private static void CreateCompanyUniqueIds()
+		private static void CreateDistributedIds()
 		{
 			// Like GUIDs, these IDs can be generated from anywhere, without any registrations whatsoever
-			var id1 = CompanyUniqueId.CreateId();
-			var id2 = CompanyUniqueId.CreateId();
+			var id1 = DistributedId.CreateId();
+			var id2 = DistributedId.CreateId();
 			var id1Alphanumeric = id1.ToAlphanumeric(); // IdEncoder can decode
 			var id2Alphanumeric = id2.ToAlphanumeric(); // IdEncoder can decode
 			Console.WriteLine();
-			Console.WriteLine($"Here is a company-unique ID generated like a GUID: {id1} (alphanumeric form: {id1Alphanumeric})");
-			Console.WriteLine($"Here is a company-unique ID generated like a GUID: {id2} (alphanumeric form: {id2Alphanumeric})");
+			Console.WriteLine($"Here is a DistributedId generated like a GUID: {id1} (alphanumeric form: {id1Alphanumeric})");
+			Console.WriteLine($"Here is a DistributedId generated like a GUID: {id2} (alphanumeric form: {id2Alphanumeric})");
 		}
 
 		private static void CreateUsersWithDependencyInjection(UserFactory userFactory)

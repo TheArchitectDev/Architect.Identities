@@ -27,22 +27,33 @@ namespace Architect.Identities
 		/// Returns the currently accessible <see cref="IdGeneratorScope"/>.
 		/// The scope is configured from the outside, such as from startup.
 		/// </summary>
-		public static IdGeneratorScope Current => GetAmbientScope() ??
+		internal static IdGeneratorScope Current => GetAmbientScope() ??
 			TestInstance ??
 			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGeneratorScope)} on startup.");
 
 		/// <summary>
+		/// <para>
+		/// Returns the current ambient <see cref="IIdGenerator"/>, or throws if none is registered.
+		/// </para>
+		/// <para>
+		/// The ID generator can be controlled by constructing a new <see cref="IdGeneratorScope"/> in a using statement.
+		/// A default can be registered using <see cref="IdGeneratorExtensions.UseIdGeneratorScope(IServiceProvider)"/>.
+		/// </para>
+		/// </summary>
+		internal static IIdGenerator CurrentGenerator => Current.IdGenerator;
+
+		/// <summary>
 		/// Returns an instance if the code is executing in a test run.
 		/// </summary>
-		private static IdGeneratorScope? TestInstance => TestInstanceValue ?? (TestInstanceValue = TestDetector.IsTestRun
+		private static IdGeneratorScope? TestInstance => TestInstanceValue ??= TestDetector.IsTestRun
 			? new IdGeneratorScope(new FluidIdGenerator(isProduction: false, FluidIdGenerator.GetUtcNow, applicationInstanceId: 1), AmbientScopeOption.NoNesting)
-			: null);
+			: null;
 		private static IdGeneratorScope? TestInstanceValue;
 
 		/// <summary>
 		/// The registered ID generator.
 		/// </summary>
-		public IIdGenerator Generator { get; }
+		internal IIdGenerator IdGenerator { get; }
 
 		/// <summary>
 		/// Establishes the given ID generator as the ambient one until the scope is disposed.
@@ -60,7 +71,7 @@ namespace Architect.Identities
 		private IdGeneratorScope(IIdGenerator idGenerator, AmbientScopeOption ambientScopeOption)
 			: base(ambientScopeOption)
 		{
-			this.Generator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+			this.IdGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
 		}
 
 		protected override void DisposeImplementation()

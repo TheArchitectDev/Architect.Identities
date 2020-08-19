@@ -17,6 +17,8 @@ namespace Architect.Identities
 		/// </summary>
 		public static IServiceCollection AddIdGenerator(this IServiceCollection services, Action<Options> generatorOptions)
 		{
+			if (generatorOptions is null) throw new ArgumentNullException(nameof(generatorOptions));
+
 			var optionsObject = new Options(services);
 			generatorOptions.Invoke(optionsObject);
 

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 namespace Architect.Identities
 {
 	/// <summary>
-	/// An implementation specific to SQL Server / Azure SQL.
+	/// An implementation specific to [Azure] SQL Server.
 	/// </summary>
 	internal sealed class SqlServerApplicationInstanceIdSource : StandardSqlApplicationInstanceIdSource
 	{
@@ -29,7 +29,7 @@ namespace Architect.Identities
 			using var command = connection.CreateCommand();
 
 			command.CommandText = $@"
-IF OBJECT_ID(N'application_instance_id', N'U') IS NULL BEGIN
+IF OBJECT_ID(N'{databaseName}{DefaultTableName}', N'U') IS NULL BEGIN
 
 CREATE TABLE {databaseName}{DefaultTableName} (
   id BIGINT NOT NULL PRIMARY KEY,

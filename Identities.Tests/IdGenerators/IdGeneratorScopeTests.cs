@@ -10,6 +10,7 @@ namespace Architect.Identities.Tests.IdGenerators
 		/// <summary>
 		/// This method combines a few tests.
 		/// Because of the static nature of Ambient Context defaults, we test them in a single test.
+		/// Once the default test scope is assigned, we can no longer simulate that we are NOT running in a unit test.
 		/// </summary>
 		[Fact]
 		public void Current_WithOnlyDefault_ShouldSucceedForUnitTestButRequireRegistrationOtherwise()
@@ -52,19 +53,19 @@ namespace Architect.Identities.Tests.IdGenerators
 		}
 
 		[Fact]
-		public void Current_WithLocalScopeWhenUsed_ShouldUseScopedGenerator()
+		public void CurrentGenerator_WithLocalScopeWhenUsed_ShouldUseScopedGenerator()
 		{
 			var invocationDetector = new InvocationDetector();
 			using var scope = new IdGeneratorScope(CreateIdGenerator(invocationDetector));
 			invocationDetector.WasInvoked = false;
 
-			IdGeneratorScope.Current.Generator.CreateId();
+			IdGeneratorScope.CurrentGenerator.CreateId();
 
 			Assert.True(invocationDetector.WasInvoked);
 		}
 
 		[Fact]
-		public void Current_WithNestedScopesWhenUsed_ShouldUseNearestScopedGenerator()
+		public void CurrentGenerator_WithNestedScopesWhenUsed_ShouldUseNearestScopedGenerator()
 		{
 			var outerInvocationDetector = new InvocationDetector();
 			using var outerScope = new IdGeneratorScope(CreateIdGenerator(outerInvocationDetector));
@@ -72,19 +73,21 @@ namespace Architect.Identities.Tests.IdGenerators
 
 			var innerInvocationDetector = new InvocationDetector();
 			using var innerScope = new IdGeneratorScope(CreateIdGenerator(innerInvocationDetector));
-			outerInvocationDetector.WasInvoked = false;
+			innerInvocationDetector.WasInvoked = false;
+
+			IdGeneratorScope.CurrentGenerator.CreateId();
 
 			Assert.True(innerInvocationDetector.WasInvoked);
 			Assert.False(outerInvocationDetector.WasInvoked);
 		}
 
 		[Fact]
-		public void Current_WithScopedCustomIdGenerator_ShouldHoldExpectedGenerator()
+		public void CurrentGenerator_WithScopedCustomIdGenerator_ShouldHoldExpectedGenerator()
 		{
 			var generator = new CustomIdGenerator(1UL);
 			using (new IdGeneratorScope(generator))
 			{
-				var result = IdGeneratorScope.Current.Generator;
+				var result = IdGeneratorScope.CurrentGenerator;
 
 				Assert.Equal(generator, result);
 			}

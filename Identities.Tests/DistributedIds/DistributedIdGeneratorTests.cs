@@ -5,10 +5,12 @@ using System.Globalization;
 using System.Linq;
 using Xunit;
 
-namespace Architect.Identities.Tests.CompanyUniqueIds
+namespace Architect.Identities.Tests.DistributedIds
 {
-	public sealed class CompanyUniqueIdGeneratorTests
+	public sealed class DistributedIdGeneratorTests
 	{
+		private static readonly int SafeRateLimitPerTimestamp = DistributedIdGenerator.AverageRateLimitPerTimestamp / 2;
+		private static readonly int ExceedingRateLimitPerTimestamp = DistributedIdGenerator.AverageRateLimitPerTimestamp * 3 / 2;
 		private static readonly DateTime FixedUtcDateTime = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
 		private static readonly ulong FixedTimestamp = GetTimestamp(FixedUtcDateTime);
 		private static readonly ulong EpochTimestamp = 0UL;
@@ -23,7 +25,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		/// <summary>
 		/// A generator with the default dependencies.
 		/// </summary>
-		private CompanyUniqueIdGenerator DefaultIdGenerator { get; } = new CompanyUniqueIdGenerator();
+		private DistributedIdGenerator DefaultIdGenerator { get; } = new DistributedIdGenerator();
 
 		private static ulong ExtractTimestampComponent(decimal id)
 		{
@@ -61,6 +63,42 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 			var randomSequence = lowTwoThirds << 16 >> 16;
 
 			return randomSequence;
+		}
+
+		/// <summary>
+		/// This detail is so important that we have a unit test on the constant. :)
+		/// </summary>
+		[Fact]
+		public void Class_Regularly_ShouldClaimExpectedAverageRateLimit()
+		{
+			Assert.Equal(128, DistributedIdGenerator.AverageRateLimitPerTimestamp);
+		}
+
+		[Fact]
+		public void CreateCore_SubsequentlyOnSameTimestamp_ShouldReachExpectedRateLimit()
+		{
+			const int minimumAverateRate = 100;
+
+			var didSleep = false;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
+
+			var creationCount = 0;
+
+			for (var x = 0; x < 100; x++) // Because probability
+			{
+				didSleep = false;
+
+				while (!didSleep)
+				{
+					generator.CreateId();
+					creationCount++;
+				}
+			}
+
+			var averageRate = creationCount / 100;
+
+			Assert.True(averageRate > minimumAverateRate);
 		}
 
 		[Fact]
@@ -139,7 +177,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 
 			var sumSleepMilliseconds = 0;
 
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
+			var generator = new DistributedIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
 			// Populate the previous timestamp
 			generator.CreateId();
@@ -161,7 +199,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 
 			var sumSleepMilliseconds = 0;
 
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
+			var generator = new DistributedIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
 			// Populate the previous timestamp
 			generator.CreateId();
@@ -174,17 +212,17 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_InYear3000_ShouldSucceed()
 		{
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => new DateTime(3000, 01, 01, 0, 0, 0, DateTimeKind.Utc));
+			var generator = new DistributedIdGenerator(utcClock: () => new DateTime(3000, 01, 01, 0, 0, 0, DateTimeKind.Utc));
 
 			var id = generator.CreateId();
 
-			Assert.True(id < CompanyUniqueIdGenerator.MaxValue);
+			Assert.True(id < DistributedIdGenerator.MaxValue);
 		}
 
 		[Fact]
 		public void CreateId_InYear4000_ShouldOverflow()
 		{
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => new DateTime(4000, 01, 01, 0, 0, 0, DateTimeKind.Utc));
+			var generator = new DistributedIdGenerator(utcClock: () => new DateTime(4000, 01, 01, 0, 0, 0, DateTimeKind.Utc));
 
 			Assert.Throws<InvalidOperationException>(() => generator.CreateId());
 		}
@@ -202,10 +240,10 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_SubsequentlyBeyondRateLimit_ShouldReturnIncrementalValues()
 		{
-			var generator = new CompanyUniqueIdGenerator();
+			var generator = new DistributedIdGenerator();
 
 			var results = new List<decimal>();
-			for (var i = 0; i < 10 + CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
+			for (var i = 0; i < 2 * ExceedingRateLimitPerTimestamp; i++)
 				results.Add(generator.CreateId());
 
 			for (var i = 1; i < results.Count; i++)
@@ -215,11 +253,24 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestampWithinRateLimit_ShouldReturnIncrementalValues()
 		{
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => FixedUtcDateTime);
+			var didSleep = false;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<decimal>();
-			for (var i = 0; i < CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				results.Add(generator.CreateId());
+
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				didSleep = false;
+				results.Clear();
+
+				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
+					results.Add(generator.CreateId());
+
+				if (!didSleep) break;
+			}
+
+			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -229,7 +280,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		public void CreateId_SubsequentlyOnDifferentTimestamps_ShouldReturnIncrementalValues()
 		{
 			var dateTime = FixedUtcDateTime;
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => dateTime = dateTime.AddMilliseconds(1));
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddMilliseconds(1));
 
 			var results = new List<decimal>();
 			for (var i = 0; i < 100; i++)
@@ -242,11 +293,24 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestampWithinRateLimit_ShouldReturnIdenticalTimestampComponents()
 		{
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => FixedUtcDateTime);
+			var didSleep = false;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<ulong>();
-			for (var i = 0; i < CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				results.Add(ExtractTimestampComponent(generator.CreateId()));
+
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				didSleep = false;
+				results.Clear();
+
+				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
+					results.Add(ExtractTimestampComponent(generator.CreateId()));
+
+				if (!didSleep) break;
+			}
+
+			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.Equal(results[i], results[i - 1]);
@@ -256,7 +320,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		public void CreateId_SubsequentlyOnDifferentTimestamps_ShouldReturnIncrementalTimestampComponents()
 		{
 			var dateTime = FixedUtcDateTime;
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => dateTime = dateTime.AddMilliseconds(1));
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddMilliseconds(1));
 
 			var results = new List<ulong>();
 			for (var i = 0; i < 100; i++)
@@ -272,12 +336,24 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameMillisecondButDifferentTick_ShouldReturnIncrementalRandomSequenceComponents()
 		{
+			var didSleep = false;
 			var dateTime = FixedUtcDateTime;
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => dateTime = dateTime.AddTicks(1));
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddTicks(1), sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<ulong>();
-			for (var i = 0; i < CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				didSleep = false;
+				results.Clear();
+
+				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
+					results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+
+				if (!didSleep) break;
+			}
+
+			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -289,11 +365,24 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestampWithinRateLimit_ShouldReturnIncrementalRandomSequenceComponents()
 		{
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => FixedUtcDateTime);
+			var didSleep = false;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<ulong>();
-			for (var i = 0; i < CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				didSleep = false;
+				results.Clear();
+
+				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
+					results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+
+				if (!didSleep) break;
+			}
+
+			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -306,7 +395,7 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		public void CreateId_SubsequentlyOnDifferentTimestamps_ShouldReturnRandomSequenceComponentsThatArePurelyRandom()
 		{
 			var dateTime = FixedUtcDateTime;
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => dateTime = dateTime.AddMilliseconds(1));
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddMilliseconds(1));
 
 			var results = new List<ulong>();
 			for (var i = 0; i < 100; i++)
@@ -327,45 +416,67 @@ namespace Architect.Identities.Tests.CompanyUniqueIds
 		[Fact]
 		public void CreateId_WithinRateLimit_ShouldNotSleep()
 		{
-			var sleepCount = 0;
-			var generator = new CompanyUniqueIdGenerator(sleepAction: _ => sleepCount++);
+			var didSleep = false;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
 
-			for (var i = 0; i < CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				this.DefaultIdGenerator.CreateId();
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				didSleep = false;
 
-			Assert.Equal(0, sleepCount);
+				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
+					this.DefaultIdGenerator.CreateId();
+
+				if (!didSleep) break;
+			}
+
+			Assert.False(didSleep);
 		}
 
 		[Fact]
-		public void CreateId_OnePlusRateLimitTimes_ShouldSleepOneMillisecond()
+		public void CreateId_ExceedingRateLimitTimes_ShouldSleepOneMillisecond()
 		{
 			var clockValue = FixedUtcDateTime; // The clock value normally stays the same
 			var sumSleepMilliseconds = 0;
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => clockValue, sleepAction: milliseconds =>
+			var generator = new DistributedIdGenerator(utcClock: () => clockValue, sleepAction: milliseconds =>
 			{
 				sumSleepMilliseconds += milliseconds;
 				clockValue = clockValue.AddMilliseconds(milliseconds); // The clock advances when we sleep
 			});
 
-			for (var i = 0; i < 1 + CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				generator.CreateId();
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				sumSleepMilliseconds = 0;
+
+				for (var i = 0; i < ExceedingRateLimitPerTimestamp; i++)
+					generator.CreateId();
+
+				if (sumSleepMilliseconds == 1) break;
+			}
 
 			Assert.Equal(1, sumSleepMilliseconds);
 		}
 
 		[Fact]
-		public void CreateId_OnePlusTwiceRateLimitTimes_ShouldSleepTwoMillisecond()
+		public void CreateId_TwiceExceedingRateLimitTimes_ShouldSleepTwoMillisecond()
 		{
 			var clockValue = FixedUtcDateTime; // The clock value normally stays the same
 			var sumSleepMilliseconds = 0;
-			var generator = new CompanyUniqueIdGenerator(utcClock: () => clockValue, sleepAction: milliseconds =>
+			var generator = new DistributedIdGenerator(utcClock: () => clockValue, sleepAction: milliseconds =>
 			{
 				sumSleepMilliseconds += milliseconds;
 				clockValue = clockValue.AddMilliseconds(milliseconds); // The clock advances when we sleep
 			});
 
-			for (var i = 0; i < 1 + 2 * CompanyUniqueIdGenerator.RateLimitPerTimestamp; i++)
-				generator.CreateId();
+			for (var x = 0; x < 20; x++) // Because probability
+			{
+				sumSleepMilliseconds = 0;
+
+				for (var i = 0; i < 2.5 * DistributedIdGenerator.AverageRateLimitPerTimestamp; i++)
+					generator.CreateId();
+
+				if (sumSleepMilliseconds == 2) break;
+			}
 
 			Assert.Equal(2, sumSleepMilliseconds);
 		}

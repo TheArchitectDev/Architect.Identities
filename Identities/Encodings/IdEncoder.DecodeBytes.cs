@@ -106,7 +106,7 @@ namespace Architect.Identities
 
 			id = new decimal(lo: lo, mid: mid, hi: hi, isNegative: false, scale: 0);
 
-			if (signAndScale != 0 || id > CompanyUniqueIdGenerator.MaxValue)
+			if (signAndScale != 0 || id > DistributedIdGenerator.MaxValue)
 			{
 				id = default;
 				return false;
