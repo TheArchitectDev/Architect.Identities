@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC6</Version>
+    <Version>1.0.0-RC7</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 This package provides Azure-implementations for the Architect.Identities package.
