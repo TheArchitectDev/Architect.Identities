@@ -32,10 +32,15 @@ namespace Architect.Identities
 			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGeneratorScope)} on startup.");
 
 		/// <summary>
-		/// Returns the <see cref="IIdGenerator"/> of the currently accessible <see cref="IdGeneratorScope"/>.
-		/// The scope is configured from the outside, such as from startup.
+		/// <para>
+		/// Returns the current ambient <see cref="IIdGenerator"/>, or throws if none is registered.
+		/// </para>
+		/// <para>
+		/// The ID generator can be controlled by constructing a new <see cref="IdGeneratorScope"/> in a using statement.
+		/// A default can be registered using <see cref="IdGeneratorExtensions.UseIdGeneratorScope(IServiceProvider)"/>.
+		/// </para>
 		/// </summary>
-		public static IIdGenerator CurrentGenerator => Current.Generator;
+		internal static IIdGenerator CurrentGenerator => Current.IdGenerator;
 
 		/// <summary>
 		/// Returns an instance if the code is executing in a test run.
@@ -48,7 +53,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// The registered ID generator.
 		/// </summary>
-		internal IIdGenerator Generator { get; }
+		internal IIdGenerator IdGenerator { get; }
 
 		/// <summary>
 		/// Establishes the given ID generator as the ambient one until the scope is disposed.
@@ -66,7 +71,7 @@ namespace Architect.Identities
 		private IdGeneratorScope(IIdGenerator idGenerator, AmbientScopeOption ambientScopeOption)
 			: base(ambientScopeOption)
 		{
-			this.Generator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
+			this.IdGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));
 		}
 
 		protected override void DisposeImplementation()

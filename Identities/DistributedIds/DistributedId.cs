@@ -38,8 +38,6 @@ namespace Architect.Identities
 	/// </summary>
 	public static class DistributedId
 	{
-		private static DistributedIdGenerator Generator { get; } = new DistributedIdGenerator();
-
 		/// <summary>
 		/// <para>
 		/// Returns a new ID value of up to 28 decimal digits, with no decimal places.
@@ -53,10 +51,14 @@ namespace Architect.Identities
 		/// <para>
 		/// Note that the values expose their creation timestamps. This may be sensitive data in some contexts.
 		/// </para>
+		/// <para>
+		/// The ID generator can be controlled by constructing a new <see cref="DistributedIdGeneratorScope"/> in a using statement.
+		/// </para>
 		/// </summary>
 		public static decimal CreateId()
 		{
-			return Generator.CreateId();
+			var id = DistributedIdGeneratorScope.CurrentGenerator.CreateId();
+			return id;
 		}
 	}
 }

@@ -10,6 +10,7 @@ namespace Architect.Identities.Tests.IdGenerators
 		/// <summary>
 		/// This method combines a few tests.
 		/// Because of the static nature of Ambient Context defaults, we test them in a single test.
+		/// Once the default test scope is assigned, we can no longer simulate that we are NOT running in a unit test.
 		/// </summary>
 		[Fact]
 		public void Current_WithOnlyDefault_ShouldSucceedForUnitTestButRequireRegistrationOtherwise()

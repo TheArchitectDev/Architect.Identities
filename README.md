@@ -6,7 +6,7 @@ This package provides highly tuned tools for ID generation and management.
 
 ## TLDR
 
-Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive.
+Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
 
 - For a 93-bit UUID replacement that is *efficient as a primary key* and has *virtually no caveats*, use the **[DistributedId](#distributed-ids)**.
 - For a 64-bit UUID replacement that is *extremely efficient as a primary key*, use the **[Fluid](#fluid)**.

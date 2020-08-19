@@ -8,7 +8,7 @@ namespace Architect.Identities
 	/// <summary>
 	/// Used to implement <see cref="DistributedId"/> in a testable way.
 	/// </summary>
-	internal sealed class DistributedIdGenerator
+	internal sealed class DistributedIdGenerator : IDistributedIdGenerator
 	{
 		/// <summary>
 		/// The maximum ID value that can be generated, and the maximum value to fit in 28 digits.

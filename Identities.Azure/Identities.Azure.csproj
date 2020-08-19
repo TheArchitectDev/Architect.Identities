@@ -16,12 +16,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC4</Version>
+    <Version>1.0.0-RC5</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 This package provides Azure-implementations for the Architect.Identities package.
 
 This package allows Azure blob storage to be used as the synchronization mechanism for assigning unique IDs to each application instance.
+
+services.AddIdGenerator(generator => generator.UseAzureBlobStorageContainer(new BlobContainerClient("ConnectionString", "ContainerName")));
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>

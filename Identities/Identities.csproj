@@ -16,19 +16,21 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC8</Version>
+    <Version>1.0.0-RC9</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 Reliable unique ID generation for distributed applications.
 
 This package provides highly tuned tools for ID generation and management.
 
-Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive.
+Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
 
 - For a 93-bit UUID replacement that is efficient as a primary key and has virtually no caveats, use the DistributedId.
 - For a 64-bit UUID replacement that is extremely efficient as a primary key, use the Fluid.
 - To expose IDs externally in a sensitive environment where zero metadata must be leaked, transform them with PublicIdentities.
 - To assign a unique ID to each distinct application or instance thereof, use an ApplicationInstanceIdSource.
+
+https://github.com/TheArchitectDev/Architect.Identities
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>

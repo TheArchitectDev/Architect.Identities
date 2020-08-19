@@ -16,18 +16,18 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC1</Version>
+    <Version>1.0.0-RC2</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 This package provides EntityFramework extensions for the Architect.Identities package.
 
-Easily configure the column type for decimal ID columns:
+Easily configure the column type to use for decimal ID columns:
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
   // ...
   
-  // For all decimal columns named *Id or *ID
+  // For all mapped decimal columns named *Id or *ID
   modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext: this);
 }
 
@@ -42,8 +42,6 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     entity.Property(e => e.Id)
       .ValueGeneratedNever()
       .StoreWithDecimalIdPrecision(dbContext: this);
-    
-    // ..
   });
 }
 
