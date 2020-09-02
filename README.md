@@ -67,6 +67,32 @@ decimal originalId = IdEncoder.GetDecimalOrDefault(compactId)
 
 Use `DECIMAL(28, 0)` to store a DistributedId in a SQL database.
 
+The ID generation can be controlled from the outside, such as in unit tests that require constant IDs:
+
+```cs
+[Fact]
+public void ShowInversionOfControl()
+{
+	// A custom generator is included
+	const decimal fixedId = 1m;
+	using (new DistributedIdGeneratorScope(new CustomDistributedIdGenerator(() => fixedId)))
+	{
+		var entity = new Entity(); // Constructor uses DistributedId.CreateId()
+		Assert.Equal(fixedId, entity.Id); // True
+		
+		// A simple incremental generator is included as well
+		using (new DistributedIdGeneratorScope(new IncrementalDistributedIdGenerator(fixedId)))
+		{
+			Assert.Equal(1m, DistributedId.CreateId()); // True
+			Assert.Equal(2m, DistributedId.CreateId()); // True
+			Assert.Equal(3m, DistributedId.CreateId()); // True
+		}
+		
+		Assert.Equal(fixedId, DistributedId.CreateId()); // True
+	}
+}
+```
+
 #### Benefits
 
 - Is incremental, making it _significantly_ more efficient as a primary key than a UUID.
@@ -213,7 +239,7 @@ public void ConfigureServices(IServiceCollection services)
 
 public void Configure(IApplicationBuilder applicationBuilder)
 {
-	// Optional: Make IdGeneratorScope.CurrentGenerator available
+	// Optional: Make IdGenerator.Current available
 	applicationBuilder.UseIdGeneratorScope();
 }
 ```
@@ -221,7 +247,7 @@ public void Configure(IApplicationBuilder applicationBuilder)
 ```cs
 public void ExampleUse()
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 	
 	// For a more compact representation, IDs can be encoded in alphanumeric
 	string compactId = id1.ToAlphanumeric(); // "1dw14L86uHcPoQJd"
@@ -242,7 +268,7 @@ In unit tests, no registration is required:
 [Fact]
 public void ShowNoRegistrationRequiredInUnitTests()
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 }
 ```
 
@@ -252,12 +278,22 @@ Even without an injected generator, the ID generation can be controlled from the
 [Fact]
 public void ShowInversionOfControl()
 {
+	// A custom generator is included
 	const long fixedId = 1;
-	using (new IdGeneratorScope(new CustomIdGenerator(fixedId)))
+	using (new IdGeneratorScope(new CustomIdGenerator(() => fixedId)))
 	{
-		var entity = new Entity(); // Implementation uses IdGeneratorScope.CurrentGenerator
-		
+		var entity = new Entity(); // Constructor uses IdGenerator.Current.CreateId()
 		Assert.Equal(fixedId, entity.Id); // True
+		
+		// A simple incremental generator is included as well
+		using (new IdGeneratorScope(new IncrementalIdGenerator()))
+		{
+			Assert.Equal(1L, IdGenerator.Current.CreateId()); // True
+			Assert.Equal(2L, IdGenerator.Current.CreateId()); // True
+			Assert.Equal(3L, IdGenerator.Current.CreateId()); // True
+		}
+		
+		Assert.Equal(fixedId, IdGenerator.Current.CreateId()); // True
 	}
 }
 ```
@@ -380,7 +416,7 @@ public void ConfigureServices(IServiceCollection services)
 ```cs
 public void ExampleUse(IPublicIdentityConverter publicIdConverter)
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 	
 	// Convert to public ID
 	Guid publicId = publicIdConverter.GetPublicRepresentation(id); // 32f0edac-8063-2c68-5c43-c889b058556e
@@ -395,7 +431,7 @@ public void ExampleUse(IPublicIdentityConverter publicIdConverter)
 ```cs
 public void ExampleHexadecimalEncoding(IPublicIdentityConverter publicIdConverter)
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 	
 	// We can use Guid's own methods to get a hexadecimal representation
 	Guid publicId = publicIdConverter.GetPublicRepresentation(id); // 32f0edac-8063-2c68-5c43-c889b058556e
