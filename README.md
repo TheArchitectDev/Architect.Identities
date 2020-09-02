@@ -209,6 +209,42 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 The demonstrated methods abstract away the knowledge of how to configure the properties. If the database used at runtime is SQLite (e.g. for integration tests), the methods customize the mapping differently, since SQLite needs a little extra work to deal with high-precision decimals.
 
+The recommended approach is to first map all entities, and then invoke a single extension method to set the correct column type for _all_ mapped properties that are of type `decimal` (including nullable ones) _and_ whose name ends in `Id` or `ID` (e.g. `Id`, `OrderId`, `ParentID`, etc.):
+
+```cs
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+	modelBuilder.Entity<Order>(entity =>
+	{
+		entity.Property(o => o.Id)
+			.ValueGeneratedNever();
+		
+		entity.HasKey(o => o.Id);
+	});
+	
+	// Other entities ...
+
+	// For all mapped decimal columns named *Id or *ID
+	modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext: this);
+}
+```
+
+Alternatively, each property can be mapped individually:
+
+```cs
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+	modelBuilder.Entity<Order>(entity =>
+	{
+		entity.Property(o => o.Id)
+			.ValueGeneratedNever()
+			.StoreWithDecimalIdPrecision(dbContext: this);
+	});
+}
+```
+
+The demonstrated methods abstract away the knowledge of how to configure the properties. If the database used at runtime is SQLite (e.g. for integration tests), the methods customize the mapping differently, since SQLite needs a little extra work to deal with high-precision decimals.
+
 ## Fluid
 
 The **F**lexible, **L**ocally-**U**nique **ID** is a 64-bit ID value guaranteed to be unique within its configured context. It is extremely efficient as a primary key, and it avoids leaking the sensitive information that an auto-increment ID does.
