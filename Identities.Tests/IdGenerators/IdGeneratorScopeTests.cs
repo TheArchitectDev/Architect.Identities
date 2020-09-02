@@ -31,7 +31,7 @@ namespace Architect.Identities.Tests.IdGenerators
 				using (var host = hostBuilder.Build())
 				{
 					Assert.Throws<InvalidOperationException>(() => IdGeneratorScope.Current);
-					host.UseIdGeneratorScope();
+					host.UseIdGenerator();
 					Assert.NotNull(IdGeneratorScope.Current);
 				}
 				IdGeneratorScope.SetDefaultValue(null);

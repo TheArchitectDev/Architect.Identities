@@ -110,8 +110,8 @@ namespace Architect.Identities
 			if (appInstanceIdPercentageUsed >= 5)
 				Console.WriteLine($"{nameof(Fluid)} ID generator has used over {10 * appInstanceIdPercentageUsed}% of its available {this.MaxApplicationInstanceId} application instance identifiers.");
 
-			var maxDateTime = now.AddMilliseconds(maxTimestamp);
-			var signedMaxDateTime = now.AddMilliseconds(maxTimestamp >> 1);
+			var maxDateTime = this.Epoch.AddMilliseconds(maxTimestamp);
+			var signedMaxDateTime = this.Epoch.AddMilliseconds(maxTimestamp >> 1);
 			var yearsRemaining = maxDateTime.Year - now.Year;
 			var signedYearsRemaining = signedMaxDateTime.Year - now.Year;
 			Console.WriteLine($"{nameof(Fluid)} ID generator has {signedYearsRemaining} ({yearsRemaining}) years of capacity remaining, until {signedMaxDateTime:yyyy-MM-dd} ({maxDateTime:yyyy-MM-dd}) for signed (unsigned) ID storage.");

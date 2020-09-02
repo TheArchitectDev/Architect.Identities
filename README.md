@@ -67,6 +67,32 @@ decimal originalId = IdEncoder.GetDecimalOrDefault(compactId)
 
 Use `DECIMAL(28, 0)` to store a DistributedId in a SQL database.
 
+The ID generation can be controlled from the outside, such as in unit tests that require constant IDs:
+
+```cs
+[Fact]
+public void ShowInversionOfControl()
+{
+	// A custom generator is included
+	const decimal fixedId = 1m;
+	using (new DistributedIdGeneratorScope(new CustomDistributedIdGenerator(() => fixedId)))
+	{
+		var entity = new Entity(); // Constructor uses DistributedId.CreateId()
+		Assert.Equal(fixedId, entity.Id); // True
+		
+		// A simple incremental generator is included as well
+		using (new DistributedIdGeneratorScope(new IncrementalDistributedIdGenerator(fixedId)))
+		{
+			Assert.Equal(1m, DistributedId.CreateId()); // True
+			Assert.Equal(2m, DistributedId.CreateId()); // True
+			Assert.Equal(3m, DistributedId.CreateId()); // True
+		}
+		
+		Assert.Equal(fixedId, DistributedId.CreateId()); // True
+	}
+}
+```
+
 #### Benefits
 
 - Is incremental, making it _significantly_ more efficient as a primary key than a UUID.
@@ -183,6 +209,42 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 
 The demonstrated methods abstract away the knowledge of how to configure the properties. If the database used at runtime is SQLite (e.g. for integration tests), the methods customize the mapping differently, since SQLite needs a little extra work to deal with high-precision decimals.
 
+The recommended approach is to first map all entities, and then invoke a single extension method to set the correct column type for _all_ mapped properties that are of type `decimal` (including nullable ones) _and_ whose name ends in `Id` or `ID` (e.g. `Id`, `OrderId`, `ParentID`, etc.):
+
+```cs
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+	modelBuilder.Entity<Order>(entity =>
+	{
+		entity.Property(o => o.Id)
+			.ValueGeneratedNever();
+		
+		entity.HasKey(o => o.Id);
+	});
+	
+	// Other entities ...
+
+	// For all mapped decimal columns named *Id or *ID
+	modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext: this);
+}
+```
+
+Alternatively, each property can be mapped individually:
+
+```cs
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+	modelBuilder.Entity<Order>(entity =>
+	{
+		entity.Property(o => o.Id)
+			.ValueGeneratedNever()
+			.StoreWithDecimalIdPrecision(dbContext: this);
+	});
+}
+```
+
+The demonstrated methods abstract away the knowledge of how to configure the properties. If the database used at runtime is SQLite (e.g. for integration tests), the methods customize the mapping differently, since SQLite needs a little extra work to deal with high-precision decimals.
+
 ## Fluid
 
 The **F**lexible, **L**ocally-**U**nique **ID** is a 64-bit ID value guaranteed to be unique within its configured context. It is extremely efficient as a primary key, and it avoids leaking the sensitive information that an auto-increment ID does.
@@ -213,15 +275,15 @@ public void ConfigureServices(IServiceCollection services)
 
 public void Configure(IApplicationBuilder applicationBuilder)
 {
-	// Optional: Make IdGeneratorScope.CurrentGenerator available
-	applicationBuilder.UseIdGeneratorScope();
+	// Optional: Make IdGenerator.Current available
+	applicationBuilder.UseIdGenerator();
 }
 ```
 
 ```cs
 public void ExampleUse()
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 	
 	// For a more compact representation, IDs can be encoded in alphanumeric
 	string compactId = id1.ToAlphanumeric(); // "1dw14L86uHcPoQJd"
@@ -242,7 +304,7 @@ In unit tests, no registration is required:
 [Fact]
 public void ShowNoRegistrationRequiredInUnitTests()
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 }
 ```
 
@@ -252,12 +314,22 @@ Even without an injected generator, the ID generation can be controlled from the
 [Fact]
 public void ShowInversionOfControl()
 {
+	// A custom generator is included
 	const long fixedId = 1;
-	using (new IdGeneratorScope(new CustomIdGenerator(fixedId)))
+	using (new IdGeneratorScope(new CustomIdGenerator(() => fixedId)))
 	{
-		var entity = new Entity(); // Implementation uses IdGeneratorScope.CurrentGenerator
-		
+		var entity = new Entity(); // Constructor uses IdGenerator.Current.CreateId()
 		Assert.Equal(fixedId, entity.Id); // True
+		
+		// A simple incremental generator is included as well
+		using (new IdGeneratorScope(new IncrementalIdGenerator()))
+		{
+			Assert.Equal(1L, IdGenerator.Current.CreateId()); // True
+			Assert.Equal(2L, IdGenerator.Current.CreateId()); // True
+			Assert.Equal(3L, IdGenerator.Current.CreateId()); // True
+		}
+		
+		Assert.Equal(fixedId, IdGenerator.Current.CreateId()); // True
 	}
 }
 ```
@@ -380,7 +452,7 @@ public void ConfigureServices(IServiceCollection services)
 ```cs
 public void ExampleUse(IPublicIdentityConverter publicIdConverter)
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 	
 	// Convert to public ID
 	Guid publicId = publicIdConverter.GetPublicRepresentation(id); // 32f0edac-8063-2c68-5c43-c889b058556e
@@ -395,7 +467,7 @@ public void ExampleUse(IPublicIdentityConverter publicIdConverter)
 ```cs
 public void ExampleHexadecimalEncoding(IPublicIdentityConverter publicIdConverter)
 {
-	long id = IdGeneratorScope.CurrentGenerator.CreateId(); // 29998545287255040
+	long id = IdGenerator.Current.CreateId(); // 29998545287255040
 	
 	// We can use Guid's own methods to get a hexadecimal representation
 	Guid publicId = publicIdConverter.GetPublicRepresentation(id); // 32f0edac-8063-2c68-5c43-c889b058556e

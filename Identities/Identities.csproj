@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC10</Version>
+    <Version>1.0.0-RC11</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 Reliable unique ID generation for distributed applications.

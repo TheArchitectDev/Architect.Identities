@@ -34,9 +34,9 @@ namespace Architect.Identities
 		/// <summary>
 		/// Returns an instance if the code is executing in a test run.
 		/// </summary>
-		private static PublicIdentityScope? TestInstance => TestInstanceValue ?? (TestInstanceValue = TestDetector.IsTestRun
+		private static PublicIdentityScope? TestInstance => TestInstanceValue ??= TestDetector.IsTestRun
 			? new PublicIdentityScope(new AesPublicIdentityConverter(new byte[32]), AmbientScopeOption.NoNesting)
-			: null);
+			: null;
 		private static PublicIdentityScope? TestInstanceValue;
 
 		/// <summary>

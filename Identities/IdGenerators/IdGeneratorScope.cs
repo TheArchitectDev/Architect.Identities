@@ -14,7 +14,7 @@ namespace Architect.Identities
 	/// The mechanism optimizes accessiblity (through a static property) at the cost of transparency, making it suitable for obvious, ubiquitous, rarely-changing dependencies.
 	/// </para>
 	/// <para>
-	/// A default scope can be registered on startup through <see cref="IdGeneratorExtensions.UseIdGeneratorScope(IServiceProvider)"/>.
+	/// A default scope can be registered on startup through <see cref="IdGeneratorExtensions.UseIdGenerator(IServiceProvider)"/>.
 	/// In test runs, a default scope is available without the need for any registrations.
 	/// </para>
 	/// <para>
@@ -29,7 +29,7 @@ namespace Architect.Identities
 		/// </summary>
 		internal static IdGeneratorScope Current => GetAmbientScope() ??
 			TestInstance ??
-			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGeneratorScope)} on startup.");
+			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGenerator)} on startup.");
 
 		/// <summary>
 		/// <para>
@@ -37,7 +37,7 @@ namespace Architect.Identities
 		/// </para>
 		/// <para>
 		/// The ID generator can be controlled by constructing a new <see cref="IdGeneratorScope"/> in a using statement.
-		/// A default can be registered using <see cref="IdGeneratorExtensions.UseIdGeneratorScope(IServiceProvider)"/>.
+		/// A default can be registered using <see cref="IdGeneratorExtensions.UseIdGenerator(IServiceProvider)"/>.
 		/// </para>
 		/// </summary>
 		internal static IIdGenerator CurrentGenerator => Current.IdGenerator;

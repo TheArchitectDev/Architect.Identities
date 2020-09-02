@@ -28,7 +28,7 @@ namespace Architect.Identities.Example
 		{
 			// Optional:
 			// Allow injection-free access to the registered IIdGenerator, through the Ambient Context IoC pattern
-			host.UseIdGeneratorScope();
+			host.UseIdGenerator();
 		}
 	}
 }
