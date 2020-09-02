@@ -240,7 +240,7 @@ public void ConfigureServices(IServiceCollection services)
 public void Configure(IApplicationBuilder applicationBuilder)
 {
 	// Optional: Make IdGenerator.Current available
-	applicationBuilder.UseIdGeneratorScope();
+	applicationBuilder.UseIdGenerator();
 }
 ```
 
