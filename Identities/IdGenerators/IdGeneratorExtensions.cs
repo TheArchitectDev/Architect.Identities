@@ -47,56 +47,56 @@ namespace Architect.Identities
 		#region Configuration
 
 		/// <summary>
-		/// Enables static, injection-free access to the registered <see cref="IIdGenerator"/> through the <see cref="IdGeneratorScope"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IIdGenerator"/> through the <see cref="IdGenerator"/> class.
 		/// </summary>
-		public static IApplicationBuilder UseIdGeneratorScope(this IApplicationBuilder applicationBuilder)
+		public static IApplicationBuilder UseIdGenerator(this IApplicationBuilder applicationBuilder)
 		{
-			return UseIdGeneratorScope<IIdGenerator>(applicationBuilder);
+			return UseIdGenerator<IIdGenerator>(applicationBuilder);
 		}
 		
 		/// <summary>
-		/// Enables static, injection-free access to the registered ID generator through the <see cref="IdGeneratorScope"/> class.
+		/// Enables static, injection-free access to the registered ID generator through the <see cref="IdGenerator"/> class.
 		/// </summary>
 		/// <typeparam name="TIdGenerator">The type of the ID generator to make available.</typeparam>
-		public static IApplicationBuilder UseIdGeneratorScope<TIdGenerator>(this IApplicationBuilder applicationBuilder)
+		public static IApplicationBuilder UseIdGenerator<TIdGenerator>(this IApplicationBuilder applicationBuilder)
 			where TIdGenerator : IIdGenerator
 		{
-			UseIdGeneratorScope<TIdGenerator>(applicationBuilder.ApplicationServices);
+			UseIdGenerator<TIdGenerator>(applicationBuilder.ApplicationServices);
 			return applicationBuilder;
 		}
 
 		/// <summary>
-		/// Enables static, injection-free access to the registered <see cref="IIdGenerator"/> through the <see cref="IdGeneratorScope"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IIdGenerator"/> through the <see cref="IdGenerator"/> class.
 		/// </summary>
-		public static IHost UseIdGeneratorScope(this IHost host)
+		public static IHost UseIdGenerator(this IHost host)
 		{
-			return UseIdGeneratorScope<IIdGenerator>(host);
+			return UseIdGenerator<IIdGenerator>(host);
 		}
 
 		/// <summary>
-		/// Enables static, injection-free access to the registered ID generator through the <see cref="IdGeneratorScope"/> class.
+		/// Enables static, injection-free access to the registered ID generator through the <see cref="IdGenerator"/> class.
 		/// </summary>
 		/// <typeparam name="TIdGenerator">The type of the ID generator to make available.</typeparam>
-		public static IHost UseIdGeneratorScope<TIdGenerator>(this IHost host)
+		public static IHost UseIdGenerator<TIdGenerator>(this IHost host)
 			where TIdGenerator : IIdGenerator
 		{
-			UseIdGeneratorScope<TIdGenerator>(host.Services);
+			UseIdGenerator<TIdGenerator>(host.Services);
 			return host;
 		}
 
 		/// <summary>
-		/// Enables static, injection-free access to the registered <see cref="IIdGenerator"/> through the <see cref="IdGeneratorScope"/> class.
+		/// Enables static, injection-free access to the registered <see cref="IIdGenerator"/> through the <see cref="IdGenerator"/> class.
 		/// </summary>
-		public static IServiceProvider UseIdGeneratorScope(this IServiceProvider serviceProvider)
+		public static IServiceProvider UseIdGenerator(this IServiceProvider serviceProvider)
 		{
-			return UseIdGeneratorScope<IIdGenerator>(serviceProvider);
+			return UseIdGenerator<IIdGenerator>(serviceProvider);
 		}
 
 		/// <summary>
-		/// Enables static, injection-free access to the registered ID generator through the <see cref="IdGeneratorScope"/> class.
+		/// Enables static, injection-free access to the registered ID generator through the <see cref="IdGenerator"/> class.
 		/// </summary>
 		/// <typeparam name="TIdGenerator">The type of the ID generator to make available.</typeparam>
-		public static IServiceProvider UseIdGeneratorScope<TIdGenerator>(this IServiceProvider serviceProvider)
+		public static IServiceProvider UseIdGenerator<TIdGenerator>(this IServiceProvider serviceProvider)
 			where TIdGenerator : IIdGenerator
 		{
 			var generator = serviceProvider.GetRequiredService<TIdGenerator>();

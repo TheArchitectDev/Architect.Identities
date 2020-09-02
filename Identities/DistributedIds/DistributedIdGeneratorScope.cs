@@ -4,7 +4,6 @@ using Architect.AmbientContexts;
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
-	// #TODO: DistributedIdScope or DistributedIdGeneratorScope?
 	/// <summary>
 	/// <para>
 	/// Provides access to a distributed ID generator through the Ambient Context pattern.
