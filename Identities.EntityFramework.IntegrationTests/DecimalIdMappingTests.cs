@@ -37,6 +37,48 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
 		}
 
+		[Fact]
+		public void StoreWithDecimalIdPrecision_WithInMemory_ReturnsExpectedPrecision()
+		{
+			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
+				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext)));
+
+			var entity = new TestEntity();
+			var loadedEntity = this.SaveAndReload(entity, dbContext);
+
+			Assert.Equal(entity.Id, loadedEntity.Id);
+			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
+			//Assert.Equal("DECIMAL(28,0)", dbContext.Model.FindEntityType(typeof(TestEntity)).FindProperty(nameof(TestEntity.Id)).GetColumnType()); // Does not work with in-memory provider
+		}
+
+		[Fact]
+		public void StoreWithDecimalIdPrecision_WithInMemoryAndExplicitColumnType_ReturnsExpectedPrecision()
+		{
+			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
+				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext, columnType: "DECIMAL(28,0)")));
+
+			var entity = new TestEntity();
+			var loadedEntity = this.SaveAndReload(entity, dbContext);
+
+			Assert.Equal(entity.Id, loadedEntity.Id);
+			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
+			//Assert.Equal("DECIMAL(28,0)", dbContext.Model.FindEntityType(typeof(TestEntity)).FindProperty(nameof(TestEntity.Id)).GetColumnType()); // Does not work with in-memory provider
+		}
+
+		[Fact]
+		public void StoreWithDecimalIdPrecision_WithInMemoryAndDifferentColumnType_ReturnsExpectedPrecision()
+		{
+			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
+				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext, columnType: "DECIMAL(29,1)")));
+
+			var entity = new TestEntity();
+			var loadedEntity = this.SaveAndReload(entity, dbContext);
+
+			Assert.Equal(entity.Id, loadedEntity.Id);
+			//Assert.Equal(1, GetSignAndScale(loadedEntity.Id)); // Unfortunately, the in-memory provider does not honor this, but at least we know that the flow did not throw
+			Assert.Equal("DECIMAL(29,1)", dbContext.Model.FindEntityType(typeof(TestEntity)).FindProperty(nameof(TestEntity.Id)).GetColumnType());
+		}
+
 		/// <summary>
 		/// This should work too, since the precision is being explicitly set. The per-property method should not have any naming requirements.
 		/// </summary>

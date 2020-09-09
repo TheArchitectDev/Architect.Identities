@@ -13,33 +13,39 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 		public DbSet<TestEntity> Entities { get; protected set; }
 		public Action<ModelBuilder, DbContext> OnModelCreatingAction { get; }
 
-		public static TestDbContext Create(Action<ModelBuilder, DbContext> onModelCreating = null)
+		public static TestDbContext Create(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
 		{
 			// Must construct a runtime subtype, because otherwise EF caches the result of OnModelCreating
 
 			var typeBuilder = ModuleBuilder.DefineType($"{nameof(TestDbContext)}_{Guid.NewGuid()}",
 				TypeAttributes.Sealed | TypeAttributes.Class | TypeAttributes.Public, typeof(TestDbContext));
 
-			var baseConstructor = typeof(TestDbContext).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(Action<ModelBuilder, DbContext>) }, modifiers: null);
-			var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(Action<ModelBuilder, DbContext>) });
+			var baseConstructor = typeof(TestDbContext).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, binder: null,
+				new[] { typeof(Action<ModelBuilder, DbContext>), typeof(bool) }, modifiers: null);
+			var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(Action<ModelBuilder, DbContext>), typeof(bool) });
 			var ilGenerator = ctorBuilder.GetILGenerator();
 			ilGenerator.Emit(OpCodes.Ldarg_0);
 			ilGenerator.Emit(OpCodes.Ldarg_1);
+			ilGenerator.Emit(OpCodes.Ldarg_2);
 			ilGenerator.Emit(OpCodes.Call, baseConstructor);
 			ilGenerator.Emit(OpCodes.Ret);
 
 			var type = typeBuilder.CreateType();
 
-			var instance = (TestDbContext)Activator.CreateInstance(type, new[] { onModelCreating });
+			var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite });
 			return instance;
 		}
 
-		protected TestDbContext(Action<ModelBuilder, DbContext> onModelCreating = null)
-			: base(new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
+		protected TestDbContext(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
+			: base(useInMemoryInsteadOfSqlite
+				  ? new DbContextOptionsBuilder().UseInMemoryDatabase("db").Options
+				  : new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
 		{
 			this.OnModelCreatingAction = onModelCreating ?? ((modelBuilder, dbContext) => { });
 
-			this.Database.OpenConnection();
+			if (!useInMemoryInsteadOfSqlite)
+				this.Database.OpenConnection();
+
 			this.Database.EnsureCreated();
 		}
 
