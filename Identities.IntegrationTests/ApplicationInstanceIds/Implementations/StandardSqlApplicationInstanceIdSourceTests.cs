@@ -34,7 +34,7 @@ namespace Architect.Identities.IntegrationTests.ApplicationInstanceIds.Implement
 			this.Connection.Open();
 			command.CommandText = $@"
 CREATE TABLE {TableName} (
-	id BIGINT UNSIGNED PRIMARY KEY,
+	id BIGINT PRIMARY KEY,
 	application_name CHAR(50),
 	server_name CHAR(50),
 	creation_datetime DATETIME(3) NOT NULL
