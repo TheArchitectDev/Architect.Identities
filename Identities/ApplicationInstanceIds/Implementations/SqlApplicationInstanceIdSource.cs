@@ -22,20 +22,58 @@ namespace Architect.Identities
 	{
 		public const string DefaultTableName = "application_instance_id";
 
+		/// <summary>
+		/// <para>
+		/// By setting this to another method, a custom implementation can be provided for acquiring a <see cref="DbConnection"/> and performing one or more commands transactionally.
+		/// </para>
+		/// <para>
+		/// This should be implemented very carefully. The current class' implementation and the DbContext-based one provide good examples.
+		/// </para>
+		/// <para>
+		/// Note that by overwriting this, it is possible to render <see cref="ConnectionFactory"/> unused.
+		/// </para>
+		/// </summary>
+		public Func<Func<DbConnection, object?>, object?> ExecuteTransactionallyFunc { get; set; }
 		private Func<DbConnection> ConnectionFactory { get; }
 		private string? DatabaseName { get; }
 
-		/// <summary>
-		/// This constructor may call virtual methods.
-		/// </summary>
 		protected SqlApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseName,
 			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
 			: base(applicationLifetime, exceptionHandler)
 		{
+			this.ExecuteTransactionallyFunc = this.ExecuteTransactionally;
 			this.ConnectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
 			this.DatabaseName = databaseName;
 
 			if (this.DatabaseName?.Length == 0) throw new ArgumentException("The database name must be either null or non-empty.");
+		}
+
+		protected object? ExecuteTransactionally(Action<DbConnection> action)
+		{
+			return this.ExecuteTransactionally(connection =>
+			{
+				action(connection);
+				return null;
+			});
+		}
+
+		protected virtual object? ExecuteTransactionally(Func<DbConnection, object?> action)
+		{
+			if (Transaction.Current != null)
+				throw new Exception($"Unexpected database transaction during {this.GetType().Name}.{nameof(this.GetContextUniqueApplicationInstanceId)}.");
+
+			using var transactionScope = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted });
+
+			using var connection = this.ConnectionFactory() ?? throw new Exception("The database connection factory produced a null connection.");
+
+			if (connection.State == System.Data.ConnectionState.Closed)
+				connection.Open();
+
+			var result = action(connection);
+
+			transactionScope.Complete();
+
+			return result;
 		}
 
 		protected override ushort GetContextUniqueApplicationInstanceIdCore()
@@ -43,17 +81,11 @@ namespace Architect.Identities
 			if (Transaction.Current != null)
 				throw new Exception($"Unexpected database transaction during {this.GetType().Name}.{nameof(this.GetContextUniqueApplicationInstanceId)}.");
 
-			using (var connection = this.ConnectionFactory() ?? throw new Exception("The database connection factory produced a null connection."))
-			{
-				connection.Open();
-				this.CreateTableIfNotExists(connection, this.DatabaseName);
-			}
+			this.ExecuteTransactionally(connection => this.CreateTableIfNotExists(connection, this.DatabaseName));
 
-			using (var transactionScope = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted }))
-			using (var connection = this.ConnectionFactory() ?? throw new Exception("The database connection factory produced a null connection."))
-			using (var command = connection.CreateCommand())
+			var result = this.ExecuteTransactionally(connection =>
 			{
-				connection.Open();
+				using var command = connection.CreateCommand();
 
 				command.CommandTimeout = 3; // Seconds
 
@@ -67,30 +99,34 @@ namespace Architect.Identities
 				if (applicationInstanceId == 0)
 					throw new Exception($"{this.GetType().Name} provided an invalid application instance identifier of 0.");
 
-				transactionScope.Complete();
-
 				return applicationInstanceId;
-			}
+			});
+
+			System.Diagnostics.Debug.Assert(result is ushort);
+
+			return (ushort)result;
 		}
 
 		protected override void DeleteContextUniqueApplicationInstanceIdCore()
 		{
 			using (new TransactionScope(TransactionScopeOption.Suppress)) // Ignore ambient transactions
-			using (var connection = this.ConnectionFactory() ?? throw new Exception("The database connection factory produced a null connection."))
-			using (var command = connection.CreateCommand())
 			{
-				command.CommandTimeout = 3; // Seconds
+				this.ExecuteTransactionally(connection =>
+				{
+					using var command = connection.CreateCommand();
 
-				this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId(command, this.DatabaseName, this.ContextUniqueApplicationInstanceId.Value);
+					command.CommandTimeout = 3; // Seconds
 
-				if (command.CommandText is null)
-					throw new Exception($"{this.GetType().Name}.{nameof(this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId)} failed to set a command text.");
-				
-				connection.Open();
-				var affectedRowCount = this.ExecuteCommandForDeleteContextUniqueApplicationInstanceId(command);
+					this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId(command, this.DatabaseName, this.ContextUniqueApplicationInstanceId.Value);
 
-				if (affectedRowCount != 1)
-					throw new Exception($"{this.GetType().Name}.{nameof(this.DeleteContextUniqueApplicationInstanceId)} affected {affectedRowCount} rows instead of the expected 1.");
+					if (command.CommandText is null)
+						throw new Exception($"{this.GetType().Name}.{nameof(this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId)} failed to set a command text.");
+
+					var affectedRowCount = this.ExecuteCommandForDeleteContextUniqueApplicationInstanceId(command);
+
+					if (affectedRowCount != 1)
+						throw new Exception($"{this.GetType().Name}.{nameof(this.DeleteContextUniqueApplicationInstanceId)} affected {affectedRowCount} rows instead of the expected 1.");
+				});
 			}
 		}
 

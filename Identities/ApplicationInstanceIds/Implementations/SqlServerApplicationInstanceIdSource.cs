@@ -15,9 +15,16 @@ namespace Architect.Identities
 			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
 			: base(connectionFactory, databaseAndSchemaName, applicationLifetime, exceptionHandler)
 		{
+			ThrowIfDatabaseNameExcludesSchema(databaseAndSchemaName);
+		}
+
+		private static void ThrowIfDatabaseNameExcludesSchema(string? databaseAndSchemaName)
+		{
 			if (databaseAndSchemaName != null && databaseAndSchemaName.Count(chr => chr == '.') != 1)
+			{
 				throw new NotSupportedException(
-					$"{this.GetType().Name} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");
+					$"{nameof(SqlServerApplicationInstanceIdSource)} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");
+			}
 		}
 
 		protected override void CreateTableIfNotExists(DbConnection connection, string? databaseName)
