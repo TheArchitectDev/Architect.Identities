@@ -1,20 +1,23 @@
 ﻿using System;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
-	/// A MySQL-specific implementation.
+	/// An implementation specific to SQLite.
 	/// </summary>
-	internal sealed class MySqlApplicationInstanceIdSource : StandardSqlApplicationInstanceIdSource
+	internal sealed class SqliteApplicationInstanceIdRenter : StandardSqlApplicationInstanceIdRenter
 	{
-		public MySqlApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(connectionFactory, databaseName, applicationLifetime, exceptionHandler)
+		public SqliteApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseName)
+			: base(serviceProvider, databaseName)
 		{
+		}
+
+		protected override object? ExecuteTransactionally(Func<DbConnection, object?> action)
+		{
+			return base.ExecuteTransactionally(action);
 		}
 
 		protected override void CreateTableIfNotExists(DbConnection connection, string? databaseName)
@@ -32,7 +35,7 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
   `server_name` CHAR(50),
   `creation_datetime` DATETIME(3) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=INNODB CHARSET=ASCII COLLATE=ascii_general_ci
+)
 ;
 ";
 
@@ -55,11 +58,11 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
 
 			command.CommandText = $@"
 -- Acquire exclusive lock on record 0 (regardless of prior existence)
-REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, NOW(3));
+REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'));
 
 -- Insert smallest available ID
 INSERT INTO {databaseName}{DefaultTableName}
-SELECT 1 + id, @ApplicationName, @ServerName, NOW(3)
+SELECT 1 + id, @ApplicationName, @ServerName, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
 FROM {databaseName}{DefaultTableName} aii
 WHERE NOT EXISTS (SELECT id FROM {databaseName}{DefaultTableName} WHERE id = 1 + aii.id)
 ORDER BY id

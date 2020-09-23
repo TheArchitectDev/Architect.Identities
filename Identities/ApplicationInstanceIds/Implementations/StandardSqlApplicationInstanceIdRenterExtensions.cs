@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Data.Common;
+using Architect.Identities.ApplicationInstanceIds;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
-	public static class StandardSqlApplicationInstanceIdSourceExtensions
+	public static class StandardSqlApplicationInstanceIdRenterExtensions
 	{
 		/// <summary>
 		/// <para>
@@ -18,7 +19,7 @@ namespace Architect.Identities
 		/// Unlike this one, such an implementation may be able to create the table if it does not exist, and it may be optimized for that specific database.
 		/// </para>
 		/// <para>
-		/// This overload takes a generic dependency to inject, and a function to get a DbConnection from that dependency.
+		/// This overload takes a generic dependency to inject, and a function to get a <see cref="DbConnection"/> from that dependency.
 		/// The dependency must be registered separately.
 		/// </para>
 		/// <para>
@@ -27,45 +28,31 @@ namespace Architect.Identities
 		/// <para>
 		/// The implementation will throw if the database does not exist, or if the table does not exist.
 		/// </para>
-		/// <para>
-		/// All database interaction except for cleanup is performed on startup, ensuring availability of the dependency before the application starts.
-		/// </para>
 		/// </summary>
-		/// <param name="getConnectionFromFactory">A function that gets a new DbConnection from the registered connection factory.</param>
-		/// <param name="connectionString">Written onto produced DbConnection objects, if given. Required only if a DbConnection is produced without a connection string.</param>
+		/// <param name="getConnectionFromFactory">A function that gets a new <see cref="DbConnection"/> from the registered connection factory.</param>
+		/// <param name="connectionString">Written onto produced <see cref="DbConnection"/> objects, if given. Required only if a <see cref="DbConnection"/> is produced without a connection string.</param>
 		/// <param name="databaseName">If the connection factory's connection string does not specify the database name, specify it here instead.</param>
 		public static ApplicationInstanceIdSourceExtensions.Options UseStandardSql<TDatabaseConnectionFactory>(this ApplicationInstanceIdSourceExtensions.Options options,
 			Func<TDatabaseConnectionFactory, DbConnection> getConnectionFromFactory, string? connectionString = null,
 			string? databaseName = null)
+			where TDatabaseConnectionFactory : class
 		{
-			options.Services.AddSingleton(CreateInstance);
+			// Register an IDbConnectionFactory
+			ApplicationInstanceIdSourceDbConnectionFactory.Register(options.Services, getConnectionFromFactory, connectionString);
+
+			// Register an IApplicationInstanceIdSourceTransactionalExecutor that uses the IDbConnectionFactory
+			options.Services.AddTransient<IApplicationInstanceIdSourceTransactionalExecutor, SqlTransactionalExecutor>();
+
+			// Register the IApplicationInstanceIdRenter that uses all of the above
+			options.Services.AddTransient(CreateInstance);
+
 			return options;
 
-			// Local function used to create an instance
-			IApplicationInstanceIdSource CreateInstance(IServiceProvider serviceProvider)
+			// Local function that creates a new instance
+			IApplicationInstanceIdRenter CreateInstance(IServiceProvider serviceProvider)
 			{
-				var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
-				var databaseConnectionFactory = serviceProvider.GetRequiredService<TDatabaseConnectionFactory>();
-				var exceptionHandler = options.ExceptionHandlerFactory?.Invoke(serviceProvider);
-
-				var instance = new StandardSqlApplicationInstanceIdSource(
-					GetConnectionFromFactory,
-					databaseName,
-					applicationLifetime,
-					exceptionHandler);
-
-				// As the value is likely application-critical, enforce its resolution if the application has not started yet
-				if (!applicationLifetime.ApplicationStarted.IsCancellationRequested) _ = instance.ContextUniqueApplicationInstanceId.Value;
-
+				var instance = new StandardSqlApplicationInstanceIdRenter(serviceProvider, databaseName);
 				return instance;
-
-				// Local function that returns a new DbConnection based on the registered connection factory, the function that gets a connection from it, and the optional connection string
-				DbConnection GetConnectionFromFactory()
-				{
-					var connection = getConnectionFromFactory(databaseConnectionFactory) ?? throw new Exception("The factory produced a null connection object.");
-					if (connectionString != null) connection.ConnectionString = connectionString;
-					return connection;
-				}
 			}
 		}
 
@@ -79,17 +66,14 @@ namespace Architect.Identities
 		/// Unlike this one, such an implementation may be able to create the table if it does not exist, and it may be optimized for that specific database.
 		/// </para>
 		/// <para>
-		/// This overload takes a custom factory of DbConnection objects.
+		/// This overload takes a custom factory of <see cref="DbConnection"/> objects.
 		/// </para>
 		/// <para>
 		/// The implementation will throw if the database does not exist, or if the table does not exist.
 		/// </para>
-		/// <para>
-		/// All database interaction except for cleanup is performed on startup, ensuring availability of the dependency before the application starts.
-		/// </para>
 		/// </summary>
 		/// <param name="connectionFactory">A function that provides new DbConnection objects.</param>
-		/// <param name="connectionString">Written onto produced DbConnection objects, if given. Required only if a DbConnection is produced without a connection string.</param>
+		/// <param name="connectionString">Written onto produced <see cref="DbConnection"/> objects, if given. Required only if a <see cref="DbConnection"/> is produced without a connection string.</param>
 		/// <param name="databaseName">If the connection factory's connection string does not specify the database name, specify it here instead.</param>
 		public static ApplicationInstanceIdSourceExtensions.Options UseStandardSql(this ApplicationInstanceIdSourceExtensions.Options options,
 			Func<DbConnection> connectionFactory, string? connectionString = null,

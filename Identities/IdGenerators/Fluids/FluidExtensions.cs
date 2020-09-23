@@ -32,7 +32,7 @@ namespace Architect.Identities
 			var hostEnvironment = serviceProvider.GetRequiredService<IHostEnvironment>();
 			var applicationInstanceIdSource = serviceProvider.GetRequiredService<IApplicationInstanceIdSource>();
 
-			var applicationInstanceId = applicationInstanceIdSource.ContextUniqueApplicationInstanceId.Value; // Might throw if the app instance ID source is unreachable
+			var applicationInstanceId = applicationInstanceIdSource.ApplicationInstanceId; // Might throw if the app instance ID was not acquired
 
 			// Throw on value 0 in production
 			if (applicationInstanceId == 0 && hostEnvironment.IsProduction())

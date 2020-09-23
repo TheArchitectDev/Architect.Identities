@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
-	/// An implementation specific to SQLite.
+	/// A MySQL-specific implementation.
 	/// </summary>
-	internal sealed class SqliteApplicationInstanceIdSource : StandardSqlApplicationInstanceIdSource
+	internal sealed class MySqlApplicationInstanceIdRenter : StandardSqlApplicationInstanceIdRenter
 	{
-		public SqliteApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(connectionFactory, databaseName, applicationLifetime, exceptionHandler)
+		public MySqlApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseName)
+			: base(serviceProvider, databaseName)
 		{
 		}
 
@@ -32,7 +30,7 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
   `server_name` CHAR(50),
   `creation_datetime` DATETIME(3) NOT NULL,
   PRIMARY KEY (`id`)
-)
+) ENGINE=INNODB CHARSET=ASCII COLLATE=ascii_general_ci
 ;
 ";
 
@@ -55,11 +53,11 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
 
 			command.CommandText = $@"
 -- Acquire exclusive lock on record 0 (regardless of prior existence)
-REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, DATE('now'));
+REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, NOW(3));
 
 -- Insert smallest available ID
 INSERT INTO {databaseName}{DefaultTableName}
-SELECT 1 + id, @ApplicationName, @ServerName, DATE('now')
+SELECT 1 + id, @ApplicationName, @ServerName, NOW(3)
 FROM {databaseName}{DefaultTableName} aii
 WHERE NOT EXISTS (SELECT id FROM {databaseName}{DefaultTableName} WHERE id = 1 + aii.id)
 ORDER BY id

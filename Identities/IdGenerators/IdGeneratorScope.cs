@@ -29,7 +29,7 @@ namespace Architect.Identities
 		/// </summary>
 		internal static IdGeneratorScope Current => GetAmbientScope() ??
 			TestInstance ??
-			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions)}.{nameof(IdGeneratorExtensions.UseIdGenerator)} on startup.");
+			throw new InvalidOperationException($"{nameof(IdGeneratorScope)} was not configured. Call {nameof(IdGeneratorExtensions.UseIdGenerator)}() on startup.");
 
 		/// <summary>
 		/// <para>

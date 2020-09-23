@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
 	/// <para>
@@ -15,18 +14,14 @@ namespace Architect.Identities
 	/// Either the table must be created manually, or a vendor-specific implementation must be used.
 	/// </para>
 	/// <para>
-	/// This implementation registers the smallest available ID by inserting it into a dedicated table.
-	/// On application shutdown, it attempts to remove that ID, freeing it up again.
-	/// </para>
-	/// <para>
-	/// Enough possible IDs should be available that an occassional failure to free up an ID is not prohibitive.
+	/// This implementation rents the smallest available ID by inserting it into a dedicated table.
+	/// On returning, it attempts to remove that ID, freeing it up again.
 	/// </para>
 	/// </summary>
-	public class StandardSqlApplicationInstanceIdSource : SqlApplicationInstanceIdSource
+	public class StandardSqlApplicationInstanceIdRenter : SqlApplicationInstanceIdRenter
 	{
-		public StandardSqlApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(connectionFactory, databaseName, applicationLifetime, exceptionHandler)
+		public StandardSqlApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseName)
+			: base(serviceProvider, databaseName)
 		{
 		}
 

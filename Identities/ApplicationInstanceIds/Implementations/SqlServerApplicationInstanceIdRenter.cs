@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
 	/// An implementation specific to [Azure] SQL Server.
 	/// </summary>
-	internal sealed class SqlServerApplicationInstanceIdSource : StandardSqlApplicationInstanceIdSource
+	internal sealed class SqlServerApplicationInstanceIdRenter : StandardSqlApplicationInstanceIdRenter
 	{
-		public SqlServerApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseAndSchemaName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(connectionFactory, databaseAndSchemaName, applicationLifetime, exceptionHandler)
+		public SqlServerApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseAndSchemaName)
+			: base(serviceProvider, databaseAndSchemaName)
 		{
 			ThrowIfDatabaseNameExcludesSchema(databaseAndSchemaName);
 		}
@@ -23,7 +21,7 @@ namespace Architect.Identities
 			if (databaseAndSchemaName != null && databaseAndSchemaName.Count(chr => chr == '.') != 1)
 			{
 				throw new NotSupportedException(
-					$"{nameof(SqlServerApplicationInstanceIdSource)} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");
+					$"{nameof(SqlServerApplicationInstanceIdRenter)} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");
 			}
 		}
 

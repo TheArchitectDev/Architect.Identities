@@ -3,34 +3,32 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using Architect.Identities.ApplicationInstanceIds;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
-using static Architect.Identities.AzureBlobApplicationInstanceIdSource;
 
 namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 {
-	public sealed class AzureBlobApplicationInstanceIdSourceTests : IDisposable
+	public sealed class AzureBlobApplicationInstanceIdRenterTests : IDisposable
 	{
 		/// <summary>
 		/// Not started by default, for performance.
 		/// </summary>
 		private IHost Host { get; }
-		private IHostApplicationLifetime HostApplicationLifetime { get; }
 		private MockBlobContainerRepo Repo { get; }
-		private AzureBlobApplicationInstanceIdSource Source { get; }
+		private AzureBlobApplicationInstanceIdRenter Renter { get; }
 		private MockExceptionHandler ExceptionHandler { get; }
 
-		public AzureBlobApplicationInstanceIdSourceTests()
+		public AzureBlobApplicationInstanceIdRenterTests()
 		{
-			var hostBuilder = new HostBuilder();
-			this.Host = hostBuilder.Build();
-			this.HostApplicationLifetime = this.Host.Services.GetRequiredService<IHostApplicationLifetime>();
-			this.Repo = new MockBlobContainerRepo();
 			this.ExceptionHandler = new MockExceptionHandler();
-			this.Source = new AzureBlobApplicationInstanceIdSource(this.Repo, this.HostApplicationLifetime,
-				exceptionHandler: this.ExceptionHandler.HandleException);
+
+			var hostBuilder = new HostBuilder();
+			hostBuilder.ConfigureServices(services => services.AddSingleton<IExceptionHandler>(this.ExceptionHandler));
+			this.Host = hostBuilder.Build();
+			this.Repo = new MockBlobContainerRepo();
+			this.Renter = new AzureBlobApplicationInstanceIdRenter(this.Host.Services, this.Repo);
 		}
 
 		public void Dispose()
@@ -39,70 +37,68 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_Regularly_ShouldAddBlob()
+		public void RentId_Regularly_ShouldAddBlob()
 		{
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			Assert.Single(this.Repo.Blobs);
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithNoPriorIds_ShouldAddId1()
+		public void RentId_WithNoPriorIds_ShouldAddId1()
 		{
 			System.Diagnostics.Debug.Assert(this.Repo.Blobs.Count == 0);
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			Assert.Single(this.Repo.Blobs);
 			Assert.Equal("1", this.Repo.Blobs.Keys.Single());
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithOnlyPriorId1_ShouldAddId2()
+		public void RentId_WithOnlyPriorId1_ShouldAddId2()
 		{
 			this.Repo.Blobs.TryAdd("1", new byte[0]);
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			Assert.Contains("2", this.Repo.Blobs.Keys);
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithOnlyPriorId100_ShouldAddId1()
+		public void RentId_WithOnlyPriorId100_ShouldAddId1()
 		{
 			this.Repo.Blobs.TryAdd("100", new byte[0]);
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			Assert.Contains("1", this.Repo.Blobs.Keys);
 		}
 
 		[Fact]
-		public async Task StopHost_Regularly_ShouldDeleteId()
+		public void ReturnId_Regularly_ShouldDeleteId()
 		{
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			Assert.Contains("1", this.Repo.Blobs.Keys);
 
-			await this.Host.StopAsync();
+			this.Renter.ReturnId(id);
 
 			Assert.DoesNotContain("1", this.Repo.Blobs.Keys);
 		}
 
 		[Fact]
-		public async Task StopHost_WithMultipleIdsPresent_ShouldOnlyTouchOwnId()
+		public void ReturnId_WithMultipleIdsPresent_ShouldOnlyTouchOwnId()
 		{
-			this.Host.Start();
-
 			this.Repo.Blobs.TryAdd("1", new byte[0]);
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			Assert.Contains("2", this.Repo.Blobs.Keys);
 
 			this.Repo.Blobs.TryAdd("3", new byte[0]);
 
-			await this.Host.StopAsync();
+			this.Renter.ReturnId(id);
 
 			Assert.Contains("1", this.Repo.Blobs.Keys);
 			Assert.DoesNotContain("2", this.Repo.Blobs.Keys);
@@ -110,50 +106,40 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_Regularly_ShouldSucceed()
+		public void RentId_Regularly_ShouldNotThrow()
 		{
-			var _ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var _ = this.Renter.RentId();
 
 			Assert.Empty(this.ExceptionHandler.Invocations);
 		}
 
 		[Fact]
-		public void CreateThroughFactory_WithException_ShouldThrow()
+		public void RentId_WithException_ShouldThrow()
 		{
 			this.Repo.ShouldThrow = true;
 
-			Assert.ThrowsAny<Exception>(() => this.Source.ContextUniqueApplicationInstanceId.Value);
+			Assert.ThrowsAny<Exception>(() => this.Renter.RentId());
 
 			Assert.Equal(1, this.ExceptionHandler.Invocations.Count);
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithException_ShouldThrow()
-		{
-			this.Repo.ShouldThrow = true;
-
-			Assert.ThrowsAny<Exception>(() => _ = this.Source.ContextUniqueApplicationInstanceId.Value);
-
-			Assert.Equal(1, this.ExceptionHandler.Invocations.Count);
-		}
-
-		[Fact]
-		public async Task StopHost_WithException_ShouldCallExceptionHandler()
+		public void ReturnId_WithException_ShouldCallExceptionHandler()
 		{
 			this.Host.Start();
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			this.Repo.ShouldThrow = true;
 
 			Assert.Empty(this.ExceptionHandler.Invocations);
 
-			await this.Host.StopAsync();
+			this.Renter.ReturnId(id);
 
 			Assert.Equal(1, this.ExceptionHandler.Invocations.Count);
 		}
 
-		private sealed class MockExceptionHandler
+		private sealed class MockExceptionHandler : IExceptionHandler
 		{
 			public IReadOnlyCollection<Exception> Invocations => this._invocations;
 			private readonly List<Exception> _invocations = new List<Exception>();
@@ -161,7 +147,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 			public void HandleException(Exception e) => this._invocations.Add(e);
 		}
 
-		private sealed class MockBlobContainerRepo : IBlobContainerRepo
+		private sealed class MockBlobContainerRepo : AzureBlobApplicationInstanceIdRenter.IBlobContainerRepo
 		{
 			public bool ContainerExists { get; set; }
 
@@ -195,7 +181,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 				return this.Blobs.Keys;
 			}
 
-			public bool UploadBlob(string blobName, Stream contentStream, bool overwrite)
+			public bool UploadBlob(string blobName, Stream contentStream)
 			{
 				if (this.ShouldThrow) throw new Exception("Instructed to throw by unit test.");
 

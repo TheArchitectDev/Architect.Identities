@@ -29,7 +29,7 @@ namespace Architect.Identities
 		/// </summary>
 		public static PublicIdentityScope Current => GetAmbientScope() ??
 			TestInstance ??
-			throw new InvalidOperationException($"{nameof(PublicIdentityScope)} was not configured. Call {nameof(PublicIdentityExtensions)}.{nameof(PublicIdentityExtensions.UsePublicIdentityScope)} on startup.");
+			throw new InvalidOperationException($"{nameof(PublicIdentityScope)} was not configured. Call {nameof(PublicIdentityExtensions.UsePublicIdentityScope)}() on startup.");
 
 		/// <summary>
 		/// Returns an instance if the code is executing in a test run.

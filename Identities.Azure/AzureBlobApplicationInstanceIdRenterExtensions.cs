@@ -1,11 +1,11 @@
 ﻿using System;
+using Architect.Identities.ApplicationInstanceIds;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
 namespace Architect.Identities
 {
-	public static class AzureBlobApplicationInstanceIdSourceExtensions
+	public static class AzureBlobApplicationInstanceIdRenterExtensions
 	{
 		/// <summary>
 		/// <para>
@@ -44,24 +44,17 @@ namespace Architect.Identities
 		{
 			if (blobContainerClientFactory is null) throw new ArgumentNullException(nameof(blobContainerClientFactory));
 
-			options.Services.AddSingleton(CreateInstance);
+			options.Services.AddTransient(CreateInstance);
+
 			return options;
 
 			// Local function used to create an instance
-			IApplicationInstanceIdSource CreateInstance(IServiceProvider serviceProvider)
+			IApplicationInstanceIdRenter CreateInstance(IServiceProvider serviceProvider)
 			{
-				var blobContainerClient = blobContainerClientFactory(serviceProvider);
-				var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
-				var exceptionHandler = options.ExceptionHandlerFactory?.Invoke(serviceProvider);
+				var blobContainerClient = blobContainerClientFactory(serviceProvider) ?? throw new Exception($"The factory produced a null {nameof(BlobContainerClient)}.");
+				var blobContainerRepo = new AzureBlobApplicationInstanceIdRenter.BlobContainerRepo(blobContainerClient);
 
-				var instance = new AzureBlobApplicationInstanceIdSource(
-					new AzureBlobApplicationInstanceIdSource.BlobContainerRepo(blobContainerClient),
-					applicationLifetime,
-					exceptionHandler);
-
-				// As the value is likely application-critical, enforce its resolution if the application has not started yet
-				if (!applicationLifetime.ApplicationStarted.IsCancellationRequested) _ = instance.ContextUniqueApplicationInstanceId.Value;
-
+				var instance = new AzureBlobApplicationInstanceIdRenter(serviceProvider, blobContainerRepo);
 				return instance;
 			}
 		}

@@ -1,48 +1,34 @@
 ﻿using System;
 using System.Data.Common;
 using System.Transactions;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
 	/// <para>
 	/// Base implementation for SQL-based application instance ID management.
 	/// </para>
 	/// <para>
-	/// This implementation registers the smallest available ID by inserting it into a dedicated table.
-	/// On application shutdown, it attempts to remove that ID, freeing it up again.
-	/// </para>
-	/// <para>
-	/// Enough possible IDs should be available that an occassional failure to free up an ID is not prohibitive.
+	/// This implementation rents the smallest available ID by inserting it into a dedicated table.
+	/// On returning, it attempts to remove that ID, freeing it up again.
 	/// </para>
 	/// </summary>
-	public abstract class SqlApplicationInstanceIdSource : BaseApplicationInstanceIdSource
+	public abstract class SqlApplicationInstanceIdRenter : BaseApplicationInstanceIdRenter
 	{
-		public const string DefaultTableName = "application_instance_id";
+		public const string DefaultTableName = "application_instance_id"; // #TODO: Reconsider
 
-		/// <summary>
-		/// <para>
-		/// By setting this to another method, a custom implementation can be provided for acquiring a <see cref="DbConnection"/> and performing one or more commands transactionally.
-		/// </para>
-		/// <para>
-		/// This should be implemented very carefully. The current class' implementation and the DbContext-based one provide good examples.
-		/// </para>
-		/// <para>
-		/// Note that by overwriting this, it is possible to render <see cref="ConnectionFactory"/> unused.
-		/// </para>
-		/// </summary>
-		public Func<Func<DbConnection, object?>, object?> ExecuteTransactionallyFunc { get; set; }
-		private Func<DbConnection> ConnectionFactory { get; }
+		private IApplicationInstanceIdSourceTransactionalExecutor TransactionalExecutor { get; }
+
 		private string? DatabaseName { get; }
 
-		protected SqlApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(applicationLifetime, exceptionHandler)
+		protected SqlApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseName)
+			: base(serviceProvider)
 		{
-			this.ExecuteTransactionallyFunc = this.ExecuteTransactionally;
-			this.ConnectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+			// We use the service locator anti-pattern here, to reduce constructor parameter explosion, since we tend to register the appropriate type anyway
+			this.TransactionalExecutor = serviceProvider.GetRequiredService<IApplicationInstanceIdSourceTransactionalExecutor>();
+
 			this.DatabaseName = databaseName;
 
 			if (this.DatabaseName?.Length == 0) throw new ArgumentException("The database name must be either null or non-empty.");
@@ -59,21 +45,7 @@ namespace Architect.Identities
 
 		protected virtual object? ExecuteTransactionally(Func<DbConnection, object?> action)
 		{
-			if (Transaction.Current != null)
-				throw new Exception($"Unexpected database transaction during {this.GetType().Name}.{nameof(this.GetContextUniqueApplicationInstanceId)}.");
-
-			using var transactionScope = new TransactionScope(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted });
-
-			using var connection = this.ConnectionFactory() ?? throw new Exception("The database connection factory produced a null connection.");
-
-			if (connection.State == System.Data.ConnectionState.Closed)
-				connection.Open();
-
-			var result = action(connection);
-
-			transactionScope.Complete();
-
-			return result;
+			return this.TransactionalExecutor.ExecuteTransactionally(action);
 		}
 
 		protected override ushort GetContextUniqueApplicationInstanceIdCore()
@@ -107,7 +79,7 @@ namespace Architect.Identities
 			return (ushort)result;
 		}
 
-		protected override void DeleteContextUniqueApplicationInstanceIdCore()
+		protected override void ReturnContextUniqueApplicationInstanceIdCore(ushort id)
 		{
 			using (new TransactionScope(TransactionScopeOption.Suppress)) // Ignore ambient transactions
 			{
@@ -117,7 +89,7 @@ namespace Architect.Identities
 
 					command.CommandTimeout = 3; // Seconds
 
-					this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId(command, this.DatabaseName, this.ContextUniqueApplicationInstanceId.Value);
+					this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId(command, this.DatabaseName, id);
 
 					if (command.CommandText is null)
 						throw new Exception($"{this.GetType().Name}.{nameof(this.ConfigureCommandForDeleteContextUniqueApplicationInstanceId)} failed to set a command text.");
@@ -125,7 +97,7 @@ namespace Architect.Identities
 					var affectedRowCount = this.ExecuteCommandForDeleteContextUniqueApplicationInstanceId(command);
 
 					if (affectedRowCount != 1)
-						throw new Exception($"{this.GetType().Name}.{nameof(this.DeleteContextUniqueApplicationInstanceId)} affected {affectedRowCount} rows instead of the expected 1.");
+						throw new Exception($"{this.GetType().Name}.{nameof(this.ReturnContextUniqueApplicationInstanceId)} affected {affectedRowCount} rows instead of the expected 1.");
 				});
 			}
 		}
