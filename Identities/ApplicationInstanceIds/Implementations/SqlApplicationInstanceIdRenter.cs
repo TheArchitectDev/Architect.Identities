@@ -17,7 +17,9 @@ namespace Architect.Identities.ApplicationInstanceIds
 	/// </summary>
 	public abstract class SqlApplicationInstanceIdRenter : BaseApplicationInstanceIdRenter
 	{
-		public const string DefaultTableName = "application_instance_id"; // #TODO: Reconsider
+		public const string DefaultTableName = "application_instance_id";
+
+		protected string TableName { get; } = DefaultTableName;
 
 		private IApplicationInstanceIdSourceTransactionalExecutor TransactionalExecutor { get; }
 
@@ -27,7 +29,11 @@ namespace Architect.Identities.ApplicationInstanceIds
 			: base(serviceProvider)
 		{
 			// We use the service locator anti-pattern here, to reduce constructor parameter explosion, since we tend to register the appropriate type anyway
+
 			this.TransactionalExecutor = serviceProvider.GetRequiredService<IApplicationInstanceIdSourceTransactionalExecutor>();
+
+			var customTableName = serviceProvider.GetService<ApplicationInstanceIdCustomTableName>();
+			if (customTableName != null) this.TableName = customTableName.TableName;
 
 			this.DatabaseName = databaseName;
 

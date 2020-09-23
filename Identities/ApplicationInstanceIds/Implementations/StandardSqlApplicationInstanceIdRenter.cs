@@ -37,7 +37,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 			using var command = connection.CreateCommand();
 
 			command.CommandText = $@"
-SELECT MAX(1) FROM {databaseName}{DefaultTableName}
+SELECT MAX(1) FROM {databaseName}{TableName}
 ;
 ";
 
@@ -47,7 +47,7 @@ SELECT MAX(1) FROM {databaseName}{DefaultTableName}
 			}
 			catch (DbException)
 			{
-				throw new NotSupportedException($"The table {DefaultTableName} does not exist, but {this.GetType().Name} does not support table creation. Create it manually or use a vendor-specific implementation.");
+				throw new NotSupportedException($"The table {TableName} does not exist, but {this.GetType().Name} does not support table creation. Create it manually or use a vendor-specific implementation.");
 			}
 		}
 
@@ -72,25 +72,25 @@ SELECT MAX(1) FROM {databaseName}{DefaultTableName}
 
 			command.CommandText = $@"
 -- Acquire exclusive lock on record 0 (regardless of prior existence)
-DELETE FROM {databaseName}{DefaultTableName} WHERE id = 0;
-INSERT INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, @CreationDateTime);
+DELETE FROM {databaseName}{TableName} WHERE id = 0;
+INSERT INTO {databaseName}{TableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, @CreationDateTime);
 
 -- Insert smallest available ID
-INSERT INTO {databaseName}{DefaultTableName}
+INSERT INTO {databaseName}{TableName}
 SELECT 1 + MIN(id), @ApplicationName, @ServerName, @CreationDateTime
-FROM {databaseName}{DefaultTableName} aii
-WHERE NOT EXISTS (SELECT id FROM {databaseName}{DefaultTableName} WHERE id = 1 + aii.id)
+FROM {databaseName}{TableName} aii
+WHERE NOT EXISTS (SELECT id FROM {databaseName}{TableName} WHERE id = 1 + aii.id)
 ;
 
 -- Get the inserted ID
 SELECT id
-FROM {databaseName}{DefaultTableName}
+FROM {databaseName}{TableName}
 WHERE application_name = @ApplicationName AND server_name = @ServerName AND id <> 0
-AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{DefaultTableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
+AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{TableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
 ;
 
 -- Release the lock
-DELETE FROM {databaseName}{DefaultTableName} WHERE id = 0;
+DELETE FROM {databaseName}{TableName} WHERE id = 0;
 ";
 		}
 		
@@ -104,7 +104,7 @@ DELETE FROM {databaseName}{DefaultTableName} WHERE id = 0;
 			command.Parameters.Add(parameter);
 
 			command.CommandText = $@"
-DELETE FROM {databaseName}{DefaultTableName} WHERE id = @Id;
+DELETE FROM {databaseName}{TableName} WHERE id = @Id;
 ";
 		}
 

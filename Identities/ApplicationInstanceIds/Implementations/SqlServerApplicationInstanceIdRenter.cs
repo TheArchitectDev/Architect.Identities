@@ -10,6 +10,8 @@ namespace Architect.Identities.ApplicationInstanceIds
 	/// </summary>
 	internal sealed class SqlServerApplicationInstanceIdRenter : StandardSqlApplicationInstanceIdRenter
 	{
+		public new const string DefaultTableName = "ApplicationInstanceIds";
+
 		public SqlServerApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseAndSchemaName)
 			: base(serviceProvider, databaseAndSchemaName)
 		{

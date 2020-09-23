@@ -5,7 +5,6 @@
 	/// </summary>
 	public interface IApplicationInstanceIdRenter
 	{
-		// #TODO: Make uint?
 		/// <summary>
 		/// This is an internal API that should not be used by application code.
 		/// </summary>

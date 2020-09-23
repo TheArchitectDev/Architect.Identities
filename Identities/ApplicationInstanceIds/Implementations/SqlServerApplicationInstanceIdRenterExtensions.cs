@@ -33,6 +33,9 @@ namespace Architect.Identities
 			string? databaseAndSchemaName = null)
 			where TDatabaseConnectionFactory : class
 		{
+			// Register a custom table name to use
+			options.Services.AddSingleton(new ApplicationInstanceIdCustomTableName(SqlServerApplicationInstanceIdRenter.DefaultTableName));
+
 			// Register an IDbConnectionFactory
 			ApplicationInstanceIdSourceDbConnectionFactory.Register(options.Services, getConnectionFromFactory, connectionString);
 

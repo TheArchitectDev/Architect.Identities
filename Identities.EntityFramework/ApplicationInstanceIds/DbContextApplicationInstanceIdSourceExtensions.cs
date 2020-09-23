@@ -10,7 +10,7 @@ namespace Architect.Identities
 {
 	public static class DbContextApplicationInstanceIdSourceExtensions
 	{
-		// #TODO: Update documentation to demo this
+		public const string DefaultTableName = "ApplicationInstanceIds";
 
 		/// <summary>
 		/// <para>
@@ -31,7 +31,8 @@ namespace Architect.Identities
 			where TDbContext : DbContext
 		{
 			options.UseSqlServer(() => new DummyDbConnection(), connectionString: null, databaseAndSchemaName);
-			
+
+			AddEntityFrameworkTableName(options.Services);
 			AddDbContextTransactionalExecutor<TDbContext>(options.Services);
 
 			return options;
@@ -57,6 +58,7 @@ namespace Architect.Identities
 		{
 			options.UseMySql(() => new DummyDbConnection(), connectionString: null, databaseName);
 
+			AddEntityFrameworkTableName(options.Services);
 			AddDbContextTransactionalExecutor<TDbContext>(options.Services);
 
 			return options;
@@ -82,6 +84,7 @@ namespace Architect.Identities
 		{
 			options.UseSqlite(() => new DummyDbConnection(), connectionString: null, databaseName);
 
+			AddEntityFrameworkTableName(options.Services);
 			AddDbContextTransactionalExecutor<TDbContext>(options.Services, isSqlite: true);
 
 			return options;
@@ -107,11 +110,24 @@ namespace Architect.Identities
 		{
 			options.UseStandardSql(() => new DummyDbConnection(), connectionString: null, databaseName);
 
+			AddEntityFrameworkTableName(options.Services);
 			AddDbContextTransactionalExecutor<TDbContext>(options.Services);
 
 			return options;
 		}
 
+		/// <summary>
+		/// Registers a table name that matches Entity Framework's default style.
+		/// </summary>
+		public static void AddEntityFrameworkTableName(IServiceCollection services)
+		{
+			// Register a custom table name to use
+			services.AddSingleton(new ApplicationInstanceIdCustomTableName(DefaultTableName));
+		}
+
+		/// <summary>
+		/// Registers an <see cref="IApplicationInstanceIdSourceTransactionalExecutor"/> that makes use of a <see cref="DbContext"/> of the given type.
+		/// </summary>
 		public static void AddDbContextTransactionalExecutor<TDbContext>(IServiceCollection services)
 			where TDbContext : DbContext
 		{

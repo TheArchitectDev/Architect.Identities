@@ -29,7 +29,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 			using var command = connection.CreateCommand();
 
 			command.CommandText = $@"
-CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(  
+CREATE TABLE IF NOT EXISTS {databaseName}`{TableName}`(  
   `id` BIGINT UNSIGNED NOT NULL,
   `application_name` CHAR(50),
   `server_name` CHAR(50),
@@ -58,26 +58,26 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
 
 			command.CommandText = $@"
 -- Acquire exclusive lock on record 0 (regardless of prior existence)
-REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'));
+REPLACE INTO {databaseName}{TableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'));
 
 -- Insert smallest available ID
-INSERT INTO {databaseName}{DefaultTableName}
+INSERT INTO {databaseName}{TableName}
 SELECT 1 + id, @ApplicationName, @ServerName, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
-FROM {databaseName}{DefaultTableName} aii
-WHERE NOT EXISTS (SELECT id FROM {databaseName}{DefaultTableName} WHERE id = 1 + aii.id)
+FROM {databaseName}{TableName} aii
+WHERE NOT EXISTS (SELECT id FROM {databaseName}{TableName} WHERE id = 1 + aii.id)
 ORDER BY id
 LIMIT 1
 ;
 
 -- Get the inserted ID
 SELECT id
-FROM {databaseName}{DefaultTableName}
+FROM {databaseName}{TableName}
 WHERE application_name = @ApplicationName AND server_name = @ServerName AND id <> 0
-AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{DefaultTableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
+AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{TableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
 ;
 
 -- Release the lock
-DELETE FROM {databaseName}{DefaultTableName} WHERE id = 0;
+DELETE FROM {databaseName}{TableName} WHERE id = 0;
 ";
 		}
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Reflection;
 using System.Threading.Tasks;
 using Architect.Identities.ApplicationInstanceIds;
 using Microsoft.Data.Sqlite;
@@ -35,6 +36,74 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 		public void Dispose()
 		{
 			this._host?.Dispose();
+		}
+
+		[Fact]
+		public void UseSqlServerDbContext_Regularly_ShouldUseExpectedTableName()
+		{
+			using var connection = new SqliteConnection("Filename=:memory:");
+			this.RegistrationActions.Add(services =>
+			{
+				services.AddApplicationInstanceIdSource(source => source.UseSqlServerDbContext<SqliteDbContext>());
+				services.AddDbContext<SqliteDbContext>(factory => factory.UseSqlite(connection), ServiceLifetime.Transient);
+			});
+
+			var renter = this.Host.Services.GetRequiredService<IApplicationInstanceIdRenter>();
+
+			var tableName = renter.GetType().GetProperty("TableName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(renter);
+
+			Assert.Equal(DbContextApplicationInstanceIdSourceExtensions.DefaultTableName, tableName);
+		}
+
+		[Fact]
+		public void UseMySqlDbContext_Regularly_ShouldUseExpectedTableName()
+		{
+			using var connection = new SqliteConnection("Filename=:memory:");
+			this.RegistrationActions.Add(services =>
+			{
+				services.AddApplicationInstanceIdSource(source => source.UseMySqlDbContext<SqliteDbContext>());
+				services.AddDbContext<SqliteDbContext>(factory => factory.UseSqlite(connection), ServiceLifetime.Transient);
+			});
+
+			var renter = this.Host.Services.GetRequiredService<IApplicationInstanceIdRenter>();
+
+			var tableName = renter.GetType().GetProperty("TableName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(renter);
+
+			Assert.Equal(DbContextApplicationInstanceIdSourceExtensions.DefaultTableName, tableName);
+		}
+
+		[Fact]
+		public void UseSqliteDbContext_Regularly_ShouldUseExpectedTableName()
+		{
+			using var connection = new SqliteConnection("Filename=:memory:");
+			this.RegistrationActions.Add(services =>
+			{
+				services.AddApplicationInstanceIdSource(source => source.UseSqliteDbContext<SqliteDbContext>());
+				services.AddDbContext<SqliteDbContext>(factory => factory.UseSqlite(connection), ServiceLifetime.Transient);
+			});
+
+			var renter = this.Host.Services.GetRequiredService<IApplicationInstanceIdRenter>();
+
+			var tableName = renter.GetType().GetProperty("TableName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(renter);
+
+			Assert.Equal(DbContextApplicationInstanceIdSourceExtensions.DefaultTableName, tableName);
+		}
+
+		[Fact]
+		public void UseStandardSqlDbContext_Regularly_ShouldUseExpectedTableName()
+		{
+			using var connection = new SqliteConnection("Filename=:memory:");
+			this.RegistrationActions.Add(services =>
+			{
+				services.AddApplicationInstanceIdSource(source => source.UseStandardSqlDbContext<SqliteDbContext>());
+				services.AddDbContext<SqliteDbContext>(factory => factory.UseSqlite(connection), ServiceLifetime.Transient);
+			});
+
+			var renter = this.Host.Services.GetRequiredService<IApplicationInstanceIdRenter>();
+
+			var tableName = renter.GetType().GetProperty("TableName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(renter);
+
+			Assert.Equal(DbContextApplicationInstanceIdSourceExtensions.DefaultTableName, tableName);
 		}
 
 		[Fact]
@@ -96,7 +165,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 			this.Host.UseApplicationInstanceIdSource();
 
 			var id = source.ApplicationInstanceId;
-			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {SqlApplicationInstanceIdRenter.DefaultTableName};");
+			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {DbContextApplicationInstanceIdSourceExtensions.DefaultTableName};");
 
 			Assert.Equal(1, id);
 			Assert.Equal(1L, count);
@@ -181,7 +250,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 			this.Host.Start();
 			await this.Host.StopAsync();
 
-			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {SqlApplicationInstanceIdRenter.DefaultTableName};");
+			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {DbContextApplicationInstanceIdSourceExtensions.DefaultTableName};");
 
 			Assert.Equal(0L, count);
 		}
@@ -201,7 +270,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 			this.Host.Start();
 			await this.Host.StopAsync();
 
-			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {SqlApplicationInstanceIdRenter.DefaultTableName};");
+			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {DbContextApplicationInstanceIdSourceExtensions.DefaultTableName};");
 
 			Assert.Equal(0L, count);
 		}
@@ -221,7 +290,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 			this.Host.Start();
 			await this.Host.StopAsync();
 
-			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {SqlApplicationInstanceIdRenter.DefaultTableName};");
+			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {DbContextApplicationInstanceIdSourceExtensions.DefaultTableName};");
 
 			Assert.Equal(0L, count);
 		}
@@ -241,7 +310,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 			this.Host.Start();
 			await this.Host.StopAsync();
 
-			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {SqlApplicationInstanceIdRenter.DefaultTableName};");
+			var count = this.ExecuteScalar(connection, $"SELECT COUNT(*) FROM {DbContextApplicationInstanceIdSourceExtensions.DefaultTableName};");
 
 			Assert.Equal(0L, count);
 		}
