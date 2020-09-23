@@ -44,7 +44,19 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 			Assert.Equal(11, distribution.ApplicationInstanceIdBitCount);
 			Assert.Equal(10, distribution.CounterBitCount);
 		}
-		
+
+		[Fact]
+		public void Construct_With16ApplicationInstanceIdBits_ShouldSucceed()
+		{
+			new FluidBitDistribution(43, 16, 5);
+		}
+
+		[Fact]
+		public void Construct_WithMoreThan16ApplicationInstanceIdBits_ShouldThrow()
+		{
+			Assert.Throws<ArgumentException>(() => new FluidBitDistribution(43, 17, 4));
+		}
+
 		[Fact]
 		public void GetTotalBitCount_Regularly_ShouldReturnExpectedValue()
 		{
