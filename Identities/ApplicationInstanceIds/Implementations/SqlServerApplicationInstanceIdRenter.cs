@@ -36,9 +36,9 @@ namespace Architect.Identities.ApplicationInstanceIds
 			using var command = connection.CreateCommand();
 
 			command.CommandText = $@"
-IF OBJECT_ID(N'{databaseName}{DefaultTableName}', N'U') IS NULL BEGIN
+IF OBJECT_ID(N'{databaseName}{this.TableName}', N'U') IS NULL BEGIN
 
-CREATE TABLE {databaseName}{DefaultTableName} (
+CREATE TABLE {databaseName}{this.TableName} (
   id BIGINT NOT NULL PRIMARY KEY,
   application_name CHAR(50) NULL,
   server_name CHAR(50) NULL,
