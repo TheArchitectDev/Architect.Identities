@@ -284,7 +284,7 @@ public void Configure(IApplicationBuilder applicationBuilder)
 {
 	// Register a unique ID for the current application instance
 	// This helps guarantee generating different IDs from other applications/servers
-	services.UseApplicationInstanceIdSource();
+	applicationBuilder.UseApplicationInstanceIdSource();
 	
 	// Optional: Make IdGenerator.Current available
 	applicationBuilder.UseIdGenerator();
@@ -311,7 +311,7 @@ public void Configure(IApplicationBuilder applicationBuilder)
 {
 	// Register a unique ID for the current application instance
 	// This helps guarantee generating different IDs from other applications/servers
-	services.UseApplicationInstanceIdSource();
+	applicationBuilder.UseApplicationInstanceIdSource();
 	
 	// Optional: Make IdGenerator.Current available
 	applicationBuilder.UseIdGenerator();
