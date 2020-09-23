@@ -309,7 +309,7 @@ public void Configure(IApplicationBuilder applicationBuilder)
 }
 ```
 
-Alternatively, if we happen to be using Entity Framework, we can use the DbContext directly (by installing an [additional package](https://www.nuget.org/packages/Architect.Identities.EntityFramework)). Just make sure to call the right method: `UseSqliteDbContext`, `UseSqlServerDbContext`, etc.
+Alternatively, if we happen to be using Entity Framework, we can use the DbContext directly (by installing an [additional package](https://www.nuget.org/packages/Architect.Identities.EntityFramework)). Just make sure to call the appropriate method for your database: `UseSqliteDbContext`, `UseSqlServerDbContext`, etc.
 
 ```cs
 // Startup.cs
@@ -450,10 +450,12 @@ The Fluid ID generator uses a unique identifier assigned to the current instance
 
 The package offers various application instance ID sources. Most sources use some form of centralized external storage. Such sources claim an ID on startup and relinquish it again on shutdown. Of course, the occasional unclean shutdown may cause an application instance ID or two to linger. However, the default bit distribution allows for 2048 different application instance IDs, leaving plenty of room. Still, you can manually delete registrations from the external storage, should the need arise.
 
-- `UseFixedSource`. This source allows you to manually provide the application instance ID.
+- `UseFixedSource`. This source allows you to manually provide the application instance ID. It is recommended only for integration tests.
 - `UseSqlServer`. This source uses a SQL Server or Azure SQL database, creating the application instance ID tracking table if it does not yet exist.
 - `UseMySql`. This source uses a MySQL database, creating the application instance ID tracking table if it does not yet exist.
+- `UseSqlite`. This source uses a SQLite databases, creating the application instance ID tracking table if it does not yet exist.
 - `UseStandardSql`. This source works with most SQL databases, allowing other databases to be used without the need for custom extensions. However, since table creation syntax rarely follows the standard, this method throws an exception if the required table does not exist. The exception provides an example `CREATE TABLE` query to guide you in the right direction.
+- `UseSqlServerDbContext`, `UseMySqlDbContext`, `UseSqliteDbContext`, `UseStandardSqlDbContext`. Offered in a [separate package](https://www.nuget.org/packages/Architect.Identities.EntityFramework). These sources work like their counterparts above, except they make use of a given DbContext. The DbContext's configuration is honored (e.g. retryable execution strategies). Support is included for `AddDbContextFactory` and `AddPooledDbContextFactory` (available since EF Core 5.0.0), although lower versions of EF Core are supported as well.
 - `UseAzureBlobStorageContainer`. Offered in a [separate package](https://www.nuget.org/packages/Architect.Identities.Azure). This source uses an Azure blob storage container to store application instance IDs that are in use.
 
 Third-party libraries may provide additional sources through further extension methods.
