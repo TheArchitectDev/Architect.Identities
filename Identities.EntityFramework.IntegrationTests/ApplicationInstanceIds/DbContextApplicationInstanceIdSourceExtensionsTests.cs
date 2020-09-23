@@ -333,7 +333,6 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.ApplicationInsta
 			this.RegistrationActions.Add(services =>
 			{
 				services.AddApplicationInstanceIdSource(source => source.UseSqliteDbContext<SqliteDbContext>());
-				// #TODO: Make in-mem again
 				services.AddPooledDbContextFactory<SqliteDbContext>(context => context.UseSqlite("Data Source=:memory:")); // Creates different connections
 			});
 
