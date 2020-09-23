@@ -289,7 +289,7 @@ Support for various databases is built-in, as well as for Azure Blob Storage (by
 
 public void ConfigureServices(IServiceCollection services)
 {
-	// Provide a source where our application can register a unique ID for itself
+	// Provide a source where our application can claim a unique ID for itself
 	// Using SQL Server, MySQL, SQLite, Standard SQL, or even Azure Blob Storage
 	services.AddApplicationInstanceIdSource(source =>
 		source.UseSqlServer(() => new SqlConnection("ConnectionString")));
@@ -320,7 +320,7 @@ public void ConfigureServices(IServiceCollection services)
 	services.AddPooledDbContextFactory<ExampleDbContext>(context =>
 		context.UseSqlite(new SqliteConnection("Filename=:memory:")));
 	
-	// Provide a source where our application instance can register a unique ID for itself
+	// Provide a source where our application instance can claim a unique ID for itself
 	// Using the DbContext's database (with SQL Server, MySQL, SQLite, or Standard SQL)
 	services.AddApplicationInstanceIdSource(source =>
 		source.UseSqliteDbContext<ExampleDbContext>());
