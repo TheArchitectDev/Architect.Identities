@@ -260,25 +260,65 @@ Note that a Fluid **reveals its creation timestamp**, which may be considered se
 
 ## Example Usage
 
+Either with Entity Framework...
+
 ```cs
 // Startup.cs
 
 public void ConfigureServices(IServiceCollection services)
 {
-	// Avoid collisions between servers or application instances (using SQL Server, MySQL, or even Azure Blob Storage)
+	// Register the DbContext
+	services.AddPooledDbContextFactory<ExampleDbContext>(context =>
+		context.UseSqlite(new SqliteConnection("Filename=:memory:")));
+	
+	// Provide a source where our application instance can register a unique ID for itself
+	// Using the DbContext's database (with SQL Server, MySQL, SQLite, or Standard SQL)
 	services.AddApplicationInstanceIdSource(source =>
-		source.UseSqlServer(() => new SqlConnection("ConnectionString")));
-
-	// Register Fluid as the ID generation mechanism
+		source.UseSqliteDbContext<ExampleDbContext>());
+	
+	// Register Fluid as the ID generator
 	services.AddIdGenerator(generator => generator.UseFluid());
 }
 
 public void Configure(IApplicationBuilder applicationBuilder)
 {
+	// Register a unique ID for the current application instance
+	// This helps guarantee generating different IDs from other applications/servers
+	services.UseApplicationInstanceIdSource();
+	
 	// Optional: Make IdGenerator.Current available
 	applicationBuilder.UseIdGenerator();
 }
 ```
+
+...or without it:
+
+```cs
+// Startup.cs
+
+public void ConfigureServices(IServiceCollection services)
+{
+	// Provide a source where our application can register a unique ID for itself
+	// Using SQL Server, MySQL, SQLite, Standard SQL, or even Azure Blob Storage
+	services.AddApplicationInstanceIdSource(source =>
+		source.UseSqlServer(() => new SqlConnection("ConnectionString")));
+
+	// Register Fluid as the ID generator
+	services.AddIdGenerator(generator => generator.UseFluid());
+}
+
+public void Configure(IApplicationBuilder applicationBuilder)
+{
+	// Register a unique ID for the current application instance
+	// This helps guarantee generating different IDs from other applications/servers
+	services.UseApplicationInstanceIdSource();
+	
+	// Optional: Make IdGenerator.Current available
+	applicationBuilder.UseIdGenerator();
+}
+```
+
+The registered ID generator is accessible from anywhere:
 
 ```cs
 public void ExampleUse()
