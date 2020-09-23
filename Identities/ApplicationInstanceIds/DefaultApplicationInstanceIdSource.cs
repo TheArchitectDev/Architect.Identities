@@ -9,7 +9,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 	internal sealed class DefaultApplicationInstanceIdSource : IApplicationInstanceIdSource
 	{
 		public ushort ApplicationInstanceId => this._applicationInstanceId ?? ThrowNotAcquired();
-		private ushort? _applicationInstanceId;
+		internal ushort? _applicationInstanceId;
 
 		public static ushort ThrowNotAcquired() => throw new Exception(
 			$"No application instance ID was acquired. Call {nameof(ApplicationInstanceIdSourceExtensions.UseApplicationInstanceIdSource)}() on startup.");

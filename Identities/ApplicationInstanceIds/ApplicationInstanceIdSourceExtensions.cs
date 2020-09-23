@@ -94,7 +94,6 @@ namespace Architect.Identities
 			return UseApplicationInstanceIdSource(applicationBuilder.ApplicationServices);
 		}
 
-		// #TODO: Update documentation to include this
 		/// <summary>
 		/// Provides the registered <see cref="IApplicationInstanceIdSource"/> with an application instance ID, and registers the returning of that ID on application shutdown.
 		/// </summary>
@@ -105,6 +104,9 @@ namespace Architect.Identities
 			var applicationInstanceIdSource = serviceProvider.GetRequiredService<IApplicationInstanceIdSource>();
 
 			if (!(applicationInstanceIdSource is DefaultApplicationInstanceIdSource defaultSource))
+				return serviceProvider;
+
+			if (defaultSource._applicationInstanceId != null) // Already resolved
 				return serviceProvider;
 
 			var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();
