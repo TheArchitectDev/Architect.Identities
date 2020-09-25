@@ -31,6 +31,8 @@ namespace Architect.Identities.Example
 			CreateUsersWithDependencyInjection(host.Services.GetRequiredService<UserFactory>());
 			CreateUsersWithAmbientContext();
 
+			Console.WriteLine();
+
 			await host.StopAsync();
 
 			Console.ReadKey(intercept: true);
@@ -44,8 +46,8 @@ namespace Architect.Identities.Example
 			var id1Alphanumeric = id1.ToAlphanumeric(); // IdEncoder can decode
 			var id2Alphanumeric = id2.ToAlphanumeric(); // IdEncoder can decode
 			Console.WriteLine();
-			Console.WriteLine($"Here is a DistributedId generated like a GUID: {id1} (alphanumeric form: {id1Alphanumeric})");
-			Console.WriteLine($"Here is a DistributedId generated like a GUID: {id2} (alphanumeric form: {id2Alphanumeric})");
+			Console.WriteLine($"Here is a DistributedId generated much like a GUID: {id1} (alphanumeric form: {id1Alphanumeric})");
+			Console.WriteLine($"Here is a DistributedId generated much like a GUID: {id2} (alphanumeric form: {id2Alphanumeric})");
 		}
 
 		private static void CreateUsersWithDependencyInjection(UserFactory userFactory)

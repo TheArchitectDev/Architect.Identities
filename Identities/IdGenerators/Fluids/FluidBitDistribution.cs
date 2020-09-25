@@ -31,6 +31,10 @@ namespace Architect.Identities
 			{
 				throw new ArgumentException("There must be no more than 63 timestamp bits."); // This limitation allows certain overflow checks without overflowing DURING the check
 			}
+			if (applicationInstanceIdBitCount > 16)
+			{
+				throw new ArgumentException("There must be no more than 16 application instance ID bits."); // This limitation allows the use of ushort
+			}
 
 			this.TimestampBitCount = timestampBitCount;
 			this.ApplicationInstanceIdBitCount = applicationInstanceIdBitCount;

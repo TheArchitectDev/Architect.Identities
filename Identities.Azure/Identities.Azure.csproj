@@ -16,10 +16,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC7</Version>
+    <Version>1.0.0-RC8</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
-This package provides Azure-implementations for the Architect.Identities package.
+Azure-based implementations for the Architect.Identities package.
 
 This package allows Azure blob storage to be used as the synchronization mechanism for assigning unique IDs to each application instance.
 

@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
-	/// An implementation specific to SQLite.
+	/// A MySQL-specific implementation.
 	/// </summary>
-	internal sealed class SqliteApplicationInstanceIdSource : StandardSqlApplicationInstanceIdSource
+	internal sealed class MySqlApplicationInstanceIdRenter : StandardSqlApplicationInstanceIdRenter
 	{
-		public SqliteApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(connectionFactory, databaseName, applicationLifetime, exceptionHandler)
+		public MySqlApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseName)
+			: base(serviceProvider, databaseName)
 		{
 		}
 
@@ -26,13 +24,13 @@ namespace Architect.Identities
 			using var command = connection.CreateCommand();
 
 			command.CommandText = $@"
-CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(  
+CREATE TABLE IF NOT EXISTS {databaseName}`{this.TableName}`(  
   `id` BIGINT UNSIGNED NOT NULL,
   `application_name` CHAR(50),
   `server_name` CHAR(50),
   `creation_datetime` DATETIME(3) NOT NULL,
   PRIMARY KEY (`id`)
-)
+) ENGINE=INNODB CHARSET=ASCII COLLATE=ascii_general_ci
 ;
 ";
 
@@ -55,26 +53,26 @@ CREATE TABLE IF NOT EXISTS {databaseName}`{DefaultTableName}`(
 
 			command.CommandText = $@"
 -- Acquire exclusive lock on record 0 (regardless of prior existence)
-REPLACE INTO {databaseName}{DefaultTableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, DATE('now'));
+REPLACE INTO {databaseName}{this.TableName} (id, application_name, server_name, creation_datetime) VALUES (0, NULL, NULL, NOW(3));
 
 -- Insert smallest available ID
-INSERT INTO {databaseName}{DefaultTableName}
-SELECT 1 + id, @ApplicationName, @ServerName, DATE('now')
-FROM {databaseName}{DefaultTableName} aii
-WHERE NOT EXISTS (SELECT id FROM {databaseName}{DefaultTableName} WHERE id = 1 + aii.id)
+INSERT INTO {databaseName}{this.TableName}
+SELECT 1 + id, @ApplicationName, @ServerName, NOW(3)
+FROM {databaseName}{this.TableName} aii
+WHERE NOT EXISTS (SELECT id FROM {databaseName}{this.TableName} WHERE id = 1 + aii.id)
 ORDER BY id
 LIMIT 1
 ;
 
 -- Get the inserted ID
 SELECT id
-FROM {databaseName}{DefaultTableName}
+FROM {databaseName}{this.TableName}
 WHERE application_name = @ApplicationName AND server_name = @ServerName AND id <> 0
-AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{DefaultTableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
+AND creation_datetime = (SELECT MAX(creation_datetime) FROM {databaseName}{this.TableName} WHERE application_name = @ApplicationName AND server_name = @ServerName)
 ;
 
 -- Release the lock
-DELETE FROM {databaseName}{DefaultTableName} WHERE id = 0;
+DELETE FROM {databaseName}{this.TableName} WHERE id = 0;
 ";
 		}
 

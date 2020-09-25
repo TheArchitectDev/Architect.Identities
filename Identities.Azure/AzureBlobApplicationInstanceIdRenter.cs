@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
+using Architect.Identities.ApplicationInstanceIds;
 using Azure;
 using Azure.Storage.Blobs;
-using Microsoft.Extensions.Hosting;
 
 namespace Architect.Identities
 {
@@ -14,20 +14,16 @@ namespace Architect.Identities
 	/// Implementation for application instance ID management through a dedicated Azure Blob Storage Container.
 	/// </para>
 	/// <para>
-	/// This implementation registers the smallest available ID by adding a blob for it.
-	/// On application shutdown, it attempts to remove that blob, freeing the ID up again.
-	/// </para>
-	/// <para>
-	/// Enough possible IDs should be available that an occassional failure to free up an ID is not prohibitive.
+	/// This implementation rents the smallest available ID by inserting it into a dedicated table.
+	/// On returning, it attempts to remove that ID, freeing it up again.
 	/// </para>
 	/// </summary>
-	internal sealed class AzureBlobApplicationInstanceIdSource : BaseApplicationInstanceIdSource
+	internal sealed class AzureBlobApplicationInstanceIdRenter : BaseApplicationInstanceIdRenter
 	{
 		public IBlobContainerRepo Repo { get; }
 
-		public AzureBlobApplicationInstanceIdSource(IBlobContainerRepo repo,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(applicationLifetime, exceptionHandler)
+		public AzureBlobApplicationInstanceIdRenter(IServiceProvider serviceProvider, IBlobContainerRepo repo)
+			: base(serviceProvider)
 		{
 			this.Repo = repo ?? throw new ArgumentNullException(nameof(repo));
 		}
@@ -60,7 +56,7 @@ namespace Architect.Identities
 
 				var applicationInstanceId = (ushort)(lastBlobId + 1);
 
-				var didCreateBlob = this.Repo.UploadBlob(applicationInstanceId.ToString(), contentStream, overwrite: true);
+				var didCreateBlob = this.Repo.UploadBlob(applicationInstanceId.ToString(), contentStream);
 
 				if (!didCreateBlob) continue; // Race condition - loop to retry
 
@@ -68,9 +64,9 @@ namespace Architect.Identities
 			}
 		}
 
-		protected override void DeleteContextUniqueApplicationInstanceIdCore()
+		protected override void ReturnContextUniqueApplicationInstanceIdCore(ushort id)
 		{
-			this.Repo.DeleteBlob(this.ContextUniqueApplicationInstanceId.Value.ToString(), includeSnapshots: true);
+			this.Repo.DeleteBlob(id.ToString(), includeSnapshots: true);
 		}
 
 		/// <summary>
@@ -82,9 +78,9 @@ namespace Architect.Identities
 			void CreateContainerIfNotExists();
 			IEnumerable<string> EnumerateBlobNames();
 			/// <summary>
-			/// If overwrite is false and the blob name already exists, this method returns false.
+			/// If the blob name already exists, this method returns false.
 			/// </summary>
-			bool UploadBlob(string blobName, Stream contentStream, bool overwrite);
+			bool UploadBlob(string blobName, Stream contentStream);
 			void DeleteBlob(string blobName, bool includeSnapshots);
 		}
 
@@ -114,18 +110,19 @@ namespace Architect.Identities
 				foreach (var blob in blobs) yield return blob.Name;
 			}
 
-			public bool UploadBlob(string blobName, Stream contentStream, bool overwrite)
+			public bool UploadBlob(string blobName, Stream contentStream)
 			{
 				var blobClient = this.Client.GetBlobClient(blobName);
 				try
 				{
 					var uploadResponse = blobClient.Upload(contentStream, overwrite: false);
-					var uploadResponseStatusCode = uploadResponse.GetRawResponse().Status;
+					var rawUploadResponse = uploadResponse.GetRawResponse();
+					var uploadResponseStatusCode = rawUploadResponse.Status;
 					if (uploadResponseStatusCode != (int)HttpStatusCode.OK && uploadResponseStatusCode != (int)HttpStatusCode.Created)
-						throw new Exception($"{this.GetType().Name} received an unexpected status code trying to upload a blob: {uploadResponseStatusCode}.");
+						throw new Exception($"{this.GetType().Name} received unexpected status code {uploadResponseStatusCode} trying to upload a blob: {blobName}. Reason: {rawUploadResponse.ReasonPhrase}");
 					return true;
 				}
-				catch (RequestFailedException) when (!overwrite)
+				catch (RequestFailedException e) when (e.ErrorCode == "BlobAlreadyExists")
 				{
 					// Race condition
 					return false;
@@ -139,7 +136,7 @@ namespace Architect.Identities
 					: Azure.Storage.Blobs.Models.DeleteSnapshotsOption.None);
 				var deleteResponseStatusCode = deleteResponse.Status;
 				if (deleteResponseStatusCode != (int)HttpStatusCode.OK && deleteResponseStatusCode != (int)HttpStatusCode.Accepted)
-					throw new Exception($"{this.GetType().Name} received an unexpected status code trying to delete a blob: {deleteResponseStatusCode}.");
+					throw new Exception($"{this.GetType().Name} received unexpected status code {deleteResponseStatusCode} trying to delete a blob: {blobName}. Reason: {deleteResponse.ReasonPhrase}");
 			}
 		}
 	}

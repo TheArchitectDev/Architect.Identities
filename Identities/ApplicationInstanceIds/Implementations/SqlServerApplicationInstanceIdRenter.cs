@@ -1,23 +1,30 @@
 ﻿using System;
 using System.Data.Common;
 using System.Linq;
-using Microsoft.Extensions.Hosting;
 
 // ReSharper disable once CheckNamespace
-namespace Architect.Identities
+namespace Architect.Identities.ApplicationInstanceIds
 {
 	/// <summary>
 	/// An implementation specific to [Azure] SQL Server.
 	/// </summary>
-	internal sealed class SqlServerApplicationInstanceIdSource : StandardSqlApplicationInstanceIdSource
+	internal sealed class SqlServerApplicationInstanceIdRenter : StandardSqlApplicationInstanceIdRenter
 	{
-		public SqlServerApplicationInstanceIdSource(Func<DbConnection> connectionFactory, string? databaseAndSchemaName,
-			IHostApplicationLifetime applicationLifetime, Action<Exception>? exceptionHandler = null)
-			: base(connectionFactory, databaseAndSchemaName, applicationLifetime, exceptionHandler)
+		public new const string DefaultTableName = "ApplicationInstanceIds";
+
+		public SqlServerApplicationInstanceIdRenter(IServiceProvider serviceProvider, string? databaseAndSchemaName)
+			: base(serviceProvider, databaseAndSchemaName)
+		{
+			ThrowIfDatabaseNameExcludesSchema(databaseAndSchemaName);
+		}
+
+		private static void ThrowIfDatabaseNameExcludesSchema(string? databaseAndSchemaName)
 		{
 			if (databaseAndSchemaName != null && databaseAndSchemaName.Count(chr => chr == '.') != 1)
+			{
 				throw new NotSupportedException(
-					$"{this.GetType().Name} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");
+					$"{nameof(SqlServerApplicationInstanceIdRenter)} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");
+			}
 		}
 
 		protected override void CreateTableIfNotExists(DbConnection connection, string? databaseName)
@@ -29,9 +36,9 @@ namespace Architect.Identities
 			using var command = connection.CreateCommand();
 
 			command.CommandText = $@"
-IF OBJECT_ID(N'{databaseName}{DefaultTableName}', N'U') IS NULL BEGIN
+IF OBJECT_ID(N'{databaseName}{this.TableName}', N'U') IS NULL BEGIN
 
-CREATE TABLE {databaseName}{DefaultTableName} (
+CREATE TABLE {databaseName}{this.TableName} (
   id BIGINT NOT NULL PRIMARY KEY,
   application_name CHAR(50) NULL,
   server_name CHAR(50) NULL,

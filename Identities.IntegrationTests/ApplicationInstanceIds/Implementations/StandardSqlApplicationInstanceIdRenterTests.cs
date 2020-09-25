@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data.Common;
 using System.Data.SQLite;
-using System.Threading.Tasks;
+using Architect.Identities.ApplicationInstanceIds;
 using Architect.Identities.IntegrationTests.TestHelpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,32 +9,34 @@ using Xunit;
 
 namespace Architect.Identities.IntegrationTests.ApplicationInstanceIds.Implementations
 {
-	public sealed class StandardSqlApplicationInstanceIdSourceTests : IDisposable
+	public sealed class StandardSqlApplicationInstanceIdRenterTests : IDisposable
 	{
-		private static string TableName => SqlApplicationInstanceIdSource.DefaultTableName;
+		private static string TableName => SqlApplicationInstanceIdRenter.DefaultTableName;
 
 		/// <summary>
 		/// Not started by default, for performance.
 		/// </summary>
 		private IHost Host { get; }
-		private IHostApplicationLifetime HostApplicationLifetime { get; }
 
 		private UndisposableDbConnection Connection { get; }
 		private DbConnection CreateDbConnection() => this.Connection;
-		private StandardSqlApplicationInstanceIdSource Source { get; }
+		private StandardSqlApplicationInstanceIdRenter Renter { get; }
 
-		public StandardSqlApplicationInstanceIdSourceTests()
+		public StandardSqlApplicationInstanceIdRenterTests()
 		{
 			var hostBuilder = new HostBuilder();
+			hostBuilder.ConfigureServices(services => services.AddSingleton<IExceptionHandler>(new OptionalExceptionHandler(null)));
+			hostBuilder.ConfigureServices(services => services.AddSingleton(sp => new ApplicationInstanceIdSourceDbConnectionFactory(sp, _ => this.CreateDbConnection())));
+			hostBuilder.ConfigureServices(services => services.AddSingleton<IApplicationInstanceIdSourceTransactionalExecutor>(
+				sp => new SqlTransactionalExecutor(sp.GetRequiredService<ApplicationInstanceIdSourceDbConnectionFactory>())));
 			this.Host = hostBuilder.Build();
-			this.HostApplicationLifetime = this.Host.Services.GetRequiredService<IHostApplicationLifetime>();
 
 			this.Connection = new UndisposableDbConnection(new SQLiteConnection("DataSource=:memory:"));
 			using var command = this.Connection.CreateCommand();
 			this.Connection.Open();
 			command.CommandText = $@"
 CREATE TABLE {TableName} (
-	id BIGINT UNSIGNED PRIMARY KEY,
+	id BIGINT PRIMARY KEY,
 	application_name CHAR(50),
 	server_name CHAR(50),
 	creation_datetime DATETIME(3) NOT NULL
@@ -42,7 +44,7 @@ CREATE TABLE {TableName} (
 ;
 ";
 			command.ExecuteNonQuery();
-			this.Source = new StandardSqlApplicationInstanceIdSource(this.CreateDbConnection, databaseName: null, this.HostApplicationLifetime);
+			this.Renter = new StandardSqlApplicationInstanceIdRenter(this.Host.Services, databaseName: null);
 		}
 
 		public void Dispose()
@@ -52,19 +54,19 @@ CREATE TABLE {TableName} (
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithNoPriorIds_ShouldReturnId1()
+		public void RentId_WithNoPriorIds_ShouldReturnId1()
 		{
-			var id = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			Assert.Equal(1, id);
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithNoPriorIds_ShouldAddRow()
+		public void RentId_WithNoPriorIds_ShouldAddRow()
 		{
 			var rowCountBefore = Convert.ToInt32(this.ExecuteScalar($"SELECT COUNT(*) FROM {TableName};"));
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			var rowCountAfter = Convert.ToInt32(this.ExecuteScalar($"SELECT COUNT(*) FROM {TableName};"));
 
@@ -73,9 +75,9 @@ CREATE TABLE {TableName} (
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithNoPriorIds_ShouldAddId1()
+		public void RentId_WithNoPriorIds_ShouldAddId1()
 		{
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			var id = Convert.ToInt32(this.ExecuteScalar($"SELECT MAX(id) FROM {TableName};"));
 
@@ -83,21 +85,21 @@ CREATE TABLE {TableName} (
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithOnlyPriorId1_ShouldReturnId2()
+		public void RentId_WithOnlyPriorId1_ShouldReturnId2()
 		{
 			this.ExecuteScalar($"INSERT INTO {TableName} VALUES (1, '', '', 0);");
 
-			var id = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			Assert.Equal(2, id);
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithOnlyPriorId1_ShouldAddId2()
+		public void RentId_WithOnlyPriorId1_ShouldAddId2()
 		{
 			this.ExecuteScalar($"INSERT INTO {TableName} VALUES (1, '', '', 0);");
 
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			_ = this.Renter.RentId();
 
 			var id = Convert.ToInt32(this.ExecuteScalar($"SELECT MAX(id) FROM {TableName};"));
 
@@ -105,51 +107,54 @@ CREATE TABLE {TableName} (
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithOnlyPriorId100_ShouldReturnId1()
+		public void RentId_WithOnlyPriorId100_ShouldReturnId1()
 		{
 			this.ExecuteScalar($"INSERT INTO {TableName} VALUES (100, '', '', 0);");
 
-			var id = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			Assert.Equal(1, id);
 		}
 
 		[Fact]
-		public void GetContextUniqueApplicationInstanceIdValue_WithOnePriorInvocation_ShouldReturnId2()
+		public void RentId_WithOnePriorInvocation_ShouldReturnId2()
 		{
-			var otherSource = new StandardSqlApplicationInstanceIdSource(this.CreateDbConnection, databaseName: null, this.HostApplicationLifetime);
-			_  = otherSource.ContextUniqueApplicationInstanceId.Value;
+			var exceptionHandler = new OptionalExceptionHandler(null);
+			var connectionFactory = new ApplicationInstanceIdSourceDbConnectionFactory(this.Host.Services, _ => this.CreateDbConnection());
+			var transactionalExecutor = new SqlTransactionalExecutor(connectionFactory);
+			var otherSource = new StandardSqlApplicationInstanceIdRenter(this.Host.Services, databaseName: null);
+			otherSource.RentId();
 
-			var id = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 
 			Assert.Equal(2, id);
 		}
 
 		[Fact]
-		public async Task StopHost_Regularly_ShouldDeleteId()
+		public void ReturnId_Regularly_ShouldDeleteId()
 		{
-			_ = this.Source.ContextUniqueApplicationInstanceId.Value;
+			this.Renter.RentId();
 
 			var id = Convert.ToInt32(this.ExecuteScalar($"SELECT MAX(id) FROM {TableName};"));
 			Assert.Equal(1, id);
 
-			await this.Host.StopAsync();
+			this.Renter.ReturnId((ushort)id);
 
 			var nullId = this.ExecuteScalar($"SELECT MAX(id) FROM {TableName};");
 			Assert.IsType<DBNull>(nullId);
 		}
 
 		[Fact]
-		public async Task StopHost_WithMultipleIdsPresent_ShouldOnlyTouchOwnId()
+		public void ReturnId_WithMultipleIdsPresent_ShouldOnlyTouchOwnId()
 		{
 			this.ExecuteScalar($"INSERT INTO {TableName} VALUES (1, '', '', 0);");
 
-			var id = this.Source.ContextUniqueApplicationInstanceId.Value;
+			var id = this.Renter.RentId();
 			Assert.Equal(2, id);
 
 			this.ExecuteScalar($"INSERT INTO {TableName} VALUES (3, '', '', 0);");
 
-			await this.Host.StopAsync();
+			this.Renter.ReturnId((ushort)id);
 
 			var idCount = Convert.ToInt32(this.ExecuteScalar($"SELECT COUNT(*) FROM {TableName};"));
 			var minId = Convert.ToInt32(this.ExecuteScalar($"SELECT MIN(id) FROM {TableName};"));

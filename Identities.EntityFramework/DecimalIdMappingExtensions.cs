@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -12,6 +11,8 @@ namespace Architect.Identities.EntityFramework
 	/// </summary>
 	public static class DecimalIdMappingExtensions
 	{
+		private const string DefaultColumnType = "DECIMAL(28,0)";
+
 		private static ValueConverter DecimalConverter { get; }
 			= new ValueConverter<decimal, string>(d => d.ToString(), s => Decimal.Parse(s));
 		private static ValueConverter NullableDecimalConverter { get; }
@@ -32,13 +33,13 @@ namespace Architect.Identities.EntityFramework
 		/// <param name="modelBuilder">The model builder whose configuration to update.</param>
 		/// <param name="dbContext">The <see cref="DbContext"/> whose <see cref="ModelBuilder"/> is being configured. Accessed if a SQLite assembly is loaded.</param>
 		/// <param name="columnType">The column type to configure for the properties. Can be changed for databases that require a different type.</param>
-		public static ModelBuilder StoreDecimalIdsWithCorrectPrecision(this ModelBuilder modelBuilder, DbContext dbContext, string columnType = "DECIMAL(28,0)")
+		public static ModelBuilder StoreDecimalIdsWithCorrectPrecision(this ModelBuilder modelBuilder, DbContext dbContext, string columnType = DefaultColumnType)
 		{
 			if (modelBuilder is null) throw new ArgumentNullException(nameof(modelBuilder));
 			if (dbContext is null) throw new ArgumentNullException(nameof(dbContext));
 			if (columnType is null) throw new ArgumentNullException(nameof(columnType));
 
-			var isSqlite = IsSqlite(dbContext);
+			var isSqlite = dbContext.IsSqlite();
 
 			var propertyMappings = modelBuilder.Model.GetEntityTypes()
 				.Where(entityType => entityType.ClrType != null)
@@ -71,7 +72,7 @@ namespace Architect.Identities.EntityFramework
 		/// <param name="propertyBuilder">The property builder whose configuration to update.</param>
 		/// <param name="dbContext">The <see cref="DbContext"/> whose <see cref="ModelBuilder"/> is being configured. Accessed if a SQLite assembly is loaded.</param>
 		/// <param name="columnType">The column type to configure for the properties. Can be changed for databases that require a different type.</param>
-		public static PropertyBuilder<decimal> StoreWithDecimalIdPrecision(this PropertyBuilder<decimal> propertyBuilder, DbContext dbContext, string columnType = "DECIMAL(28,0)")
+		public static PropertyBuilder<decimal> StoreWithDecimalIdPrecision(this PropertyBuilder<decimal> propertyBuilder, DbContext dbContext, string columnType = DefaultColumnType)
 		{
 			StoreWithDecimalIdPrecision(propertyBuilder, isNullable: false, dbContext, columnType);
 			return propertyBuilder;
@@ -92,14 +93,14 @@ namespace Architect.Identities.EntityFramework
 		/// <param name="propertyBuilder">The property builder whose configuration to update.</param>
 		/// <param name="dbContext">The <see cref="DbContext"/> whose <see cref="ModelBuilder"/> is being configured. Accessed if a SQLite assembly is loaded.</param>
 		/// <param name="columnType">The column type to configure for the properties. Can be changed for databases that require a different type.</param>
-		public static PropertyBuilder<decimal?> StoreWithDecimalIdPrecision(this PropertyBuilder<decimal?> propertyBuilder, DbContext dbContext, string columnType = "DECIMAL(28,0)")
+		public static PropertyBuilder<decimal?> StoreWithDecimalIdPrecision(this PropertyBuilder<decimal?> propertyBuilder, DbContext dbContext, string columnType = DefaultColumnType)
 		{
 			StoreWithDecimalIdPrecision(propertyBuilder, isNullable: true, dbContext, columnType);
 			return propertyBuilder;
 		}
 
 		private static void StoreWithDecimalIdPrecision(PropertyBuilder decimalPropertyBuilder, bool isNullable, DbContext dbContext,
-			string columnType = "DECIMAL(28,0)",
+			string columnType = DefaultColumnType,
 			bool? isSqlite = null)
 		{
 			if (decimalPropertyBuilder is null) throw new ArgumentNullException(nameof(decimalPropertyBuilder));
@@ -107,37 +108,20 @@ namespace Architect.Identities.EntityFramework
 			System.Diagnostics.Debug.Assert(decimalPropertyBuilder.Metadata.PropertyInfo.PropertyType == typeof(decimal) ||
 				decimalPropertyBuilder.Metadata.PropertyInfo.PropertyType == typeof(decimal?));
 
-			if (isSqlite ?? IsSqlite(dbContext))
+			if (isSqlite ?? dbContext.IsSqlite())
 			{
 				decimalPropertyBuilder.HasColumnType("TEXT");
 				decimalPropertyBuilder.HasConversion(isNullable ? NullableDecimalConverter : DecimalConverter);
+			}
+			else if (columnType == DefaultColumnType && PropertyBuilderPrecisionSetter.Value != null)
+			{
+				// We prefer to use the dynamic setter, since it is not tied to an explicit string representation, allowing broader support by providers
+				PropertyBuilderPrecisionSetter.Value.Invoke(decimalPropertyBuilder, 28, 0);
 			}
 			else
 			{
 				decimalPropertyBuilder.HasColumnType(columnType);
 			}
-		}
-
-		/// <summary>
-		/// Determines if the given <see cref="DbContext.Database" /> is SQLite through reflection, without using a hard dependency on Microsoft.EntityFrameworkCore.Sqlite.
-		/// </summary>
-		private static bool IsSqlite(DbContext dbContext)
-		{
-			var sqliteAssembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(assembly => assembly.FullName?.StartsWith("Microsoft.EntityFrameworkCore.Sqlite,") == true);
-			var databaseFacadeExtensionsType = sqliteAssembly?.GetTypes()
-				.SingleOrDefault(type => type.Name == "SqliteDatabaseFacadeExtensions" && type.Namespace == "Microsoft.EntityFrameworkCore");
-			var isSqliteMethod = databaseFacadeExtensionsType?.GetMethod("IsSqlite");
-
-			if (isSqliteMethod != null && isSqliteMethod.ReturnType == typeof(bool) &&
-				isSqliteMethod.GetParameters().Count() == 1 && isSqliteMethod.GetParameters().Single().ParameterType == typeof(DatabaseFacade))
-			{
-				if (dbContext is null) throw new ArgumentNullException(nameof(dbContext));
-
-				var result = isSqliteMethod.Invoke(obj: null, parameters: new[] { dbContext.Database });
-				return (bool)result!;
-			}
-
-			return false;
 		}
 	}
 }

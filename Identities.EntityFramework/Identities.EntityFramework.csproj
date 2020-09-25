@@ -16,21 +16,32 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC2</Version>
+    <Version>1.0.0-RC4</Version>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
-This package provides EntityFramework extensions for the Architect.Identities package.
+EntityFramework extensions for the Architect.Identities package.
+
+Use DbContext-based connections for the Fluid ID generator:
+
+public void ConfigureServices(IServiceCollection services)
+{
+  services.AddPooledDbContextFactory&lt;ExampleDbContext&gt;(context => context.UseSqlServer("ConnectionString"));
+  
+  services.AddApplicationInstanceIdSource(source => source.UseSqlServerDbContext&lt;ExampleDbContext&gt;());
+  
+  services.AddIdGenerator(generator => generator.UseFluid());
+}
 
 Easily configure the column type to use for decimal ID columns:
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-  modelBuilder.Entity&lt;Order&gt;(entity =>
+  modelBuilder.Entity&lt;Order&gt;(entity =&gt;
   {
-    entity.Property(o => o.Id)
+    entity.Property(o =&gt; o.Id)
       .ValueGeneratedNever();
     
-    entity.HasKey(o => o.Id);
+    entity.HasKey(o =&gt; o.Id);
   });
   
   // Other entities ...
@@ -43,9 +54,9 @@ Or per individual property:
 
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
-  modelBuilder.Entity&lt;Order&gt;(entity =>
+  modelBuilder.Entity&lt;Order&gt;(entity =&gt;
   {
-    entity.Property(e => e.Id)
+    entity.Property(e =&gt; e.Id)
       .ValueGeneratedNever()
       .StoreWithDecimalIdPrecision(dbContext: this);
   });
@@ -63,6 +74,7 @@ The extensions in this package special-case SQLite, which requires special treat
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Architect.Identities" Version="[1.0.0-*, 2.0.0)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0" />
   </ItemGroup>
@@ -72,6 +84,10 @@ The extensions in this package special-case SQLite, which requires special treat
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Identities\Identities.csproj" />
   </ItemGroup>
 
 </Project>
