@@ -181,7 +181,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var aesInput = new byte[16];
 			var aesOutput = new byte[16];
-			MemoryMarshal.Write(aesInput.AsSpan().Slice(8), ref id);
+			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref id);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
 			Assert.True(publicIdBytes.SequenceEqual(aesOutput));
@@ -201,7 +201,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var aesInput = new byte[16];
 			var aesOutput = new byte[16];
-			MemoryMarshal.Write(aesInput.AsSpan().Slice(8), ref id);
+			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref id);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
 			Assert.True(publicIdBytes.SequenceEqual(aesOutput));
@@ -222,7 +222,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var ulongId = (ulong)id;
 			var aesInput = new byte[16];
 			var aesOutput = new byte[16];
-			MemoryMarshal.Write(aesInput.AsSpan().Slice(8), ref ulongId);
+			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref ulongId);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
 			Assert.True(publicIdBytes.SequenceEqual(aesOutput));

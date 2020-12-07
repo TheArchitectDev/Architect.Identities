@@ -103,7 +103,7 @@ namespace Architect.Identities
 
 			var applicationInstanceIdSource = serviceProvider.GetRequiredService<IApplicationInstanceIdSource>();
 
-			if (!(applicationInstanceIdSource is DefaultApplicationInstanceIdSource defaultSource))
+			if (applicationInstanceIdSource is not DefaultApplicationInstanceIdSource defaultSource)
 				return serviceProvider;
 
 			if (defaultSource._applicationInstanceId != null) // Already resolved
