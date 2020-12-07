@@ -23,7 +23,7 @@ Azure-based implementations for the Architect.Identities package.
 
 This package allows Azure blob storage to be used as the synchronization mechanism for assigning unique IDs to each application instance.
 
-services.AddIdGenerator(generator => generator.UseAzureBlobStorageContainer(new BlobContainerClient("ConnectionString", "ContainerName")));
+services.AddIdGenerator(generator =&gt; generator.UseAzureBlobStorageContainer(new BlobContainerClient("ConnectionString", "ContainerName")));
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
@@ -36,7 +36,7 @@ services.AddIdGenerator(generator => generator.UseAzureBlobStorageContainer(new 
 
   <ItemGroup>
     <PackageReference Include="Architect.Identities" Version="[1.0.0-*, 2.0.0)" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.4.4" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
   </ItemGroup>
 
   <ItemGroup>
