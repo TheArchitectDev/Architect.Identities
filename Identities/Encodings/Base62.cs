@@ -43,8 +43,8 @@ namespace Architect.Identities.Encodings
 			var forwardAlphabet = DefaultAlphabet.ForwardAlphabet;
 
 			EncodeBlock(forwardAlphabet, bytes, chars);
-			bytes = bytes.Slice(8);
-			chars = chars.Slice(11);
+			bytes = bytes[8..];
+			chars = chars[11..];
 			EncodeBlock(forwardAlphabet, bytes, chars);
 		}
 
@@ -101,8 +101,8 @@ namespace Architect.Identities.Encodings
 			var reverseAlphabet = DefaultAlphabet.ReverseAlphabet;
 
 			DecodeBlock(reverseAlphabet, chars, bytes);
-			chars = chars.Slice(11);
-			bytes = bytes.Slice(8);
+			chars = chars[11..];
+			bytes = bytes[8..];
 			DecodeBlock(reverseAlphabet, chars, bytes);
 		}
 

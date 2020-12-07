@@ -131,7 +131,7 @@ namespace Architect.Identities
 				System.Diagnostics.Debug.Assert(this.EncryptorInputUlongSpan[0] == 0UL);
 				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<ulong>(this.EncryptorInputBlock) == 0, "The left 8 bytes were inadvertently used. They should remain 0.");
 
-				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<ulong>(this.EncryptorInputBlock.AsSpan().Slice(8)) == id); // Confirm reversible operation
+				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<ulong>(this.EncryptorInputBlock.AsSpan()[8..]) == id); // Confirm reversible operation
 
 				var byteCount = this.Encryptor.TransformBlock(this.EncryptorInputBlock, 0, 16, this.EncryptorOutputBlock, 0);
 				System.Diagnostics.Debug.Assert(byteCount == 16);
