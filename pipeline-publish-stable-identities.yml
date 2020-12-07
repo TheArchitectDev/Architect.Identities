@@ -15,7 +15,6 @@ steps:
     includeNugetOrg: true
     projects: |
       **/*.csproj
-      !**/*Tests*.csproj
 
 - task: DotNetCoreCLI@2
   displayName: 'DotNet Build'
