@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-RC4</Version>
+    <VersionPrefix>1.0.0</VersionPrefix>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 EntityFramework extensions for the Architect.Identities package.
