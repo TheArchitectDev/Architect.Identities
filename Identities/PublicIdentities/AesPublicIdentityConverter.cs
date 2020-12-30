@@ -154,7 +154,7 @@ namespace Architect.Identities
 			{
 				this.EncryptorInputDecimalSpan[0] = id;
 
-				if (id > DistributedIdGenerator.MaxValue || DecimalStructure.GetSignAndScale(this.EncryptorInputDecimalComponentSpan) != 0m)
+				if (id > DistributedIdGenerator.MaxValue || DecimalStructure.GetSignAndScale(this.EncryptorInputDecimalComponentSpan) != 0)
 					throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 				// The first 4 bytes are always zero, and the last 12 bytes we overwrite
