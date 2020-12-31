@@ -176,8 +176,7 @@ namespace Architect.Identities.Tests.Encodings
 			var guids = new List<Guid>();
 
 			// All except high 32 bits
-			decimal i;
-			for (i = 1m; i <= DistributedIdGenerator.MaxValue / 16; i *= 16)
+			for (var i = 1m; i <= DistributedIdGenerator.MaxValue / 16; i *= 16)
 			{
 				var guid = IdEncoder.GetGuid(i);
 				guids.Add(guid);
@@ -186,7 +185,7 @@ namespace Architect.Identities.Tests.Encodings
 			// Into high 32 bits
 			for (var x = 1U; x <= UInt32.MaxValue / 2; x *= 2)
 			{
-				var guid = IdEncoder.GetGuid(i);
+				var guid = IdEncoder.GetGuid(0m);
 				var uints = MemoryMarshal.Cast<Guid, uint>(MemoryMarshal.CreateSpan(ref guid, length: 1));
 				System.Diagnostics.Debug.Assert(uints[0] == 0);
 				uints[0] = x;
