@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Architect.Identities.Encodings;
 using Architect.Identities.Helpers;
@@ -9,6 +10,28 @@ namespace Architect.Identities
 {
 	public static partial class IdEncoder
 	{
+		/// <summary>
+		/// Validates that the given ID is valid, and returns its components.
+		/// </summary>
+		private static (int SignAndScale, int Hi, int Mid, int Lo) ExtractAndValidateIdComponents(decimal id)
+		{
+			if (id < 0m) throw new ArgumentOutOfRangeException();
+
+			// Extract the components
+			var decimals = MemoryMarshal.CreateReadOnlySpan(ref id, length: 1);
+			var components = MemoryMarshal.Cast<decimal, int>(decimals);
+			var signAndScale = DecimalStructure.GetSignAndScale(components);
+			var hi = DecimalStructure.GetHi(components);
+			var lo = DecimalStructure.GetLo(components);
+			var mid = DecimalStructure.GetMid(components);
+
+			// Validate format and range
+			if (id > DistributedIdGenerator.MaxValue || signAndScale != 0)
+				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
+
+			return (signAndScale, hi, mid, lo);
+		}
+
 		/// <summary>
 		/// <para>
 		/// Outputs an 11-character alphanumeric string representation of the given ID.
@@ -60,22 +83,10 @@ namespace Architect.Identities
 		{
 			if (bytes.Length < 16) throw new IndexOutOfRangeException("At least 16 output bytes are required.");
 
-			if (id < 0m) throw new ArgumentOutOfRangeException();
+			var (signAndScale, hi, mid, lo) = ExtractAndValidateIdComponents(id);
 
-			// Extract the components
-			var decimals = MemoryMarshal.CreateReadOnlySpan(ref id, length: 1);
-			var components = MemoryMarshal.Cast<decimal, int>(decimals);
-			var signAndScale = DecimalStructure.GetSignAndScale(components);
-			var hi = DecimalStructure.GetHi(components);
-			var lo = DecimalStructure.GetLo(components);
-			var mid = DecimalStructure.GetMid(components);
-
-			// Validate format and range
-			if (id > DistributedIdGenerator.MaxValue || signAndScale != 0m)
-				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
-
-			// Abuse the caller's output span as input space
-			BinaryPrimitives.WriteInt32BigEndian(bytes, 0);
+			System.Diagnostics.Debug.Assert(signAndScale == 0); // Double check
+			Unsafe.WriteUnaligned(ref bytes[0], 0); // Endianness for 0 is irrelevant, so use unaligned for performance
 			BinaryPrimitives.WriteInt32BigEndian(bytes[4..], hi);
 			BinaryPrimitives.WriteInt32BigEndian(bytes[8..], mid);
 			BinaryPrimitives.WriteInt32BigEndian(bytes[12..], lo);
@@ -101,9 +112,18 @@ namespace Architect.Identities
 		{
 			if (bytes.Length < 22) throw new IndexOutOfRangeException("At least 22 output bytes are required.");
 
-			Span<byte> inputBytes = stackalloc byte[16];
-			if (!id.TryWriteBytes(inputBytes)) throw new InvalidOperationException($"The ID's bytes could not be extracted: {id}.");
+			var guids = MemoryMarshal.CreateSpan(ref id, length: 1);
+			var uints = MemoryMarshal.Cast<Guid, uint>(guids);
+			var ushorts = MemoryMarshal.Cast<Guid, ushort>(guids);
 
+			// We need to order the GUID's bytes left-to-right from most significant to least significant
+			uints[0] = BinaryPrimitives.ReverseEndianness(uints[0]); // Bytes 0-3 are the most significant, but are still litte-endian
+			ushorts[2] = BinaryPrimitives.ReverseEndianness(ushorts[2]); // Bytes 4-5 are the next most significant, but are still little-endian
+			ushorts[3] = BinaryPrimitives.ReverseEndianness(ushorts[3]); // Bytes 6-7 are the next most significant, but are still little-endian
+
+			// Bytes 8-15 are the next most significant, and are already in big-endian
+
+			var inputBytes = MemoryMarshal.AsBytes(guids);
 			Base62.ToBase62Chars16(inputBytes, bytes);
 		}
 	}
