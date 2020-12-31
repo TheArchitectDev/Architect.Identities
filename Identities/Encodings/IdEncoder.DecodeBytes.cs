@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
+using System.Runtime.InteropServices;
 using Architect.Identities.Encodings;
 
 // ReSharper disable once CheckNamespace
@@ -84,7 +85,7 @@ namespace Architect.Identities
 			}
 
 			Span<byte> paddedInputBytes = stackalloc byte[22];
-			paddedInputBytes[..^16].Fill((byte)'0'); // Fill with '0' characters
+			paddedInputBytes[..^16].Fill((byte)'0'); // Fill with leading '0' characters
 			bytes[..16].CopyTo(paddedInputBytes[^16..]);
 
 			Span<byte> outputBytes = stackalloc byte[16];
@@ -145,6 +146,15 @@ namespace Architect.Identities
 				id = default;
 				return false;
 			}
+
+			var uints = MemoryMarshal.Cast<byte, uint>(outputBytes);
+			var ushorts = MemoryMarshal.Cast<byte, ushort>(outputBytes);
+
+			// Our entire input was big-endian
+			// Correct the left half of the GUID: make little-endian, with byte group significance (most to least) 0-3, 4-5, 6-7
+			uints[0] = BinaryPrimitives.ReverseEndianness(uints[0]);
+			ushorts[2] = BinaryPrimitives.ReverseEndianness(ushorts[2]);
+			ushorts[3] = BinaryPrimitives.ReverseEndianness(ushorts[3]);
 
 			id = new Guid(outputBytes);
 			return true;
