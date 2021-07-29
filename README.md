@@ -57,7 +57,7 @@ Compared to the DistributedId, the Fluid has the following pros and cons:
 
 A DistributedId is a UUID replacement represented as a `decimal`. It can be generated on-the-fly without any prerequisites, and is _significantly_ more efficient than a random UUID as a primary key in a database.
 
-Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 35 billion IDs generated.
+Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 350 billion IDs generated.
 
 DistributedIds are designed to be unique within a logical context, such as a database table or Bounded Context. This forms the most common boundary within which uniqueness is required. Any number of distributed applications may contribute new IDs to such a context.
 
