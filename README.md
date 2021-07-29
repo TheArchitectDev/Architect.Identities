@@ -29,23 +29,37 @@ Finally, there are cases where it is useful to assign unique IDs to applications
 
 ## Which type of ID should I use?
 
-Prefer the [Fluid](#fluid), as it is the most compact (i.e. human-friendly) and the most efficient (i.e. machine-friendly).
+Prefer the [DistributedId](#distributed-ids), as it is a drop-in replacement for the UUID.
 
-When to use the [DistributedId](#distributed-ids) instead:
+If any of the following are true, consider using the [Fluid](#fluid) instead:
 
-- If you need your IDs to be extremely hard to guess. (Beware of security through obscurity.)
-- If you are unsure whether your servers are running a clock synchronization mechanism (such as NTP).
-- If the application lacks access to at least a SQL database _or_ Azure. (More effort would be required to provide the Fluid's synchronization mechanism.)
-- If the application lacks Dependency Injection.
-- If the application regularly experiences unclean shutdown.
+- You are unable to use a `decimal` or `string` as an ID value.
+- You need to generate more than 128K IDs per second, per application instance.
+- Encountering 1 collision per 350 billion (350,000,000,000) IDs would be unacceptable.
+
+Compared to the DistributedId, the Fluid has the following pros and cons:
+
+##### Pros
+
+- The ID is a 64-bit `long` or `ulong`, a simple primitive, rather than a 93-bit decimal.
+- It avoids collisions entirely, rather than making them exceedingly unlikely.
+- It can be generated at a rate of 1M per second, per application instance.
+
+##### Cons
+
+- It requires a clock synchronization mechanism (such as NTP) on the application's host. (The maximum acceptable drift is about 5 ms.)
+- It requires a synchronization mechanism, such as database or blob storage container.
+- It requires startup configuration, whereas the DistributedId can be invoked on-the-fly.
+- While the Fluid is not necessarily _easy_ to guess, it lacks the significant randomness that makes the DistributedId extremely hard to guess. (Beware of security through obscurity in general.)
+- It runs out of available timestamps before the year 2200, whereas the DistributedId can represent timestamps beyond the year 3000.
 
 ## Distributed IDs
 
 A DistributedId is a UUID replacement represented as a `decimal`. It can be generated on-the-fly without any prerequisites, and is _significantly_ more efficient than a random UUID as a primary key in a database.
 
-Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 35 billion IDs generated.
+Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 350 billion IDs generated.
 
-DistributedIds are designed to be unique within a logical context, such as a database table or Bounded Context. This forms the most common boundary within which uniqueness is required. Any number of distributed applications may contribute new IDs to such a context.
+DistributedIds are designed to be unique within a logical context, such as a database table, a Bounded Context, or even a medium-sized company. These form the most common boundaries within which uniqueness is required. Any number of distributed applications may contribute new IDs to such a context.
 
 Note that a DistributedId **reveals its creation timestamp**, which may be considered sensitive data in certain contexts.
 
@@ -99,21 +113,22 @@ public void ShowInversionOfControl()
 - Is shorter than a UUID, making it more efficient as a primary key.
 - Like a UUID, can be generated on-the-fly, with no registration or synchronization whatsoever.
 - Like a UUID, makes collisions extremely unlikely.
+- Like a UUID, is hard to guess due to a significant random component.
 - Like a UUID, does not require database insertion to determine the ID, nor reading the ID back in after insertion (as with auto-increment).
 - Consists of digits only.
 - Can be encoded as 16 alphanumeric characters, for a shorter representation.
 - Uses the common `decimal` type, which is intuitively represented, sorted, and manipulated in .NET and databases (which cannot be said for UUIDs).
 - Supports comparison operators (unlike UUIDs, which make comparisons notoriously hard to write using the Entity Framework).
 - Is suitable for use in URLs.
-- Can by selected (such as for copying) by double-clicking, as it consists of only word characters in both its numeric and alphanumeric form.
+- Can by selected in UIs (such as for copying) by double-clicking, as it consists of only word characters in both its numeric and alphanumeric form.
 
 #### Trade-offs
 
 - Reveals its creation timestamp in milliseconds.
 - Is rate-limited to 128 generated IDs per millisecond (i.e. 128K IDs per second) on average per application instance.
-- Is context-unique rather than globally unique.
-- Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, see [Fluid](#fluid).)
-- Is unpleasant to use with SQLite, which truncates decimals to 8 bytes.
+- Is intended to be unique within a chosen context rather than globally.
+- Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, at the cost of different trade-offs, see the [Fluid](#fluid).)
+- Is unpleasant to use with SQLite, which truncates decimals to 8 bytes. (The alphanumeric representation can be used to remedy this.)
 
 #### Structure
 
@@ -137,7 +152,7 @@ DistributedIds have strong collision resistance. The probability of generating t
 
 Most notably, collisions between different timestamps are impossible, since the millisecond values differ.
 
-Within a single application instance, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (42 bits). This guarantees unique IDs within the application instance, as long as the system clock is not turned back. If the clock is turned back, it is like having two instances of the application during the repeated time.
+Within a single application instance, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (42 bits). This guarantees unique IDs within the application instance, as long as the system clock is not turned back. If the clock is turned back, the scenario is comparable to having an extra application instance (addressed below) during the repeated time span.
 
 Having multiple application instances generate IDs introduces a chance of collisions between them. It is detailed below and should be negligible.
 
@@ -145,13 +160,13 @@ Having multiple application instances generate IDs introduces a chance of collis
 
 These are the statistics under the worst possible circumstances:
 
-- On average, with 2 application instances, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. For reference, it takes 2 billion IDs to exhaust an `int` primary key.)
+- On average, with 2 application instances, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. As a frame of reference, it takes 2 billion IDs to exhaust an `int` primary key.)
 - On average, with 10 application instances, there is **1 collision 350 billion IDs**.
 - On average, with 100 application instances, there is **1 collision per 35 billion IDs**.
 
-**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the probability of a collision.
+**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the realistic probability of a collision.
 
-##### What if I want certainty?
+##### What if I need absolute certainty?
 
 For contexts where even a single collision could be catastrophic, such as in certain financial domains, it is advisable to avoid "upserts", and always explicitly separate inserts from updates. This way, even if a collision did occur, it would merely cause one transaction to fail (out of billions), rather than overwriting an existing record. This is good practice in general.
 
@@ -159,7 +174,7 @@ Alternatively, the [Fluid](#fluid) can be used to preclude collisions altogether
 
 #### Guessability
 
-Presupposing knowledge of a timestamp on which an ID was generated, the probability of guessing an ID is between 1/2^42 and 1/2^48, thanks to the 48-bit cryptographically-secure pseudorandom sequence. In practice, the timestamp component tends to reduce the guessability, since for most milliseconds no IDs will have been generated.
+Presupposing knowledge of the millisecond timestamp on which an ID was generated, the probability of guessing that ID is between 1/2^42 and 1/2^48, thanks to the 48-bit cryptographically-secure pseudorandom sequence. In practice, the timestamp component tends to reduce the guessability, since for most milliseconds no IDs will have been generated.
 
 The difference between the two probabilities (given knowledge of the timestamp) stems from the way the incremental property is achieved. If only one ID was generated on a timestamp, as tends to be common, the probability is 1/2^48. If the maximum number of IDs were generated on that timestamp, or if another ID from the same timestamp is known, an educated guess has a 1/2^42 probability of being correct.
 
@@ -361,7 +376,7 @@ public void ShowInversionOfControl()
 - Reveals its creation timestamp in milliseconds (see Attack Surface).
 - Reveals very minor information about which instance created the ID and how many IDs it has created this second (see Attack Surface).
 - Is rate-limited to 1,024 generated IDs per millisecond (i.e. 1 million IDs per second) per application.
-- Is context-unique rather than globally unique.
+- Is intended to be unique within a chosen context rather than globally.
 
 #### Structure
 

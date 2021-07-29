@@ -8,6 +8,16 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identities.Tests", "Identities.Tests\Identities.Tests.csproj", "{0000C4C4-7D1F-43B1-9BA1-806CC6F7DAE9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{40ADCE6A-4A53-4F2B-8152-140CA2E363C9}"
+	ProjectSection(SolutionItems) = preProject
+		pipeline-publish-preview-identities-azure.yml = pipeline-publish-preview-identities-azure.yml
+		pipeline-publish-preview-identities-entityframework.yml = pipeline-publish-preview-identities-entityframework.yml
+		pipeline-publish-preview-identities.yml = pipeline-publish-preview-identities.yml
+		pipeline-publish-stable-identities-azure.yml = pipeline-publish-stable-identities-azure.yml
+		pipeline-publish-stable-identities-entityframework.yml = pipeline-publish-stable-identities-entityframework.yml
+		pipeline-publish-stable-identities.yml = pipeline-publish-stable-identities.yml
+		pipeline-verify.yml = pipeline-verify.yml
+		README.md = README.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identities.Example", "Identities.Example\Identities.Example.csproj", "{FEE561A3-FE36-4F52-ACD8-BEA4E3409A21}"
 EndProject
@@ -19,7 +29,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identities.EntityFramework"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identities.EntityFramework.IntegrationTests", "Identities.EntityFramework.IntegrationTests\Identities.EntityFramework.IntegrationTests.csproj", "{2DA84553-03BB-4876-9EA3-08CE0C5CD461}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Identities.IntegrationTests", "Identities.IntegrationTests\Identities.IntegrationTests.csproj", "{A513A35C-3B45-48EE-BD45-1B681D8DC8FE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Identities.IntegrationTests", "Identities.IntegrationTests\Identities.IntegrationTests.csproj", "{A513A35C-3B45-48EE-BD45-1B681D8DC8FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
