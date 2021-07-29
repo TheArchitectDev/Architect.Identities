@@ -31,7 +31,7 @@ Finally, there are cases where it is useful to assign unique IDs to applications
 
 Prefer the [DistributedId](#distributed-ids), as it is a drop-in replacement for the UUID.
 
-If any of the following are true, use the [Fluid](#fluid) instead:
+If any of the following are true, consider using the [Fluid](#fluid) instead:
 
 - You are unable to use a `decimal` or `string` as an ID value.
 - You need to generate more than 128K IDs per second, per application instance.
