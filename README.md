@@ -127,7 +127,7 @@ public void ShowInversionOfControl()
 - Reveals its creation timestamp in milliseconds.
 - Is rate-limited to 128 generated IDs per millisecond (i.e. 128K IDs per second) on average per application instance.
 - Is intended to be unique within a chosen context rather than globally.
-- Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, at the cost of different trade-offs, see [Fluid](#fluid).)
+- Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, at the cost of different trade-offs, see the [Fluid](#fluid).)
 - Is unpleasant to use with SQLite, which truncates decimals to 8 bytes. (The alphanumeric representation can be used to remedy this.)
 
 #### Structure
@@ -152,7 +152,7 @@ DistributedIds have strong collision resistance. The probability of generating t
 
 Most notably, collisions between different timestamps are impossible, since the millisecond values differ.
 
-Within a single application instance, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (42 bits). This guarantees unique IDs within the application instance, as long as the system clock is not turned back. If the clock is turned back, it is like having two instances of the application during the repeated time.
+Within a single application instance, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (42 bits). This guarantees unique IDs within the application instance, as long as the system clock is not turned back. If the clock is turned back, the scenario is comparable to having an extra application instance (addressed below) during the repeated time span.
 
 Having multiple application instances generate IDs introduces a chance of collisions between them. It is detailed below and should be negligible.
 
@@ -160,13 +160,13 @@ Having multiple application instances generate IDs introduces a chance of collis
 
 These are the statistics under the worst possible circumstances:
 
-- On average, with 2 application instances, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. For reference, it takes 2 billion IDs to exhaust an `int` primary key.)
+- On average, with 2 application instances, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. As a frame of reference, it takes 2 billion IDs to exhaust an `int` primary key.)
 - On average, with 10 application instances, there is **1 collision 350 billion IDs**.
 - On average, with 100 application instances, there is **1 collision per 35 billion IDs**.
 
-**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the probability of a collision.
+**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the realistic probability of a collision.
 
-##### What if I want certainty?
+##### What if I need absolute certainty?
 
 For contexts where even a single collision could be catastrophic, such as in certain financial domains, it is advisable to avoid "upserts", and always explicitly separate inserts from updates. This way, even if a collision did occur, it would merely cause one transaction to fail (out of billions), rather than overwriting an existing record. This is good practice in general.
 
@@ -174,7 +174,7 @@ Alternatively, the [Fluid](#fluid) can be used to preclude collisions altogether
 
 #### Guessability
 
-Presupposing knowledge of a timestamp on which an ID was generated, the probability of guessing an ID is between 1/2^42 and 1/2^48, thanks to the 48-bit cryptographically-secure pseudorandom sequence. In practice, the timestamp component tends to reduce the guessability, since for most milliseconds no IDs will have been generated.
+Presupposing knowledge of the millisecond timestamp on which an ID was generated, the probability of guessing that ID is between 1/2^42 and 1/2^48, thanks to the 48-bit cryptographically-secure pseudorandom sequence. In practice, the timestamp component tends to reduce the guessability, since for most milliseconds no IDs will have been generated.
 
 The difference between the two probabilities (given knowledge of the timestamp) stems from the way the incremental property is achieved. If only one ID was generated on a timestamp, as tends to be common, the probability is 1/2^48. If the maximum number of IDs were generated on that timestamp, or if another ID from the same timestamp is known, an educated guess has a 1/2^42 probability of being correct.
 
