@@ -59,7 +59,7 @@ A DistributedId is a UUID replacement represented as a `decimal`. It can be gene
 
 Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, there tends be no more than 1 collision per 350 billion IDs generated.
 
-DistributedIds are designed to be unique within a logical context, such as a database table or Bounded Context. This forms the most common boundary within which uniqueness is required. Any number of distributed applications may contribute new IDs to such a context.
+DistributedIds are designed to be unique within a logical context, such as a database table, a Bounded Context, or even a medium-sized company. These form the most common boundaries within which uniqueness is required. Any number of distributed applications may contribute new IDs to such a context.
 
 Note that a DistributedId **reveals its creation timestamp**, which may be considered sensitive data in certain contexts.
 
