@@ -29,15 +29,29 @@ Finally, there are cases where it is useful to assign unique IDs to applications
 
 ## Which type of ID should I use?
 
-Prefer the [Fluid](#fluid), as it is the most compact (i.e. human-friendly) and the most efficient (i.e. machine-friendly).
+Prefer the [DistributedId](#distributed-ids), as it is a drop-in replacement for the UUID.
 
-When to use the [DistributedId](#distributed-ids) instead:
+If any of the following are true, use the [Fluid](#fluid) instead:
 
-- If you need your IDs to be extremely hard to guess. (Beware of security through obscurity.)
-- If you are unsure whether your servers are running a clock synchronization mechanism (such as NTP).
-- If the application lacks access to at least a SQL database _or_ Azure. (More effort would be required to provide the Fluid's synchronization mechanism.)
-- If the application lacks Dependency Injection.
-- If the application regularly experiences unclean shutdown.
+- You are unable to use a `decimal` or `string` as an ID value.
+- You need to generate more than 128K IDs per second, per application instance.
+- Encountering 1 collision per 350 billion (350,000,000,000) IDs would be unacceptable.
+
+Compared to the DistributedId, the Fluid has the following pros and cons:
+
+##### Pros
+
+- The ID is a 63-bit `long` or `ulong`, a simple primitive, rather than a 93-bit decimal.
+- It avoids collisions entirely, rather than making them exceedingly unlikely.
+- It can be generated at a rate of 1M per second, per application instance.
+
+##### Cons
+
+- It requires a clock synchronization mechanism (such as NTP) on the application's host. (The maximum acceptable drift is about 5 ms.)
+- It requires a synchronization mechanism, such as database or blob storage container.
+- It requires startup configuration, whereas the DistributedId can be invoked on-the-fly.
+- While the Fluid is not necessarily _easy_ to guess, it lacks the significant randomness that makes the DistributedId extremely hard to guess. (Beware of security through obscurity in general.)
+- It runs out of available timestamps before the year 2200, whereas the DistributedId can represent timestamps beyond the year 3000.
 
 ## Distributed IDs
 
@@ -99,21 +113,22 @@ public void ShowInversionOfControl()
 - Is shorter than a UUID, making it more efficient as a primary key.
 - Like a UUID, can be generated on-the-fly, with no registration or synchronization whatsoever.
 - Like a UUID, makes collisions extremely unlikely.
+- Like a UUID, is hard to guess due to a significant random component.
 - Like a UUID, does not require database insertion to determine the ID, nor reading the ID back in after insertion (as with auto-increment).
 - Consists of digits only.
 - Can be encoded as 16 alphanumeric characters, for a shorter representation.
 - Uses the common `decimal` type, which is intuitively represented, sorted, and manipulated in .NET and databases (which cannot be said for UUIDs).
 - Supports comparison operators (unlike UUIDs, which make comparisons notoriously hard to write using the Entity Framework).
 - Is suitable for use in URLs.
-- Can by selected (such as for copying) by double-clicking, as it consists of only word characters in both its numeric and alphanumeric form.
+- Can by selected in UIs (such as for copying) by double-clicking, as it consists of only word characters in both its numeric and alphanumeric form.
 
 #### Trade-offs
 
 - Reveals its creation timestamp in milliseconds.
 - Is rate-limited to 128 generated IDs per millisecond (i.e. 128K IDs per second) on average per application instance.
-- Is context-unique rather than globally unique.
-- Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, see [Fluid](#fluid).)
-- Is unpleasant to use with SQLite, which truncates decimals to 8 bytes.
+- Is intended to be unique within a chosen context rather than globally.
+- Still exceeds 64 bits, the common CPU register size. (For an extremely efficient option that fits in 64 bits, at the cost of different trade-offs, see [Fluid](#fluid).)
+- Is unpleasant to use with SQLite, which truncates decimals to 8 bytes. (The alphanumeric representation can be used to remedy this.)
 
 #### Structure
 
@@ -361,7 +376,7 @@ public void ShowInversionOfControl()
 - Reveals its creation timestamp in milliseconds (see Attack Surface).
 - Reveals very minor information about which instance created the ID and how many IDs it has created this second (see Attack Surface).
 - Is rate-limited to 1,024 generated IDs per millisecond (i.e. 1 million IDs per second) per application.
-- Is context-unique rather than globally unique.
+- Is intended to be unique within a chosen context rather than globally.
 
 #### Structure
 
