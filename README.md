@@ -41,7 +41,7 @@ Compared to the DistributedId, the Fluid has the following pros and cons:
 
 ##### Pros
 
-- The ID is a 63-bit `long` or `ulong`, a simple primitive, rather than a 93-bit decimal.
+- The ID is a 64-bit `long` or `ulong`, a simple primitive, rather than a 93-bit decimal.
 - It avoids collisions entirely, rather than making them exceedingly unlikely.
 - It can be generated at a rate of 1M per second, per application instance.
 
