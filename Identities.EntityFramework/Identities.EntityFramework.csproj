@@ -25,11 +25,11 @@ Use DbContext-based connections for the Fluid ID generator:
 
 public void ConfigureServices(IServiceCollection services)
 {
-  services.AddPooledDbContextFactory&lt;ExampleDbContext&gt;(context => context.UseSqlServer("ConnectionString"));
+  services.AddPooledDbContextFactory&lt;ExampleDbContext&gt;(context =&gt; context.UseSqlServer("ConnectionString"));
   
-  services.AddApplicationInstanceIdSource(source => source.UseSqlServerDbContext&lt;ExampleDbContext&gt;());
+  services.AddApplicationInstanceIdSource(source =&gt; source.UseSqlServerDbContext&lt;ExampleDbContext&gt;());
   
-  services.AddIdGenerator(generator => generator.UseFluid());
+  services.AddIdGenerator(generator =&gt; generator.UseFluid());
 }
 
 Easily configure the column type to use for decimal ID columns:
@@ -67,7 +67,7 @@ The extensions in this package special-case SQLite, which requires special treat
 Release notes:
 
 1.0.1:
-- Now using AmbientContexts 1.1.0, for a performance improvement.
+- See Architect.Identities.
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
