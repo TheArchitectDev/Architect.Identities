@@ -35,7 +35,7 @@ If any of the following are true, consider using the [Fluid](#fluid) instead:
 
 - You are unable to use a `decimal` or `string` as an ID value.
 - You need to generate more than 128K IDs per second, per application instance.
-- Encountering 1 collision per 350 billion (350,000,000,000) IDs would be unacceptable.
+- Encountering 1 collision (duplicate) per 350 billion (350,000,000,000) IDs would be unacceptable. (This is a very safe guideline. The practical collision rate is much, much lower.)
 
 Compared to the DistributedId, the Fluid has the following pros and cons:
 
@@ -160,11 +160,11 @@ Having multiple application instances generate IDs introduces a chance of collis
 
 These are the statistics under the worst possible circumstances:
 
-- On average, with 2 application instances, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. As a frame of reference, it takes 2 billion IDs to exhaust an `int` primary key.)
-- On average, with 10 application instances, there is **1 collision 350 billion IDs**.
-- On average, with 100 application instances, there is **1 collision per 35 billion IDs**.
+- On average, with 2 application instances at maximum throughput, there is **1 collision per 3500 billion IDs**. (That is 3,500,000,000,000. As a frame of reference, it takes 2 billion IDs to exhaust an `int` primary key.)
+- On average, with 10 application instances at maximum throughput, there is **1 collision 350 billion IDs**.
+- On average, with 100 application instances at maximum throughput, there is **1 collision per 35 billion IDs**.
 
-**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _at the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the realistic probability of a collision.
+**The above is only in the degenerate scenario** where _all instances_ are generating IDs _at the maximum rate per millisecond_, and always _on the exact same millisecond_. In practice, fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the realistic probability of a collision.
 
 ##### What if I need absolute certainty?
 

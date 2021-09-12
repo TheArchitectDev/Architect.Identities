@@ -39,6 +39,6 @@ Note that the INCREMENT bit count is leading. (Only adding a bit to the incremen
 48/42: 67B
 48/42: After 855 minutes: 51304977 iterations, 331.775.677.658 IDs, 3 collisions: 1 in 110.591.892.552.
 48/42: After 2210 minutes: 79902785 iterations, 953.505.581.604 IDs, 14 collisions: 1 in 68.107.541.543
-48/42: After 2310 minutes: 83800893 iterations, 1.000.023.086.681 IDs, 14 collisions: 1 in 71.430.220.
+48/42: After 2310 minutes: 83800893 iterations, 1.000.023.086.681 IDs, 14 collisions: 1 in 71.430.220.000
 (With double rate, double collisions:)
 (After 533 minutes: 19057726 iterations, 242.564.619.371 IDs, 6 collisions: 1 in 40.427.436.561)

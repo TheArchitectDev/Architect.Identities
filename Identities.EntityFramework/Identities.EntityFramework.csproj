@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>1.0.1</VersionPrefix>
     <PackageReleaseNotes></PackageReleaseNotes>
     <Description>
 EntityFramework extensions for the Architect.Identities package.
@@ -25,11 +25,11 @@ Use DbContext-based connections for the Fluid ID generator:
 
 public void ConfigureServices(IServiceCollection services)
 {
-  services.AddPooledDbContextFactory&lt;ExampleDbContext&gt;(context => context.UseSqlServer("ConnectionString"));
+  services.AddPooledDbContextFactory&lt;ExampleDbContext&gt;(context =&gt; context.UseSqlServer("ConnectionString"));
   
-  services.AddApplicationInstanceIdSource(source => source.UseSqlServerDbContext&lt;ExampleDbContext&gt;());
+  services.AddApplicationInstanceIdSource(source =&gt; source.UseSqlServerDbContext&lt;ExampleDbContext&gt;());
   
-  services.AddIdGenerator(generator => generator.UseFluid());
+  services.AddIdGenerator(generator =&gt; generator.UseFluid());
 }
 
 Easily configure the column type to use for decimal ID columns:
@@ -63,6 +63,11 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 }
 
 The extensions in this package special-case SQLite, which requires special treatment.
+
+Release notes:
+
+1.0.1:
+- See Architect.Identities.
     </Description>
     <Copyright>The Architect</Copyright>
     <Company>The Architect</Company>
@@ -74,7 +79,7 @@ The extensions in this package special-case SQLite, which requires special treat
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Architect.Identities" Version="[1.0.0-*, 2.0.0)" />
+    <PackageReference Include="Architect.Identities" Version="[1.0.1-*, 2.0.0)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0" />
   </ItemGroup>
