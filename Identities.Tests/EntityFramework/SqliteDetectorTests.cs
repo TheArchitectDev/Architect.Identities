@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Architect.Identities.EntityFramework;
+﻿using Architect.Identities.EntityFramework;
 using Xunit;
 
 namespace Architect.Identities.Tests.EntityFramework

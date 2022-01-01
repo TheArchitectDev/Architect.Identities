@@ -1,5 +1,4 @@
-﻿using System;
-using Architect.Identities.Encodings;
+﻿using Architect.Identities.Encodings;
 using Xunit;
 
 namespace Architect.Identities.Tests.Encodings

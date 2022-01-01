@@ -1,8 +1,5 @@
-﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
+﻿using System.Buffers.Binary;
 using System.Globalization;
-using System.Linq;
 using Xunit;
 
 namespace Architect.Identities.Tests.DistributedIds

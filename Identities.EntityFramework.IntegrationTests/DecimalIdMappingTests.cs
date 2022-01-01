@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Architect.Identities.EntityFramework.IntegrationTests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Xunit;

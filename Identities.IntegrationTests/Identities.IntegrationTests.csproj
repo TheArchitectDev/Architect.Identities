@@ -4,7 +4,8 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<AssemblyName>Architect.Identities.IntegrationTests</AssemblyName>
 		<RootNamespace>Architect.Identities.IntegrationTests</RootNamespace>
-		<IsPackable>false</IsPackable>
+		<ImplicitUsings>Enable</ImplicitUsings>
+		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 
 	<ItemGroup>

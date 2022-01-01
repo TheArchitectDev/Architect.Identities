@@ -1,5 +1,4 @@
-﻿using System;
-using Architect.Identities.Helpers;
+﻿using Architect.Identities.Helpers;
 using Xunit;
 
 namespace Architect.Identities.Tests.IdGenerators

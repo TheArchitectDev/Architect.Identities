@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Threading.Tasks;
+﻿using System.Data.SQLite;
 using Architect.Identities.ApplicationInstanceIds;
 using Architect.Identities.IntegrationTests.TestHelpers;
 using Microsoft.Extensions.DependencyInjection;

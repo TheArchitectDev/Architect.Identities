@@ -5,7 +5,7 @@
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<AssemblyName>Architect.Identities.Example</AssemblyName>
 		<RootNamespace>Architect.Identities.Example</RootNamespace>
-		<IsPackable>false</IsPackable>
+		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 
 	<ItemGroup>

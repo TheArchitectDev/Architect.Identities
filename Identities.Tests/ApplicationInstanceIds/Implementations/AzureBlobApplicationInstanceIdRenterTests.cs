@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using Architect.Identities.ApplicationInstanceIds;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
