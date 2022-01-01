@@ -13,6 +13,16 @@
 		<VersionPrefix>1.0.2</VersionPrefix>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<Description>
+Release notes:
+
+1.0.2:
+- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
+
+1.0.1:
+- Now using AmbientContexts 1.1.0, for a performance improvement.
+
+Description:
+
 Reliable unique ID generation and management for distributed applications.
 
 Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
@@ -23,14 +33,6 @@ Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are
 - To assign a unique ID to each distinct application or instance thereof, use an ApplicationInstanceIdSource.
 
 https://github.com/TheArchitectDev/Architect.Identities
-
-Release notes:
-
-1.0.2:
-- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
-
-1.0.1:
-- Now using AmbientContexts 1.1.0, for a performance improvement.
 		</Description>
 		<Copyright>The Architect</Copyright>
 		<Company>The Architect</Company>

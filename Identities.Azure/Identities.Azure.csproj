@@ -13,12 +13,6 @@
 		<VersionPrefix>1.0.2</VersionPrefix>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<Description>
-Azure-based implementations for the Architect.Identities package.
-
-This package allows Azure blob storage to be used as the synchronization mechanism for assigning unique IDs to each application instance.
-
-services.AddIdGenerator(generator =&gt; generator.UseAzureBlobStorageContainer(new BlobContainerClient("ConnectionString", "ContainerName")));
-
 Release notes:
 
 1.0.2:
@@ -26,6 +20,14 @@ Release notes:
 
 1.0.1:
 - Now using AmbientContexts 1.1.0, for a performance improvement.
+
+Description:
+
+Azure-based implementations for the Architect.Identities package.
+
+This package allows Azure blob storage to be used as the synchronization mechanism for assigning unique IDs to each application instance.
+
+services.AddIdGenerator(generator =&gt; generator.UseAzureBlobStorageContainer(new BlobContainerClient("ConnectionString", "ContainerName")));
 		</Description>
 		<Copyright>The Architect</Copyright>
 		<Company>The Architect</Company>
