@@ -423,7 +423,6 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 			Assert.Equal(expectedValue, (ulong)fluid);
 		}
 
-
 		[Fact]
 		public void CreateFluid_WithClockThrowingOnSecondInvocationForOneFluid_ShouldNotChangeCounter()
 		{

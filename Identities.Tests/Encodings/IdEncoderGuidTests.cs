@@ -95,8 +95,8 @@ namespace Architect.Identities.Tests.Encodings
 			{
 				IdEncoder.TryGetGuid(bytes, out _),
 				IdEncoder.TryGetGuid(chars, out _),
-				IdEncoder.GetGuidOrDefault(bytes) != null,
-				IdEncoder.GetGuidOrDefault(chars) != null,
+				IdEncoder.GetGuidOrDefault(bytes) is not null,
+				IdEncoder.GetGuidOrDefault(chars) is not null,
 			};
 		}
 

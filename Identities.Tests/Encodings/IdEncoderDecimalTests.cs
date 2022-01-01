@@ -60,8 +60,8 @@ namespace Architect.Identities.Tests.Encodings
 			{
 				IdEncoder.TryGetDecimal(bytes, out _),
 				IdEncoder.TryGetDecimal(chars, out _),
-				IdEncoder.GetDecimalOrDefault(bytes) != null,
-				IdEncoder.GetDecimalOrDefault(chars) != null,
+				IdEncoder.GetDecimalOrDefault(bytes) is not null,
+				IdEncoder.GetDecimalOrDefault(chars) is not null,
 			};
 		}
 

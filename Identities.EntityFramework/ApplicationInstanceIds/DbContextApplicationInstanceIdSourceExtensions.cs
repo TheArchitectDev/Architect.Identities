@@ -145,7 +145,7 @@ namespace Architect.Identities
 
 			iDbContextFactoryType = iDbContextFactoryType?.MakeGenericType(typeof(TDbContext));
 
-			var createDbContextMethod = iDbContextFactoryType?.GetMethods().SingleOrDefault(method => method.Name == "CreateDbContext" && method.GetParameters().Count() == 0);
+			var createDbContextMethod = iDbContextFactoryType?.GetMethods().SingleOrDefault(method => method.Name == "CreateDbContext" && method.GetParameters().Length == 0);
 
 			services.AddTransient(CreateTransactionalExecutor); // DbContext may be registered as anything, which we can support by being transient
 
@@ -155,9 +155,9 @@ namespace Architect.Identities
 				Func<IServiceProvider, DbContext> getDbContext;
 				bool shouldDisposeDbContext;
 
-				var dbContextFactory = serviceProvider.GetService(iDbContextFactoryType);
+				var dbContextFactory = iDbContextFactoryType is null ? null : serviceProvider.GetService(iDbContextFactoryType);
 
-				if (dbContextFactory != null && createDbContextMethod != null)
+				if (dbContextFactory is not null && createDbContextMethod is not null)
 				{
 					getDbContext = serviceProvider => (DbContext)(createDbContextMethod.Invoke(dbContextFactory, parameters: Array.Empty<object>())
 						?? throw new Exception($"The factory produced a null {nameof(DbContext)}."));
@@ -194,7 +194,7 @@ namespace Architect.Identities
 							{
 								var secondConnection = secondDbContext.Database.GetDbConnection();
 								if (!ReferenceEquals(connection, secondConnection))
-									throw new Exception($"To use an in-memory SQLite database, configure a fixed connection.");
+									throw new Exception("To use an in-memory SQLite database, configure a fixed connection.");
 							}
 						}
 						isSqlite = false;

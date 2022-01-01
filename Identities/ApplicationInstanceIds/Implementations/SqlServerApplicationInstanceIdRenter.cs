@@ -20,7 +20,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 
 		private static void ThrowIfDatabaseNameExcludesSchema(string? databaseAndSchemaName)
 		{
-			if (databaseAndSchemaName != null && databaseAndSchemaName.Count(chr => chr == '.') != 1)
+			if (databaseAndSchemaName is not null && databaseAndSchemaName.Count(chr => chr == '.') != 1)
 			{
 				throw new NotSupportedException(
 					$"{nameof(SqlServerApplicationInstanceIdRenter)} only supports specifying the database name outside of the connection string if the schema name is included, i.e. 'database.schema'.");

@@ -1,24 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Architect.Identities.EntityFramework</AssemblyName>
-    <RootNamespace>Architect.Identities.EntityFramework</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AssemblyName>Architect.Identities.EntityFramework</AssemblyName>
+		<RootNamespace>Architect.Identities.EntityFramework</RootNamespace>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
-    <!-- NoWarn: 1591=MissingXmlComments -->
-    <NoWarn>1573;1591</NoWarn>
-    <LangVersion>latest</LangVersion>
-    <Nullable>Enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
+		<!-- NoWarn: 1591=MissingXmlComments -->
+		<NoWarn>1573;1591</NoWarn>
+		<LangVersion>latest</LangVersion>
+		<Nullable>Enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <VersionPrefix>1.0.1</VersionPrefix>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <Description>
+	<PropertyGroup>
+		<VersionPrefix>1.0.2</VersionPrefix>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<Description>
 EntityFramework extensions for the Architect.Identities package.
 
 Use DbContext-based connections for the Fluid ID generator:
@@ -66,33 +66,37 @@ The extensions in this package special-case SQLite, which requires special treat
 
 Release notes:
 
+1.0.2:
+- Fixed an incompatibility with EF Core 6.0.0+ (caused by a breaking change in EF itself).
+- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
+
 1.0.1:
-- See Architect.Identities.
-    </Description>
-    <Copyright>The Architect</Copyright>
-    <Company>The Architect</Company>
-    <Authors>TheArchitectDev, Timovzl</Authors>
-    <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>Entity, Framework, EntityFramework, EF, Core, EfCore, ID, IDs, identity, identities, Fluid, distributed, locally, unique, locally-unique, generator, generation, IdGenerator, UUID, GUID, auto-increment, primary, key, entity, entities, PublicIdentities, IdGeneratorScope, flexible</PackageTags>
-  </PropertyGroup>
+- Now using AmbientContexts 1.1.0, for a performance improvement.
+		</Description>
+		<Copyright>The Architect</Copyright>
+		<Company>The Architect</Company>
+		<Authors>TheArchitectDev, Timovzl</Authors>
+		<RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageTags>Entity, Framework, EntityFramework, EF, Core, EfCore, ID, IDs, identity, identities, Fluid, distributed, locally, unique, locally-unique, generator, generation, IdGenerator, UUID, GUID, auto-increment, primary, key, entity, entities, PublicIdentities, IdGeneratorScope, flexible</PackageTags>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Architect.Identities" Version="[1.0.1-*, 2.0.0)" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Architect.Identities" Version="[1.0.2-*, 2.0.0)" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Identities\Identities.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Identities\Identities.csproj" />
+	</ItemGroup>
 
 </Project>

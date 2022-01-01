@@ -106,7 +106,7 @@ namespace Architect.Identities
 			if (applicationInstanceIdSource is not DefaultApplicationInstanceIdSource defaultSource)
 				return serviceProvider;
 
-			if (defaultSource._applicationInstanceId != null) // Already resolved
+			if (defaultSource._applicationInstanceId is not null) // Already resolved
 				return serviceProvider;
 
 			var applicationLifetime = serviceProvider.GetRequiredService<IHostApplicationLifetime>();

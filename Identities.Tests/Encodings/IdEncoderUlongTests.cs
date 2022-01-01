@@ -60,8 +60,8 @@ namespace Architect.Identities.Tests.Encodings
 			{
 				IdEncoder.TryGetUlong(bytes, out _),
 				IdEncoder.TryGetUlong(chars, out _),
-				IdEncoder.GetUlongOrDefault(bytes) != null,
-				IdEncoder.GetUlongOrDefault(chars) != null,
+				IdEncoder.GetUlongOrDefault(bytes) is not null,
+				IdEncoder.GetUlongOrDefault(chars) is not null,
 			};
 		}
 

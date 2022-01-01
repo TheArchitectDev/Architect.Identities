@@ -28,8 +28,8 @@ namespace Architect.Identities.EntityFramework
 				.SingleOrDefault(type => type.Name == "SqliteDatabaseFacadeExtensions" && type.Namespace == "Microsoft.EntityFrameworkCore");
 			var isSqliteMethod = databaseFacadeExtensionsType?.GetMethod("IsSqlite");
 
-			if (isSqliteMethod != null && isSqliteMethod.ReturnType == typeof(bool) &&
-				isSqliteMethod.GetParameters().Count() == 1 && isSqliteMethod.GetParameters().Single().ParameterType == typeof(DatabaseFacade))
+			if (isSqliteMethod is not null && isSqliteMethod.ReturnType == typeof(bool) &&
+				isSqliteMethod.GetParameters().Length == 1 && isSqliteMethod.GetParameters().Single().ParameterType == typeof(DatabaseFacade))
 			{
 				if (database is null) throw new ArgumentNullException(nameof(database));
 

@@ -47,7 +47,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		[Fact]
 		public void RentId_WithNoPriorIds_ShouldAddId1()
 		{
-			System.Diagnostics.Debug.Assert(this.Repo.Blobs.Count == 0);
+			System.Diagnostics.Debug.Assert(this.Repo.Blobs.IsEmpty);
 
 			_ = this.Renter.RentId();
 
@@ -58,7 +58,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		[Fact]
 		public void RentId_WithOnlyPriorId1_ShouldAddId2()
 		{
-			this.Repo.Blobs.TryAdd("1", new byte[0]);
+			this.Repo.Blobs.TryAdd("1", Array.Empty<byte>());
 
 			_ = this.Renter.RentId();
 
@@ -68,7 +68,7 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		[Fact]
 		public void RentId_WithOnlyPriorId100_ShouldAddId1()
 		{
-			this.Repo.Blobs.TryAdd("100", new byte[0]);
+			this.Repo.Blobs.TryAdd("100", Array.Empty<byte>());
 
 			_ = this.Renter.RentId();
 
@@ -90,13 +90,13 @@ namespace Architect.Identities.Tests.ApplicationInstanceIds.Implementations
 		[Fact]
 		public void ReturnId_WithMultipleIdsPresent_ShouldOnlyTouchOwnId()
 		{
-			this.Repo.Blobs.TryAdd("1", new byte[0]);
+			this.Repo.Blobs.TryAdd("1", Array.Empty<byte>());
 
 			var id = this.Renter.RentId();
 
 			Assert.Contains("2", this.Repo.Blobs.Keys);
 
-			this.Repo.Blobs.TryAdd("3", new byte[0]);
+			this.Repo.Blobs.TryAdd("3", Array.Empty<byte>());
 
 			this.Renter.ReturnId(id);
 

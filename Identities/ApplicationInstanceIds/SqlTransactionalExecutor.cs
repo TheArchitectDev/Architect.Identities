@@ -18,7 +18,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 
 		public object? ExecuteTransactionally(Func<DbConnection, object?> action)
 		{
-			if (System.Transactions.Transaction.Current != null)
+			if (System.Transactions.Transaction.Current is not null)
 				throw new Exception($"An an unexpected database transaction was present while attempting to create a new transaction.");
 
 			var connection = this.ConnectionFactory.CreateDbConnection() ?? throw new Exception("The factory produced a null connection object.");

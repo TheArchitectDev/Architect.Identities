@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -42,12 +44,12 @@ namespace Architect.Identities.EntityFramework
 			var isSqlite = dbContext.IsSqlite();
 
 			var propertyMappings = modelBuilder.Model.GetEntityTypes()
-				.Where(entityType => entityType.ClrType != null)
+				.Where(entityType => GetClrType(entityType) is not null)
 				.SelectMany(entityType => entityType.GetProperties())
-				.Where(property => property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
-				.Where(property => property.Name.EndsWith("Id") || property.Name.EndsWith("ID"))
-				.Select(property => (Property: property, Entity: modelBuilder.Entity(property.DeclaringEntityType.ClrType)))
-				.Select(pair => (PropertyBuilder: pair.Entity.Property(pair.Property.Name), IsNullable: pair.Property.ClrType == typeof(decimal?)));
+				.Where(property => GetClrType(property) == typeof(decimal) || GetClrType(property) == typeof(decimal?))
+				.Where(property => GetName(property).EndsWith("Id") || GetName(property).EndsWith("ID"))
+				.Select(property => (Property: property, Entity: modelBuilder.Entity(GetClrType(property.DeclaringEntityType))))
+				.Select(pair => (PropertyBuilder: pair.Entity.Property(GetName(pair.Property)), IsNullable: GetClrType(pair.Property) == typeof(decimal?)));
 
 			foreach (var (propertyBuilder, isNullable) in propertyMappings)
 			{
@@ -55,6 +57,20 @@ namespace Architect.Identities.EntityFramework
 			}
 
 			return modelBuilder;
+
+			// Local function that gets the ClrType property value from a given entity or property type
+			static Type? GetClrType(object entityOrPropertyType)
+			{
+				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
+				return (Type?)entityOrPropertyType.GetType().GetProperty(nameof(IMutableProperty.ClrType))!.GetValue(entityOrPropertyType);
+			}
+
+			// Local function that gets the Name property value from a given entity or property type
+			static string GetName(object entityOrPropertyType)
+			{
+				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
+				return (string)entityOrPropertyType.GetType().GetProperty(nameof(IMutableProperty.Name))!.GetValue(entityOrPropertyType)!;
+			}
 		}
 
 		/// <summary>
@@ -105,15 +121,15 @@ namespace Architect.Identities.EntityFramework
 		{
 			if (decimalPropertyBuilder is null) throw new ArgumentNullException(nameof(decimalPropertyBuilder));
 
-			System.Diagnostics.Debug.Assert(decimalPropertyBuilder.Metadata.PropertyInfo.PropertyType == typeof(decimal) ||
-				decimalPropertyBuilder.Metadata.PropertyInfo.PropertyType == typeof(decimal?));
+			System.Diagnostics.Debug.Assert(GetPropertyInfo(decimalPropertyBuilder.Metadata)?.PropertyType == typeof(decimal) ||
+				GetPropertyInfo(decimalPropertyBuilder.Metadata)?.PropertyType == typeof(decimal?));
 
 			if (isSqlite ?? dbContext.IsSqlite())
 			{
 				decimalPropertyBuilder.HasColumnType("TEXT");
 				decimalPropertyBuilder.HasConversion(isNullable ? NullableDecimalConverter : DecimalConverter);
 			}
-			else if (columnType == DefaultColumnType && PropertyBuilderPrecisionSetter.Value != null)
+			else if (columnType == DefaultColumnType && PropertyBuilderPrecisionSetter.Value is not null)
 			{
 				// We prefer to use the dynamic setter, since it is not tied to an explicit string representation, allowing broader support by providers
 				PropertyBuilderPrecisionSetter.Value.Invoke(decimalPropertyBuilder, 28, 0);
@@ -121,6 +137,13 @@ namespace Architect.Identities.EntityFramework
 			else
 			{
 				decimalPropertyBuilder.HasColumnType(columnType);
+			}
+
+			// Local function that gets the PropertyInfo property value from a given property
+			static PropertyInfo? GetPropertyInfo(object property)
+			{
+				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
+				return (PropertyInfo?)property.GetType().GetProperty(nameof(IMutableProperty.PropertyInfo))!.GetValue(property)!;
 			}
 		}
 	}

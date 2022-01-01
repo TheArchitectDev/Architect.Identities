@@ -33,7 +33,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 			this.TransactionalExecutor = serviceProvider.GetRequiredService<IApplicationInstanceIdSourceTransactionalExecutor>();
 
 			var customTableName = serviceProvider.GetService<ApplicationInstanceIdCustomTableName>();
-			if (customTableName != null) this.TableName = customTableName.TableName;
+			if (customTableName is not null) this.TableName = customTableName.TableName;
 
 			this.DatabaseName = databaseName;
 
@@ -56,7 +56,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 
 		protected override ushort GetContextUniqueApplicationInstanceIdCore()
 		{
-			if (Transaction.Current != null)
+			if (Transaction.Current is not null)
 				throw new Exception($"Unexpected database transaction during {this.GetType().Name}.{nameof(this.GetContextUniqueApplicationInstanceId)}.");
 
 			this.ExecuteTransactionally(connection => this.CreateTableIfNotExists(connection, this.DatabaseName));

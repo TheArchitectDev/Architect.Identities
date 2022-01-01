@@ -100,7 +100,7 @@ namespace Architect.Identities
 			{
 				var creationResponse = this.Client.CreateIfNotExists(Azure.Storage.Blobs.Models.PublicAccessType.None);
 				var creationResponsStatusCode = creationResponse?.GetRawResponse().Status;
-				if (creationResponsStatusCode != null && creationResponsStatusCode != (int)HttpStatusCode.OK && creationResponsStatusCode != (int)HttpStatusCode.Created)
+				if (creationResponsStatusCode is not null && creationResponsStatusCode != (int)HttpStatusCode.OK && creationResponsStatusCode != (int)HttpStatusCode.Created)
 					throw new Exception($"{this.GetType().Name} received an unexpected status code trying to ensure that the container exists: {creationResponsStatusCode}.");
 			}
 

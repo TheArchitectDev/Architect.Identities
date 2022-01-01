@@ -31,7 +31,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 		public DbConnection CreateDbConnection()
 		{
 			var connection = this.GetConnection(this.ServiceProvider) ?? throw new Exception("The factory produced a null connection object.");
-			if (this.ConnectionString != null) connection.ConnectionString = this.ConnectionString;
+			if (this.ConnectionString is not null) connection.ConnectionString = this.ConnectionString;
 			return connection;
 		}
 
