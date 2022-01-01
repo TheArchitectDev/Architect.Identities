@@ -143,7 +143,7 @@ namespace Architect.Identities.EntityFramework
 			static PropertyInfo? GetPropertyInfo(object property)
 			{
 				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
-				return (PropertyInfo?)property.GetType().GetProperty(nameof(IMutableProperty.PropertyInfo))!.GetValue(property)!;
+				return (PropertyInfo?)property.GetType().GetProperty(nameof(IMutableProperty.PropertyInfo))!.GetValue(property);
 			}
 		}
 	}
