@@ -1,5 +1,4 @@
-﻿using System;
-using Xunit;
+﻿using Xunit;
 
 namespace Architect.Identities.Tests.IdGenerators.Fluids
 {
@@ -8,7 +7,7 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		[Fact]
 		public void Construct_With64TotalBits_ShouldSucceed()
 		{
-			new FluidBitDistribution(43, 11, 10);
+			_ = new FluidBitDistribution(43, 11, 10);
 		}
 		
 		[Fact]
@@ -48,7 +47,7 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 		[Fact]
 		public void Construct_With16ApplicationInstanceIdBits_ShouldSucceed()
 		{
-			new FluidBitDistribution(43, 16, 5);
+			_ = new FluidBitDistribution(43, 16, 5);
 		}
 
 		[Fact]

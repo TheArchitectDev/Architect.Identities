@@ -1,6 +1,4 @@
-﻿using System;
-using System.Buffers.Binary;
-using System.Threading;
+﻿using System.Buffers.Binary;
 using Architect.Identities;
 
 // ReSharper disable once CheckNamespace

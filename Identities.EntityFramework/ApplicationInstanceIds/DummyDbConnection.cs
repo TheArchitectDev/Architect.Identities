@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities.ApplicationInstanceIds
@@ -10,7 +11,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 	/// </summary>
 	public sealed class DummyDbConnection : DbConnection
 	{
-		public override string ConnectionString { get; set; } = null!;
+		public override string ConnectionString { get; [param: AllowNull] set; } = null!;
 		public override string Database { get; } = null!;
 		public override string DataSource { get; } = null!;
 		public override string ServerVersion { get; } = null!;

@@ -16,7 +16,7 @@ namespace Architect.Identities.ApplicationInstanceIds
 
 		internal void SetApplicationInstanceId(ushort applicationInstanceId)
 		{
-			if (this._applicationInstanceId != null)
+			if (this._applicationInstanceId is not null)
 				throw new InvalidOperationException("An application instance ID was already configured.");
 
 			this._applicationInstanceId = applicationInstanceId;

@@ -1,24 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Architect.Identities</AssemblyName>
-    <RootNamespace>Architect.Identities</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AssemblyName>Architect.Identities</AssemblyName>
+		<RootNamespace>Architect.Identities</RootNamespace>
+		<Nullable>Enable</Nullable>
+		<LangVersion>9</LangVersion>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
-    <!-- NoWarn: 1591=MissingXmlComments -->
-    <NoWarn>1573;1591</NoWarn>
-    <LangVersion>latest</LangVersion>
-    <Nullable>Enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<VersionPrefix>1.0.2</VersionPrefix>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<Description>
+Release notes:
 
-  <PropertyGroup>
-    <VersionPrefix>1.0.1</VersionPrefix>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <Description>
+1.0.2:
+- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
+
+1.0.1:
+- Now using AmbientContexts 1.1.0, for a performance improvement.
+
+Description:
+
 Reliable unique ID generation and management for distributed applications.
 
 Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
@@ -29,33 +33,28 @@ Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are
 - To assign a unique ID to each distinct application or instance thereof, use an ApplicationInstanceIdSource.
 
 https://github.com/TheArchitectDev/Architect.Identities
+		</Description>
+		<Copyright>The Architect</Copyright>
+		<Company>The Architect</Company>
+		<Authors>TheArchitectDev, Timovzl</Authors>
+		<RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageTags>ID, IDs, identity, identities, Fluid, distributed, locally, unique, locally-unique, generator, generation, IdGenerator, UUID, GUID, auto-increment, primary, key, entity, entities, PublicIdentities, IdGeneratorScope, flexible</PackageTags>
+	</PropertyGroup>
 
-Release notes:
+	<ItemGroup>
+		<PackageReference Include="Architect.AmbientContexts" Version="1.1.1-*" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.0" />
+	</ItemGroup>
 
-1.0.1:
-- Now using AmbientContexts 1.1.0, for a performance improvement.
-    </Description>
-    <Copyright>The Architect</Copyright>
-    <Company>The Architect</Company>
-    <Authors>TheArchitectDev, Timovzl</Authors>
-    <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>ID, IDs, identity, identities, Fluid, distributed, locally, unique, locally-unique, generator, generation, IdGenerator, UUID, GUID, auto-increment, primary, key, entity, entities, PublicIdentities, IdGeneratorScope, flexible</PackageTags>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Architect.AmbientContexts" Version="1.1.0-*" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
 </Project>

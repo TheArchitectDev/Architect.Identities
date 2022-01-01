@@ -1,58 +1,57 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Architect.Identities.Azure</AssemblyName>
-    <RootNamespace>Architect.Identities</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<AssemblyName>Architect.Identities.Azure</AssemblyName>
+		<RootNamespace>Architect.Identities</RootNamespace>
+		<Nullable>Enable</Nullable>
+		<LangVersion>9</LangVersion>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
-    <!-- NoWarn: 1591=MissingXmlComments -->
-    <NoWarn>1573;1591</NoWarn>
-    <LangVersion>latest</LangVersion>
-    <Nullable>Enable</Nullable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<VersionPrefix>1.0.2</VersionPrefix>
+		<PackageReleaseNotes></PackageReleaseNotes>
+		<Description>
+Release notes:
 
-  <PropertyGroup>
-    <VersionPrefix>1.0.1</VersionPrefix>
-    <PackageReleaseNotes></PackageReleaseNotes>
-    <Description>
+1.0.2:
+- Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
+
+1.0.1:
+- Now using AmbientContexts 1.1.0, for a performance improvement.
+
+Description:
+
 Azure-based implementations for the Architect.Identities package.
 
 This package allows Azure blob storage to be used as the synchronization mechanism for assigning unique IDs to each application instance.
 
 services.AddIdGenerator(generator =&gt; generator.UseAzureBlobStorageContainer(new BlobContainerClient("ConnectionString", "ContainerName")));
+		</Description>
+		<Copyright>The Architect</Copyright>
+		<Company>The Architect</Company>
+		<Authors>TheArchitectDev, Timovzl</Authors>
+		<RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
+		<RepositoryType>Git</RepositoryType>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageTags>Azure, blob, storage, container, ID, IDs, identity, identities, Fluid, generator, generation, IdGenerator, UUID, GUID, auto-increment, entity, entities, PublicIdentities, IdGeneratorScope, flexible, locally, unique</PackageTags>
+	</PropertyGroup>
 
-Release notes:
+	<ItemGroup>
+		<PackageReference Include="Architect.Identities" Version="[1.0.2-*, 2.0.0)" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
+	</ItemGroup>
 
-1.0.1:
-- See Architect.Identities.
-    </Description>
-    <Copyright>The Architect</Copyright>
-    <Company>The Architect</Company>
-    <Authors>TheArchitectDev, Timovzl</Authors>
-    <RepositoryUrl>https://github.com/TheArchitectDev/Architect.Identities</RepositoryUrl>
-    <RepositoryType>Git</RepositoryType>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageTags>Azure, blob, storage, container, ID, IDs, identity, identities, Fluid, generator, generation, IdGenerator, UUID, GUID, auto-increment, entity, entities, PublicIdentities, IdGeneratorScope, flexible, locally, unique</PackageTags>
-  </PropertyGroup>
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath></PackagePath>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Architect.Identities" Version="[1.0.1-*, 2.0.0)" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\LICENSE">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Identities\Identities.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Identities\Identities.csproj" />
+	</ItemGroup>
 
 </Project>

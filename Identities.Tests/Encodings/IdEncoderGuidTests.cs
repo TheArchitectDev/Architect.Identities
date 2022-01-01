@@ -1,7 +1,4 @@
-﻿using System;
-using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 using System.Text;
 using Architect.Identities.Helpers;
@@ -95,8 +92,8 @@ namespace Architect.Identities.Tests.Encodings
 			{
 				IdEncoder.TryGetGuid(bytes, out _),
 				IdEncoder.TryGetGuid(chars, out _),
-				IdEncoder.GetGuidOrDefault(bytes) != null,
-				IdEncoder.GetGuidOrDefault(chars) != null,
+				IdEncoder.GetGuidOrDefault(bytes) is not null,
+				IdEncoder.GetGuidOrDefault(chars) is not null,
 			};
 		}
 

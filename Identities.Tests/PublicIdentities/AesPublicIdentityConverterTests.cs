@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Xunit;
 
@@ -342,7 +340,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var decodedId = this.Converter.GetUlongOrDefault(guid);
 
-			Assert.Equal(decodingShouldSucceed, decodedId != null);
+			Assert.Equal(decodingShouldSucceed, decodedId is not null);
 			Assert.Equal(expectedId, decodedId);
 		}
 
@@ -357,7 +355,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var decodedId = this.Converter.GetLongOrDefault(guid);
 
-			Assert.Equal(decodingShouldSucceed, decodedId != null);
+			Assert.Equal(decodingShouldSucceed, decodedId is not null);
 			Assert.Equal(expectedId, decodedId);
 		}
 
@@ -373,7 +371,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var decodedId = this.Converter.GetDecimalOrDefault(guid);
 
-			Assert.Equal(decodingShouldSucceed, decodedId != null);
+			Assert.Equal(decodingShouldSucceed, decodedId is not null);
 			Assert.Equal(expectedId, decodedId);
 		}
 

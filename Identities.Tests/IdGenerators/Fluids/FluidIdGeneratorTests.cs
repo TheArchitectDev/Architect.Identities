@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Xunit;
 
 namespace Architect.Identities.Tests.IdGenerators.Fluids
@@ -422,7 +421,6 @@ namespace Architect.Identities.Tests.IdGenerators.Fluids
 			var expectedValue = milliseconds | applicationInstanceId | counterValue;
 			Assert.Equal(expectedValue, (ulong)fluid);
 		}
-
 
 		[Fact]
 		public void CreateFluid_WithClockThrowingOnSecondInvocationForOneFluid_ShouldNotChangeCounter()

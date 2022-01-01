@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Reflection;
-using System.Threading.Tasks;
 using Architect.Identities.ApplicationInstanceIds;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;

@@ -63,11 +63,11 @@ namespace Architect.Identities
 				throw new ArgumentException($"The given {nameof(utcClock)} produced a non-UTC datetime.");
 			}
 
-			if (epoch != null && epoch.Value.Kind != DateTimeKind.Utc)
+			if (epoch is not null && epoch.Value.Kind != DateTimeKind.Utc)
 			{
 				throw new ArgumentException($"The {nameof(this.Epoch)} must be in UTC.");
 			}
-			if (epoch != null && epoch.Value.TimeOfDay != TimeSpan.Zero)
+			if (epoch is not null && epoch.Value.TimeOfDay != TimeSpan.Zero)
 			{
 				throw new ArgumentException($"The {nameof(this.Epoch)} must not include a time component.");
 			}

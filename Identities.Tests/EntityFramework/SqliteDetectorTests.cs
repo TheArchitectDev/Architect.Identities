@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Architect.Identities.EntityFramework;
+﻿using Architect.Identities.EntityFramework;
 using Xunit;
 
 namespace Architect.Identities.Tests.EntityFramework
@@ -12,7 +10,7 @@ namespace Architect.Identities.Tests.EntityFramework
 			// Assert that no SQLite assemblies are loaded (except System.Data.SQLite, which seems to be quite standard)
 			var anySqliteAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(assembly =>
 				assembly.FullName?.Contains("SQLite", StringComparison.OrdinalIgnoreCase) == true);
-			if (anySqliteAssembly != null) throw new Exception("SQLite was inadvertently loaded in this unit test library.");
+			if (anySqliteAssembly is not null) throw new Exception("SQLite was inadvertently loaded in this unit test library.");
 		}
 
 		/// <summary>
