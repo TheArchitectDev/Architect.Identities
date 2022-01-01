@@ -6,13 +6,6 @@
 		<Nullable>Enable</Nullable>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
-		<!-- NoWarn: 1591=MissingXmlComments -->
-		<!-- NoWarn: CA1822=MarkMembersAsStatic -->
-		<NoWarn>1573;1591;CA1822</NoWarn>
-	</PropertyGroup>
-
 	<ItemGroup>
 		<ProjectReference Include="..\Identities\Identities.csproj" />
 	</ItemGroup>

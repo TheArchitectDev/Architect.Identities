@@ -82,7 +82,7 @@ namespace Architect.Identities.EntityFramework
 		/// Doing so avoids truncation of decimals to 8 bytes, and ensures that they are reconstituted with their original precision.
 		/// </para>
 		/// <para>
-		/// To do this without repetition for each decimal ID property, call <see cref="StoreDecimalIdsWithCorrectPrecision(ModelBuilder, DbContext, string)"/> on the <see cref="ModelBuilder"/>.
+		/// To do this without repetition for each decimal ID property, call <see cref="StoreDecimalIdsWithCorrectPrecision(ModelBuilder, DbContext, String)"/> on the <see cref="ModelBuilder"/>.
 		/// </para>
 		/// </summary>
 		/// <param name="propertyBuilder">The property builder whose configuration to update.</param>
@@ -103,7 +103,7 @@ namespace Architect.Identities.EntityFramework
 		/// Doing so avoids truncation of decimals to 8 bytes, and ensures that they are reconstituted with their original precision.
 		/// </para>
 		/// <para>
-		/// To do this without repetition for each decimal ID property, call <see cref="StoreDecimalIdsWithCorrectPrecision(ModelBuilder, DbContext, string)"/> on the <see cref="ModelBuilder"/>.
+		/// To do this without repetition for each decimal ID property, call <see cref="StoreDecimalIdsWithCorrectPrecision(ModelBuilder, DbContext, String)"/> on the <see cref="ModelBuilder"/>.
 		/// </para>
 		/// </summary>
 		/// <param name="propertyBuilder">The property builder whose configuration to update.</param>

@@ -4,15 +4,9 @@
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<AssemblyName>Architect.Identities.Azure</AssemblyName>
 		<RootNamespace>Architect.Identities</RootNamespace>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<!-- NoWarn: 1573=SummariesOnOnlySomeParams -->
-		<!-- NoWarn: 1591=MissingXmlComments -->
-		<NoWarn>1573;1591</NoWarn>
-		<LangVersion>latest</LangVersion>
 		<Nullable>Enable</Nullable>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<LangVersion>9</LangVersion>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<PropertyGroup>
