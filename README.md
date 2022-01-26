@@ -313,7 +313,7 @@ if (entity is null) return this.NotFound();
 
 Sometimes a very short, 64-bit numeric ID is required. Due to its tighter constraints, such an ID requires orchestration and has additional caveats. As such, use of the **[DistributedId](#distributed-ids)** is recommended.
 
-The **F**lexible, **L**ocally-**U**nique **ID** is a 64-bit ID value guaranteed to be unique within its configured context. It is extremely efficient as a primary key, and it avoids leaking the sensitive information that an auto-increment ID does.
+The **F**lexible, **L**ocally-**U**nique **ID** (Fluid) is a 64-bit ID value guaranteed to be unique within its configured context. It is extremely efficient as a primary key, and it avoids leaking the sensitive information that an auto-increment ID does.
 
 An application using Fluids **should run on a clock-synchronized system** with clock adjustments of no more than 5 seconds. This is because if the clock is adjusted backwards right after an ID was generated, the system needs to wait for the clock to reach its original value again in order to guarantee ID uniqueness. In other words, once an application instance generates an ID on a timestamp, it will no longer generate IDs on _earlier_ timestamps. ID generation will wait for up to 5 seconds to let the clock catch up, or throw an exception if it would need to wait longer.
 
