@@ -61,7 +61,7 @@ The DistributedId is a UUID replacement that is generated on-the-fly (without or
 
 A DistributedId is created as a 93-bit decimal value of 27-28 digits, but can also be represented as a (case-sensitive) 16-char alphanumeric value or as a `Guid`.
 
-Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, collisions tend to be far under 1 collision per 350 billion IDs generated.
+Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, [collisions](#collision-resistance) (i.e. duplicates) tend to be far under 1 collision per 350 billion IDs generated.
 
 DistributedIds are designed to be unique within a logical context, such as a database table, a Bounded Context, or even a whole medium-sized company. These form the most common boundaries within which uniqueness is required. Any number of distributed applications may generate new IDs within such a context.
 
