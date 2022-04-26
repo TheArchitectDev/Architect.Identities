@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Globalization;
 using Xunit;
 
@@ -72,33 +72,6 @@ namespace Architect.Identities.Tests.DistributedIds
 		}
 
 		[Fact]
-		public void CreateCore_SubsequentlyOnSameTimestamp_ShouldReachExpectedRateLimit()
-		{
-			const int minimumAverateRate = 100;
-
-			var didSleep = false;
-			var dateTime = FixedUtcDateTime;
-			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
-
-			var creationCount = 0;
-
-			for (var x = 0; x < 100; x++) // Because probability
-			{
-				didSleep = false;
-
-				while (!didSleep)
-				{
-					generator.CreateId();
-					creationCount++;
-				}
-			}
-
-			var averageRate = creationCount / 100;
-
-			Assert.True(averageRate > minimumAverateRate);
-		}
-
-		[Fact]
 		public void CreateCore_Regularly_ShouldUseEpochToCalculateMilliseconds()
 		{
 			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, FixedRandomSequence6);
@@ -169,7 +142,12 @@ namespace Architect.Identities.Tests.DistributedIds
 		[Fact]
 		public void AwaitUpdatedClockValue_Regularly_ShouldSleepUntilClockHasChanged()
 		{
-			var clockValues = new[] { /* Initial time */ FixedUtcDateTime, /* After first sleep */ FixedUtcDateTime, /* After second sleep */ FixedUtcDateTime.AddHours(1) };
+			var clockValues = new[]
+			{
+				/* Initial time */ FixedUtcDateTime, // Sleep again
+				/* After first sleep */ FixedUtcDateTime, // Sleep again
+				/* After second sleep */ FixedUtcDateTime.AddHours(1), // Success
+			};
 			var clockValueIndex = 0;
 
 			var sumSleepMilliseconds = 0;
@@ -179,19 +157,25 @@ namespace Architect.Identities.Tests.DistributedIds
 			// Populate the previous timestamp
 			generator.CreateId();
 
-			generator.AwaitUpdatedClockValue();
+			var result = generator.AwaitUpdatedClockValue(minimumTimestamp: generator.PreviousCreationTimestamp + 1);
 
 			Assert.Equal(2, sumSleepMilliseconds);
+			Assert.Equal(result, generator.PreviousCreationTimestamp + 3600 * 1000);
 		}
 
 		/// <summary>
-		/// We do not care if the clock went forward or backward, as long as it has changed.
-		/// The risk of collisions is extremely low, so there is no reason to protect against clock rewinds.
+		/// We prefer to wait for the clock to move forward (so long as we do not have to wait too long), to provide incremental IDs.
 		/// </summary>
 		[Fact]
-		public void AwaitUpdatedClockValue_WithRewindingClock_ShouldStopSleepingEvenOnRewind()
+		public void AwaitUpdatedClockValue_WithMildlyRewindingClock_ShouldWaitToCatchUp()
 		{
-			var clockValues = new[] { /* Initial time */ FixedUtcDateTime.AddMilliseconds(1), /* After first sleep */ FixedUtcDateTime.AddMilliseconds(1), /* After second sleep */ FixedUtcDateTime };
+			var clockValues = new[]
+			{
+				/* Initial time */ FixedUtcDateTime.AddMilliseconds(1), // Sleep again
+				/* After first sleep */ FixedUtcDateTime.AddMilliseconds(1), // Sleep again
+				/* After second sleep */ FixedUtcDateTime.AddMilliseconds(-90), // Sleep again
+				/* After third sleep */ FixedUtcDateTime.AddMilliseconds(2), // Success
+			};
 			var clockValueIndex = 0;
 
 			var sumSleepMilliseconds = 0;
@@ -201,9 +185,37 @@ namespace Architect.Identities.Tests.DistributedIds
 			// Populate the previous timestamp
 			generator.CreateId();
 
-			generator.AwaitUpdatedClockValue();
+			var result = generator.AwaitUpdatedClockValue(minimumTimestamp: generator.PreviousCreationTimestamp + 1);
+
+			Assert.Equal(3, sumSleepMilliseconds);
+			Assert.Equal(result, generator.PreviousCreationTimestamp + 1);
+		}
+
+		/// <summary>
+		/// If the clock is adjusted backwards too far, we give up waiting and start anew.
+		/// </summary>
+		[Fact]
+		public void AwaitUpdatedClockValue_WithStronglyRewindingClock_ShouldWaitToCatchUp()
+		{
+			var clockValues = new[]
+			{
+				/* Initial time */ FixedUtcDateTime, // Sleep again
+				/* After first sleep */ FixedUtcDateTime.AddMilliseconds(-90), // Sleep again
+				/* After second sleep */ FixedUtcDateTime.AddMilliseconds(-101), // Give up and reset
+			};
+			var clockValueIndex = 0;
+
+			var sumSleepMilliseconds = 0;
+
+			var generator = new DistributedIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
+
+			// Populate the previous timestamp
+			generator.CreateId();
+
+			var result = generator.AwaitUpdatedClockValue(minimumTimestamp: generator.PreviousCreationTimestamp + 1);
 
 			Assert.Equal(2, sumSleepMilliseconds);
+			Assert.Equal(result, generator.PreviousCreationTimestamp - 101);
 		}
 
 		[Fact]
@@ -241,6 +253,16 @@ namespace Architect.Identities.Tests.DistributedIds
 
 			var results = new List<decimal>();
 			for (var i = 0; i < 2 * ExceedingRateLimitPerTimestamp; i++)
+				results.Add(generator.CreateId());
+
+			for (var i = 1; i < results.Count; i++)
+				Assert.True(results[i] > results[i - 1]);
+
+			var dateTime = FixedUtcDateTime;
+			generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddTicks(1), sleepAction: _ => dateTime = dateTime.AddMilliseconds(1));
+
+			results.Clear();
+			for (var i = 0; i < 1_000_000; i++)
 				results.Add(generator.CreateId());
 
 			for (var i = 1; i < results.Count; i++)
@@ -290,27 +312,39 @@ namespace Architect.Identities.Tests.DistributedIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestampWithinRateLimit_ShouldReturnIdenticalTimestampComponents()
 		{
-			var didSleep = false;
+			var didChangeTimestamp = false;
 			var dateTime = FixedUtcDateTime;
-			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didChangeTimestamp = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<ulong>();
 
-			for (var x = 0; x < 20; x++) // Because probability
+			int x;
+			for (x = 0; x < 20; x++) // Because probability
 			{
-				didSleep = false;
+				didChangeTimestamp = false;
+				dateTime = dateTime.AddMilliseconds(1);
 				results.Clear();
 
+				ulong? previousTimestampComponent = null;
 				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
-					results.Add(ExtractTimestampComponent(generator.CreateId()));
+				{
+					var id = generator.CreateId();
+					var timestampComponent = ExtractTimestampComponent(id);
 
-				if (!didSleep) break;
+					if (previousTimestampComponent is not null && timestampComponent != previousTimestampComponent)
+						didChangeTimestamp = true;
+					previousTimestampComponent = timestampComponent;
+
+					results.Add(ExtractTimestampComponent(id));
+				}
+
+				if (!didChangeTimestamp) break;
 			}
 
 			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
-				Assert.Equal(results[i], results[i - 1]);
+				Assert.Equal(results[i - 1], results[i]);
 		}
 
 		[Fact]
@@ -333,27 +367,38 @@ namespace Architect.Identities.Tests.DistributedIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameMillisecondButDifferentTick_ShouldReturnIncrementalRandomSequenceComponents()
 		{
-			var didSleep = false;
+			var didChangeTimestamp = false;
 			var dateTime = FixedUtcDateTime;
-			var generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddTicks(1), sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime = dateTime.AddTicks(1), sleepAction: _ => { didChangeTimestamp = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<ulong>();
 
 			for (var x = 0; x < 20; x++) // Because probability
 			{
-				didSleep = false;
+				didChangeTimestamp = false;
+				dateTime = dateTime.AddMilliseconds(1);
 				results.Clear();
 
+				ulong? previousTimestampComponent = null;
 				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
-					results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+				{
+					var id = generator.CreateId();
+					var timestampComponent = ExtractTimestampComponent(id);
 
-				if (!didSleep) break;
+					if (previousTimestampComponent is not null && timestampComponent != previousTimestampComponent)
+						didChangeTimestamp = true;
+					previousTimestampComponent = timestampComponent;
+
+					results.Add(ExtractRandomSequenceComponent(id));
+				}
+
+				if (!didChangeTimestamp) break;
 			}
 
 			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
-				Assert.True(results[i] > results[i - 1]);
+				Assert.True(results[i] > results[i - 1], $"Results should have been incremental: {results[i - 1]}, {results[i]}");
 		}
 
 		/// <summary>
@@ -362,27 +407,38 @@ namespace Architect.Identities.Tests.DistributedIds
 		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestampWithinRateLimit_ShouldReturnIncrementalRandomSequenceComponents()
 		{
-			var didSleep = false;
+			var didChangeTimestamp = false;
 			var dateTime = FixedUtcDateTime;
-			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didSleep = true; dateTime = dateTime.AddMilliseconds(1); });
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { didChangeTimestamp = true; dateTime = dateTime.AddMilliseconds(1); });
 
 			var results = new List<ulong>();
-
+			
 			for (var x = 0; x < 20; x++) // Because probability
 			{
-				didSleep = false;
+				didChangeTimestamp = false;
+				dateTime = dateTime.AddMilliseconds(1);
 				results.Clear();
 
+				ulong? previousTimestampComponent = null;
 				for (var i = 0; i < SafeRateLimitPerTimestamp; i++)
-					results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+				{
+					var id = generator.CreateId();
+					var timestampComponent = ExtractTimestampComponent(id);
 
-				if (!didSleep) break;
+					if (previousTimestampComponent is not null && timestampComponent != previousTimestampComponent)
+						didChangeTimestamp = true;
+					previousTimestampComponent = timestampComponent;
+
+					results.Add(ExtractRandomSequenceComponent(id));
+				}
+
+				if (!didChangeTimestamp) break;
 			}
 
 			Assert.Equal(SafeRateLimitPerTimestamp, results.Count);
 
 			for (var i = 1; i < results.Count; i++)
-				Assert.True(results[i] > results[i - 1]);
+				Assert.True(results[i] > results[i - 1], $"Results should have been incremental: {results[i - 1]}, {results[i]}");
 		}
 
 		/// <summary>
@@ -411,7 +467,7 @@ namespace Architect.Identities.Tests.DistributedIds
 		}
 
 		[Fact]
-		public void CreateId_WithinRateLimit_ShouldNotSleep()
+		public void CreateId_SubsequentlyWithinRateLimit_ShouldNotSleep()
 		{
 			var didSleep = false;
 			var dateTime = FixedUtcDateTime;
@@ -431,51 +487,85 @@ namespace Architect.Identities.Tests.DistributedIds
 		}
 
 		[Fact]
-		public void CreateId_ExceedingRateLimitTimes_ShouldSleepOneMillisecond()
+		public void CreateId_SubsequentlyOnSameTimestamp_ShouldReachExpectedRateLimit()
 		{
-			var clockValue = FixedUtcDateTime; // The clock value normally stays the same
-			var sumSleepMilliseconds = 0;
-			var generator = new DistributedIdGenerator(utcClock: () => clockValue, sleepAction: milliseconds =>
-			{
-				sumSleepMilliseconds += milliseconds;
-				clockValue = clockValue.AddMilliseconds(milliseconds); // The clock advances when we sleep
-			});
+			const int minimumRate = 100;
+			const int maximumExpectedRate = 150;
 
-			for (var x = 0; x < 20; x++) // Because probability
-			{
-				sumSleepMilliseconds = 0;
+			var sleepCount = 0;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { sleepCount++; dateTime = dateTime.AddMilliseconds(1); });
 
-				for (var i = 0; i < ExceedingRateLimitPerTimestamp; i++)
-					generator.CreateId();
+			// Spend the burst capacity, to avoid skewing the result
+			for (var i = 0; i < 128_000; i++)
+				generator.CreateId();
 
-				if (sumSleepMilliseconds == 1) break;
-			}
+			sleepCount = 0;
 
-			Assert.Equal(1, sumSleepMilliseconds);
+			for (var i = 0; i < 1_000_000; i++)
+				generator.CreateId();
+
+			var rate = 1_000_000 / sleepCount;
+
+			Assert.True(rate > minimumRate);
+			Assert.True(rate < maximumExpectedRate);
 		}
 
 		[Fact]
-		public void CreateId_TwiceExceedingRateLimitTimes_ShouldSleepTwoMillisecond()
+		public void CreateId_SubsequentlyWithinBurstCapacity_ShouldNotSleep()
 		{
-			var clockValue = FixedUtcDateTime; // The clock value normally stays the same
-			var sumSleepMilliseconds = 0;
-			var generator = new DistributedIdGenerator(utcClock: () => clockValue, sleepAction: milliseconds =>
-			{
-				sumSleepMilliseconds += milliseconds;
-				clockValue = clockValue.AddMilliseconds(milliseconds); // The clock advances when we sleep
-			});
+			var sleepCount = 0;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { sleepCount++; dateTime = dateTime.AddMilliseconds(1); });
 
-			for (var x = 0; x < 20; x++) // Because probability
-			{
-				sumSleepMilliseconds = 0;
+			// Should be able to burst-generate about 128 * 1000 IDs without sleeping
+			for (var i = 0; i < 100_000; i++)
+				generator.CreateId();
 
-				for (var i = 0; i < 2.5 * DistributedIdGenerator.AverageRateLimitPerTimestamp; i++)
-					generator.CreateId();
+			Assert.Equal(0, sleepCount);
+		}
 
-				if (sumSleepMilliseconds == 2) break;
-			}
+		[Fact]
+		public void CreateId_SubsequentlyToBurstCapacity_ShouldRecoverBurstCapacityAfterOneSecond()
+		{
+			var sleepCount = 0;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { sleepCount++; dateTime = dateTime.AddMilliseconds(1); });
 
-			Assert.Equal(2, sumSleepMilliseconds);
+			// Should be able to burst-generate about 128 * 1000 IDs without sleeping
+			for (var i = 0; i < 128_000; i++)
+				generator.CreateId();
+
+			sleepCount = 0;
+			dateTime = dateTime.AddSeconds(1);
+
+			// Should be able to burst-generate about 128 * 1000 IDs without sleeping
+			for (var i = 0; i < 100_000; i++)
+				generator.CreateId();
+
+			Assert.Equal(0, sleepCount);
+		}
+
+		[Fact]
+		public void CreateId_SubsequentlyToBurstCapacity_IsNotExpectedToRecoverBurstCapacityInHalfASecond()
+		{
+			var sleepCount = 0;
+			var dateTime = FixedUtcDateTime;
+			var generator = new DistributedIdGenerator(utcClock: () => dateTime, sleepAction: _ => { sleepCount++; dateTime = dateTime.AddMilliseconds(1); });
+
+			// Should be able to burst-generate about 128 * 1000 IDs without sleeping
+			for (var i = 0; i < 128_000; i++)
+				generator.CreateId();
+
+			sleepCount = 0;
+			dateTime = dateTime.AddSeconds(0.5);
+
+			for (var i = 0; i < 128_000; i++)
+				generator.CreateId();
+
+			// With burst capacity half restored, this should require about half a second's worth of sleep to generate a second's worth of IDs
+			Assert.True(sleepCount > 400);
+			Assert.True(sleepCount < 600);
 		}
 
 		/// <summary>

@@ -1,10 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<AssemblyName>Architect.Identities.Tests</AssemblyName>
 		<RootNamespace>Architect.Identities.Tests</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>
+		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 
@@ -23,7 +24,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Identities.Azure\Identities.Azure.csproj" />
 		<ProjectReference Include="..\Identities.EntityFramework\Identities.EntityFramework.csproj" />
 		<ProjectReference Include="..\Identities\Identities.csproj" />
 	</ItemGroup>

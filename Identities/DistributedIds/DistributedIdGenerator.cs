@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers.Binary;
 using System.Threading;
 
@@ -18,10 +18,10 @@ namespace Architect.Identities
 		static DistributedIdGenerator()
 		{
 			if (!Environment.Is64BitOperatingSystem)
-				throw new NotSupportedException($"{nameof(DistributedId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
+				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
 
 			if (!BitConverter.IsLittleEndian)
-				throw new NotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
+				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
 		}
 
 		private static DateTime GetUtcNow() => DateTime.UtcNow;
@@ -30,6 +30,11 @@ namespace Architect.Identities
 		/// On average, a single application instance can create this many IDs on a single timestamp.
 		/// </summary>
 		internal const ushort AverageRateLimitPerTimestamp = 1 << (48 - RandomSequence6.AdditionalBitCount); // 64 for 42 bits, 128 for 41 bits
+
+		/// <summary>
+		/// The custom epoch helps ensure 28-character IDs, avoiding 27-character ones.
+		/// </summary>
+		internal static readonly DateTime Epoch = new DateTime(1900, 01, 01, 00, 00, 00, DateTimeKind.Utc);
 
 		/// <summary>
 		/// Can be invoked to get the current UTC datetime.
@@ -43,7 +48,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// The previous UTC timestamp (in milliseconds since the epoch) on which an ID was created (or 0 initially).
 		/// </summary>
-		private ulong PreviousCreationTimestamp { get; set; }
+		internal ulong PreviousCreationTimestamp { get; private set; }
 		/// <summary>
 		/// The random sequence used during the previous ID creation.
 		/// </summary>
@@ -83,19 +88,31 @@ namespace Architect.Identities
 			{
 				var timestamp = this.GetTimestamp();
 
-				// If the clock has not advanced since the previous invocation
-				if (timestamp == this.PreviousCreationTimestamp)
+				// If the clock has not advanced beyond the last used timestamp, then we must make an effort to continue where we left off
+				if (timestamp <= this.PreviousCreationTimestamp)
 				{
-					// If we succeed in creating another, greater value, use that
+					// If we succeed in creating another, greater value for the previous timestamp, return that
 					if (this.TryCreateIncrementalRandomSequence(this.PreviousRandomSequence, randomSequence, out var incrementedRandomSequence))
 					{
+						timestamp = this.PreviousCreationTimestamp;
 						this.PreviousRandomSequence = incrementedRandomSequence;
 						return (timestamp, incrementedRandomSequence);
+					}
+
+					// If we have room to advance the timestamp while staying in the past, do so
+					if (this.PreviousCreationTimestamp - timestamp < 999)
+					{
+						timestamp = this.PreviousCreationTimestamp + 1;
 					}
 					// Otherwise, sleep until the clock has advanced
 					else
 					{
-						timestamp = this.AwaitUpdatedClockValue();
+						timestamp = this.AwaitUpdatedClockValue(minimumTimestamp: this.PreviousCreationTimestamp - 998);
+
+						// We should generally be able to advance 1 millisecond while just barely staying in the past now
+						// However, it is possible that the clock was adjusted backwards too much, in which case we will simply reset to the returned timestamp
+						if (this.PreviousCreationTimestamp - timestamp < 999)
+							timestamp = this.PreviousCreationTimestamp + 1;
 					}
 				}
 
@@ -108,33 +125,44 @@ namespace Architect.Identities
 		}
 
 		/// <summary>
-		/// Returns the UTC timestamp in milliseconds since the epoch.
+		/// Returns the UTC timestamp in milliseconds since the epoch, but 1000 milliseconds in the past.
+		/// By returning a timestamp in the past, we can add up to 999 milliseconds while still staying in the past.
+		/// This allows us to burst-generate more IDs without throttling, and without using future timestamps.
 		/// </summary>
 		private ulong GetTimestamp()
 		{
+			// The custom epoch ensures that the resulting ID is always 28 digits long (whereas the UnixEpoch could cause 27-digit IDs)
 			var utcNow = this.Clock();
-			var millisecondsSinceEpoch = (ulong)(utcNow - DateTime.UnixEpoch).TotalMilliseconds;
-			return millisecondsSinceEpoch;
+			var millisecondsSinceEpoch = (ulong)(utcNow - Epoch).TotalMilliseconds;
+
+			// In order to allow 1000 milliseconds' worth of IDs to be generated without delays, we return timestamps 1 second in the past by default
+			// This lets us add up to 1000 milliseconds without moving into the future
+			return millisecondsSinceEpoch - 1000;
 		}
 
 		/// <summary>
 		/// <para>
-		/// Sleeps until the clock has changed onto another millisecond and then returns that timestamp.
+		/// Sleeps until the clock has reached at least the given <paramref name="minimumTimestamp"/> and then returns the timestamp.
 		/// </para>
 		/// <para>
 		/// May cause the current thread to sleep.
 		/// </para>
 		/// <para>
-		/// Intended for use inside lock. Reads object state, but does not mutate it.
+		/// If the clock is adjusted backwards more than 100 milliseconds, this method will consider the clock reset and simply return the current timestamp.
 		/// </para>
 		/// </summary>
-		internal ulong AwaitUpdatedClockValue()
+		internal ulong AwaitUpdatedClockValue(ulong minimumTimestamp)
 		{
 			ulong timestamp;
 			do
 			{
 				this.SleepAction(1);
-			} while ((timestamp = this.GetTimestamp()) == this.PreviousCreationTimestamp);
+				timestamp = this.GetTimestamp();
+
+				// If the clock was adjusted backwards more than 100 milliseconds, consider the clock to be completely reset
+				if (timestamp <= minimumTimestamp - 100)
+					return timestamp;
+			} while (timestamp < minimumTimestamp);
 			return timestamp;
 		}
 
@@ -146,7 +174,7 @@ namespace Architect.Identities
 		/// Returns a new 48-bit (6-byte) random sequence.
 		/// </para>
 		/// </summary>
-		private RandomSequence6 CreateRandomSequence()
+		private static RandomSequence6 CreateRandomSequence()
 		{
 			return RandomSequence6.Create();
 		}

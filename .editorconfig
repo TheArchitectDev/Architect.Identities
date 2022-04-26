@@ -1,6 +1,18 @@
 # Remove the line below if you want to inherit .editorconfig settings from higher directories
 root = true
 
+# All files
+[*]
+
+#### Core EditorConfig Options ####
+
+# New line preferences
+insert_final_newline = true
+end_of_line = crlf
+
+# Default charset
+charset = utf-8
+
 # C# files
 [*.cs]
 
@@ -10,19 +22,10 @@ dotnet_diagnostic.CS1573.severity = none # CS1573: Undocumented public symbol wh
 dotnet_diagnostic.CS1591.severity = none # CS1591: Missing XML comment for publicly visible type
 dotnet_diagnostic.CA1816.severity = none # CA1816: Dispose() should call GC.SuppressFinalize()
 
-#### Core EditorConfig Options ####
-
-# Default charset
-charset = utf-8
-
 # Indentation and spacing
 indent_size = 4
 indent_style = tab
 tab_width = 4
-
-# New line preferences
-end_of_line = crlf
-insert_final_newline = true
 
 #### .NET Coding Conventions ####
 
@@ -255,3 +258,14 @@ dotnet_naming_style._camelcase.required_prefix = _
 dotnet_naming_style._camelcase.required_suffix = 
 dotnet_naming_style._camelcase.word_separator = 
 dotnet_naming_style._camelcase.capitalization = camel_case
+
+# Json files
+[*.json]
+indent_size = 2
+indent_style = space
+
+# C# project files
+[*.csproj]
+indent_size = 4
+indent_style = tab
+tab_width = 4

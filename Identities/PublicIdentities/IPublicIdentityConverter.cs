@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -24,7 +24,7 @@ namespace Architect.Identities
 		public Guid GetPublicRepresentation(long id)
 		{
 			if (id < 0) throw new ArgumentOutOfRangeException(nameof(id));
-			return GetPublicRepresentation((ulong)id);
+			return this.GetPublicRepresentation((ulong)id);
 		}
 		/// <summary>
 		/// <para>
@@ -64,7 +64,7 @@ namespace Architect.Identities
 		/// </summary>
 		public bool TryGetLong(Guid publicId, out long id)
 		{
-			if (!TryGetUlong(publicId, out var ulongId) || ulongId > Int64.MaxValue)
+			if (!this.TryGetUlong(publicId, out var ulongId) || ulongId > Int64.MaxValue)
 			{
 				id = default;
 				return false;

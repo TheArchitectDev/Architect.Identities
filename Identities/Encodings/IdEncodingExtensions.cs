@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -7,21 +7,21 @@ namespace Architect.Identities
 	{
 		/// <summary>
 		/// <para>
-		/// Returns an 11-character alphanumeric representation of the given <see cref="long"/> ID.
+		/// Returns an 11-character alphanumeric representation of the given <see cref="Int64"/> ID.
 		/// </para>
 		/// </summary>
 		/// <param name="id">The positive ID to encode.</param>
 		public static string ToAlphanumeric(this long id) => IdEncoder.GetAlphanumeric(id);
 		/// <summary>
 		/// <para>
-		/// Returns an 11-character alphanumeric representation of the given <see cref="ulong"/> ID.
+		/// Returns an 11-character alphanumeric representation of the given <see cref="UInt64"/> ID.
 		/// </para>
 		/// </summary>
 		/// <param name="id">The ID to encode.</param>
 		public static string ToAlphanumeric(this ulong id) => IdEncoder.GetAlphanumeric(id);
 		/// <summary>
 		/// <para>
-		/// Returns a 16-character alphanumeric representation of the given <see cref="decimal"/> ID.
+		/// Returns a 16-character alphanumeric representation of the given <see cref="Decimal"/> ID.
 		/// </para>
 		/// </summary>
 		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
@@ -36,7 +36,7 @@ namespace Architect.Identities
 
 		/// <summary>
 		/// <para>
-		/// Outputs an 11-character alphanumeric representation of the given <see cref="long"/> ID.
+		/// Outputs an 11-character alphanumeric representation of the given <see cref="Int64"/> ID.
 		/// </para>
 		/// </summary>
 		/// <param name="id">The positive ID to encode.</param>
@@ -44,7 +44,7 @@ namespace Architect.Identities
 		public static void ToAlphanumeric(this long id, Span<byte> bytes) => IdEncoder.GetAlphanumeric(id, bytes);
 		/// <summary>
 		/// <para>
-		/// Outputs an 11-character alphanumeric representation of the given <see cref="ulong"/> ID.
+		/// Outputs an 11-character alphanumeric representation of the given <see cref="UInt64"/> ID.
 		/// </para>
 		/// </summary>
 		/// <param name="id">The ID to encode.</param>
@@ -52,7 +52,7 @@ namespace Architect.Identities
 		public static void ToAlphanumeric(this ulong id, Span<byte> bytes) => IdEncoder.GetAlphanumeric(id, bytes);
 		/// <summary>
 		/// <para>
-		/// Outputs a 16-character alphanumeric representation of the given <see cref="decimal"/> ID.
+		/// Outputs a 16-character alphanumeric representation of the given <see cref="Decimal"/> ID.
 		/// </para>
 		/// </summary>
 		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>

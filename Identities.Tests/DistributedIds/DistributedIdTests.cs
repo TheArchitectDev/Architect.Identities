@@ -1,4 +1,3 @@
-﻿using Architect.Identities.Helpers;
 using Xunit;
 
 namespace Architect.Identities.Tests.DistributedIds
@@ -9,18 +8,9 @@ namespace Architect.Identities.Tests.DistributedIds
 	/// </summary>
 	public sealed class DistributedIdTests
 	{
-		/// <summary>
-		/// Combined in a single test, since it is often hard to simulate NOT running in a unit test after simulating that we ARE running in one.
-		/// </summary>
 		[Fact]
-		public void CreateId_WithNoCustomScopeRegardlessOfUnitTest_ShouldSucceed()
+		public void CreateId_WithNoCustomScope_ShouldSucceed()
 		{
-			using (new TestDetector(isTestRun: false))
-				_ = DistributedId.CreateId();
-
-			using (new TestDetector(isTestRun: true))
-				_ = DistributedId.CreateId();
-
 			_ = DistributedId.CreateId();
 		}
 

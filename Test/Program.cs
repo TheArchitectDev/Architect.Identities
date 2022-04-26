@@ -11,7 +11,7 @@ namespace Test
 		/// The number of simultaneously working application instances.
 		/// Both are simulated to repeatedly generate the IDs at the maximum rate on the same millisecond.
 		/// </summary>
-		private const ushort Parallelism = 2;
+		private const ushort Parallelism = 10;
 		/// <summary>
 		/// The rate used to be fixed, but is now dynamic. This should be greater, to provide enough array space for the generated IDs.
 		/// </summary>
