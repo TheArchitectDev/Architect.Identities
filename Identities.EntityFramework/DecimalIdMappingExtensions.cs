@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
@@ -142,7 +142,7 @@ namespace Architect.Identities.EntityFramework
 			// Local function that gets the PropertyInfo property value from a given property
 			static PropertyInfo? GetPropertyInfo(object property)
 			{
-				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
+				// This workaround is needed because the library otherwise breaks if EF Core 6+ is used by the host application, due to breaking changes in EF
 				return (PropertyInfo?)property.GetType().GetProperty(nameof(IMutableProperty.PropertyInfo))!.GetValue(property);
 			}
 		}

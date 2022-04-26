@@ -1,38 +1,44 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netcoreapp3.1</TargetFramework>
 		<AssemblyName>Architect.Identities</AssemblyName>
 		<RootNamespace>Architect.Identities</RootNamespace>
 		<Nullable>Enable</Nullable>
-		<LangVersion>9</LangVersion>
+		<LangVersion>10</LangVersion>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>1.0.2</VersionPrefix>
+		<VersionPrefix>2.0.0</VersionPrefix>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<Description>
+Reliable unique ID generation and management for distributed applications.
+
+Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
+
+- For a 93-bit UUID replacement that is efficient as a primary key, use the DistributedId.
+- To expose IDs externally in a sensitive environment where zero metadata must be leaked, transform them with PublicIdentities.
+
+https://github.com/TheArchitectDev/Architect.Identities
+
 Release notes:
+
+2.0.0:
+- BREAKING: Removed Fluid. Configured ambient scopes are considered undesirable.
+- BREAKING: Removed ApplicationInstanceId. Configured ambient scopes are considered undesirable.
+- BREAKING: Removed ambient access to IPublicIdentityConverter. Configured ambient scopes are considered undesirable.
+- BREAKING: IPublicIdentityConverter now throws on big-endian architectures, instead of risking silent portability issues between architectures.
+- BREAKING: Now using AmbientContexts 2.0.0.
+- Semi-breaking: DistributedIds are now always 28 digits, to avoid a change from 27 to 28 digits in the future. Migrating will cause a one-time skip to greater ID values.
+- DistributedIds can now burst-generate ~128K IDs at once before the 128 IDs per millisecond throttling kicks in. This makes it less likely that throttling is encountered.
+- IPublicIdentityConverter now comes with a TestPublicIdentityConverter implementation for unit tests.
 
 1.0.2:
 - Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.
 
 1.0.1:
 - Now using AmbientContexts 1.1.0, for a performance improvement.
-
-Description:
-
-Reliable unique ID generation and management for distributed applications.
-
-Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
-
-- For a 93-bit UUID replacement that is efficient as a primary key and has virtually no caveats, use the DistributedId.
-- For a 64-bit UUID replacement that is extremely efficient as a primary key, use the Fluid.
-- To expose IDs externally in a sensitive environment where zero metadata must be leaked, transform them with PublicIdentities.
-- To assign a unique ID to each distinct application or instance thereof, use an ApplicationInstanceIdSource.
-
-https://github.com/TheArchitectDev/Architect.Identities
 		</Description>
 		<Copyright>The Architect</Copyright>
 		<Company>The Architect</Company>
@@ -44,7 +50,7 @@ https://github.com/TheArchitectDev/Architect.Identities
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Architect.AmbientContexts" Version="1.1.1-*" />
+		<PackageReference Include="Architect.AmbientContexts" Version="2.0.0-*" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.0" />

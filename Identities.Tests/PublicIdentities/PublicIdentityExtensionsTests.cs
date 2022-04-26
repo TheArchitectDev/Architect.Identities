@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
 
@@ -35,7 +35,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var key2 = new byte[32];
 			key2[31] = 2;
 
-			var guid0 = PublicIdentityScope.Current.Converter.GetPublicRepresentation(0UL);
+			var guid0 = new CustomPublicIdentityConverter().GetPublicRepresentation(0UL);
 
 			var hostBuilder1 = new HostBuilder();
 			hostBuilder1.ConfigureServices(services => services.AddPublicIdentities(identities => identities.Key(key1)));

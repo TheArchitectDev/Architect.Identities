@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Architect.Identities.Helpers;
@@ -14,10 +14,13 @@ namespace Architect.Identities
 	/// For optimal performance, singleton or pooled use is preferred.
 	/// </para>
 	/// </summary>
-	internal sealed partial class AesPublicIdentityConverter : IPublicIdentityConverter
+	internal sealed class AesPublicIdentityConverter : IPublicIdentityConverter
 	{
 		static AesPublicIdentityConverter()
 		{
+			if (!BitConverter.IsLittleEndian)
+				throw new PlatformNotSupportedException($"{nameof(IPublicIdentityConverter)} is not supported on big-endian architectures, to avoid issues with the portability of values between architectures.");
+
 			// Ensure that decimals are still structured the same way
 			// This prevents the application from ever generating incorrect public identities in this extremely unlikely scenario, allowing a fix to be created
 			DecimalStructure.ThrowIfDecimalStructureIsUnexpected();
@@ -71,7 +74,7 @@ namespace Architect.Identities
 		public Guid GetPublicRepresentation(ulong id)
 		{
 			Span<byte> outputBytes = stackalloc byte[16];
-			WriteBytes(id, outputBytes);
+			this.WriteBytes(id, outputBytes);
 
 			var publicId = new Guid(outputBytes);
 			return publicId;
@@ -80,7 +83,7 @@ namespace Architect.Identities
 		public Guid GetPublicRepresentation(decimal id)
 		{
 			Span<byte> outputBytes = stackalloc byte[16];
-			WriteBytes(id, outputBytes);
+			this.WriteBytes(id, outputBytes);
 
 			var publicId = new Guid(outputBytes);
 			return publicId;
@@ -91,7 +94,7 @@ namespace Architect.Identities
 			Span<byte> idBytes = stackalloc byte[16];
 			var idUlongs = MemoryMarshal.Cast<byte, ulong>(idBytes);
 
-			if (!TryGetIdBytes(publicId, idBytes) || idUlongs[0] != 0UL) // Invalid input if the left 8 bytes contain any non-zeros
+			if (!this.TryGetIdBytes(publicId, idBytes) || idUlongs[0] != 0UL) // Invalid input if the left 8 bytes contain any non-zeros
 			{
 				id = default;
 				return false;
@@ -107,7 +110,7 @@ namespace Architect.Identities
 			var decimalComponents = MemoryMarshal.Cast<byte, int>(idBytes);
 
 			// Invalid input if sign-and-scale component (4 bytes) are non-zero or max value is exceeded
-			if (!TryGetIdBytes(publicId, idBytes) || DecimalStructure.GetSignAndScale(decimalComponents) != 0 || (id = decimals[0]) > DistributedIdGenerator.MaxValue)
+			if (!this.TryGetIdBytes(publicId, idBytes) || DecimalStructure.GetSignAndScale(decimalComponents) != 0 || (id = decimals[0]) > DistributedIdGenerator.MaxValue)
 			{
 				id = default;
 				return false;

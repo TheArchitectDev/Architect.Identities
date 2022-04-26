@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 
@@ -74,7 +74,7 @@ namespace Architect.Identities
 		private RandomSequence6(ulong value)
 		{
 			if (value == 0UL || value >> (64 - 16) != 0UL)
-				throw new ArgumentException("The value must be a randomized value with the high 2 bytes set to zero.");
+				throw new ArgumentException("The value must be a randomized, non-zero value with the high 2 bytes set to zero.");
 
 			this._value = value;
 		}

@@ -77,7 +77,7 @@ namespace Test
 		private (ulong Timestamp, RandomSequence6 RandomSequence) CreateValues()
 		{
 			// The random number generator is likely to lock, so doing this outside of our own lock is likely to increase throughput
-			var randomSequence = CreateRandomSequence();
+			var randomSequence = this.CreateRandomSequence();
 
 			lock (this._lockObject)
 			{

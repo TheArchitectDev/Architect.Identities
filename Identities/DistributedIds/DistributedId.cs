@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -24,7 +24,7 @@ namespace Architect.Identities
 	/// In [Azure] SQL Server and MySQL, this takes 13 bytes of storage, making it about 20% more compact than a <see cref="Guid"/>.
 	/// </para>
 	/// <para>
-	/// The <see cref="decimal"/> type has broad support and predictable implementations, unlike the <see cref="Guid"/> type.
+	/// The <see cref="Decimal"/> type has broad support and predictable implementations, unlike the <see cref="Guid"/> type.
 	/// For example, SQL Server sorts <see cref="Guid"/> values in an unfavorable way, treating some of the middle bytes as the most significant.
 	/// MySQL has no <see cref="Guid"/> type, making manual queries cumbersome.
 	/// Decimals avoid such issues.
