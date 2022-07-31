@@ -5,7 +5,6 @@
 		<AssemblyName>Architect.Identities.EntityFramework.IntegrationTests</AssemblyName>
 		<RootNamespace>Architect.Identities.EntityFramework.IntegrationTests</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>
-		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 

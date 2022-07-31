@@ -5,7 +5,6 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>Enable</Nullable>
 		<ImplicitUsings>Enable</ImplicitUsings>
-		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 

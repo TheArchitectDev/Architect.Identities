@@ -143,7 +143,7 @@ DistributedIds have strong collision resistance. The probability of generating t
 
 Most notably, collisions across different timestamps are impossible, since the millisecond values differ.
 
-Within a single application replica, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (41 bits). This guarantees unique IDs within the application replica.
+Within a single application replica, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (41 bits). This guarantees unique IDs within the application replica, as long as the system clock is not adjusted backwards. Whenever it is, the scenario is comparable to having an additional replica (addressed below) during the repeated time span.
 
 The scenario where collisions can occur is when multiple application replicas are generating IDs at the same millisecond. It is detailed below and should be negligible.
 

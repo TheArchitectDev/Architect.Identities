@@ -5,7 +5,6 @@
 		<AssemblyName>Architect.Identities.Tests</AssemblyName>
 		<RootNamespace>Architect.Identities.Tests</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>
-		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 

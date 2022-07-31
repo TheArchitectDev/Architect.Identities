@@ -6,7 +6,6 @@
 		<AssemblyName>Architect.Identities.Example</AssemblyName>
 		<RootNamespace>Architect.Identities.Example</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>
-		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 

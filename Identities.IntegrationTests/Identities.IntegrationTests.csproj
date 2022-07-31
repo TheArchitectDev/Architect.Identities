@@ -5,7 +5,6 @@
 		<AssemblyName>Architect.Identities.IntegrationTests</AssemblyName>
 		<RootNamespace>Architect.Identities.IntegrationTests</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>
-		<LangVersion>10</LangVersion>
 		<IsPackable>False</IsPackable>
 	</PropertyGroup>
 
