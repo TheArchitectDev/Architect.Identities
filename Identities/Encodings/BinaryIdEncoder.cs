@@ -160,7 +160,7 @@ namespace Architect.Identities
 		public static bool TryDecodeUlong(ReadOnlySpan<byte> bytes, out ulong id)
 		{
 			// Binary encodings are exactly 8 bytes long
-			if (bytes.Length < 8)
+			if (bytes.Length != 8)
 			{
 				id = default;
 				return false;
@@ -183,7 +183,7 @@ namespace Architect.Identities
 		public static bool TryDecodeDecimal(ReadOnlySpan<byte> bytes, out decimal id)
 		{
 			// Binary encodings are exactly 16 bytes long
-			if (bytes.Length < 16)
+			if (bytes.Length != 16)
 			{
 				id = default;
 				return false;
@@ -218,7 +218,7 @@ namespace Architect.Identities
 		public static bool TryDecodeGuid(ReadOnlySpan<byte> bytes, out Guid id)
 		{
 			// Binary encodings are exactly 16 bytes long
-			if (bytes.Length < 16)
+			if (bytes.Length != 16)
 			{
 				id = default;
 				return false;

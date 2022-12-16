@@ -91,9 +91,10 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("1234567890$")] // Invalid char
 		[InlineData("12345678,00")] // Invalid char
 		[InlineData("12345678.00")] // Invalid char
-		[InlineData("+12345678901")] // Invalid char
-		[InlineData("-12345678901")] // Invalid char
+		[InlineData("+1234567890")] // Invalid char
+		[InlineData("-1234567890")] // Invalid char
 		[InlineData("1234567890_")] // Invalid char
+		[InlineData("000000000001")] // Invalid length
 		public void TryDecodeLong_WithCharInput_ShouldReturnSameResultAsTryDecodeUlong(string input)
 		{
 			var expectedSuccess = AlphanumericIdEncoder.TryDecodeUlong(input, out var expectedResult);
@@ -115,9 +116,10 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("1234567890$")] // Invalid char
 		[InlineData("12345678,00")] // Invalid char
 		[InlineData("12345678.00")] // Invalid char
-		[InlineData("+12345678901")] // Invalid char
-		[InlineData("-12345678901")] // Invalid char
+		[InlineData("+1234567890")] // Invalid char
+		[InlineData("-1234567890")] // Invalid char
 		[InlineData("1234567890_")] // Invalid char
+		[InlineData("000000000001")] // Invalid length
 		public void TryDecodeLong_WithByteInput_ShouldReturnSameResultAsWithStringInput(string inputString)
 		{
 			var expectedSuccess = AlphanumericIdEncoder.TryDecodeLong(inputString, out var expectedResult);
@@ -142,9 +144,10 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("1234567890$")] // Invalid char
 		[InlineData("12345678,00")] // Invalid char
 		[InlineData("12345678.00")] // Invalid char
-		[InlineData("+12345678901")] // Invalid char
-		[InlineData("-12345678901")] // Invalid char
+		[InlineData("+1234567890")] // Invalid char
+		[InlineData("-1234567890")] // Invalid char
 		[InlineData("1234567890_")] // Invalid char
+		[InlineData("000000000001")] // Invalid length
 		public void DecodeLongOrDefault_WithCharInput_ShouldReturnSameResultAsTryDecodeLong(string input)
 		{
 			var expectedResult = AlphanumericIdEncoder.TryDecodeLong(input, out var expectedId)
@@ -167,9 +170,10 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("1234567890$")] // Invalid char
 		[InlineData("12345678,00")] // Invalid char
 		[InlineData("12345678.00")] // Invalid char
-		[InlineData("+12345678901")] // Invalid char
-		[InlineData("-12345678901")] // Invalid char
+		[InlineData("+1234567890")] // Invalid char
+		[InlineData("-1234567890")] // Invalid char
 		[InlineData("1234567890_")] // Invalid char
+		[InlineData("000000000001")] // Invalid length
 		public void DecodeLongOrDefault_WithByteInput_ShouldReturnSameResultAsWithStringInput(string inputString)
 		{
 			var expectedResult = AlphanumericIdEncoder.DecodeLongOrDefault(inputString);
@@ -228,15 +232,15 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void Encode_WithUlongAndTooLongInput_ShouldSucceed()
+		public void Encode_WithUlongAndTooLongOutput_ShouldSucceed()
 		{
 			AlphanumericIdEncoder.Encode(SampleUlongId, stackalloc byte[100]);
 		}
 
 		[Fact]
-		public void Encode_WithUlongAndTooShortInput_ShouldThrow()
+		public void Encode_WithUlongAndTooShortOutput_ShouldThrow()
 		{
-			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleUlongId, new byte[10]));
+			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleUlongId, stackalloc byte[10]));
 		}
 
 		[Fact]
@@ -336,27 +340,17 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void TryDecodeUlong_WithTooLongByteInput_ShouldReturnExpectedResult()
+		public void TryDecodeUlong_WithTooLongByteInput_ShouldFail()
 		{
-			Span<byte> bytes = stackalloc byte[100];
-			SampleAlphanumericBytesOfUlongId.AsSpan().CopyTo(bytes);
-
-			var success = AlphanumericIdEncoder.TryDecodeUlong(bytes, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleUlongId, result);
+			var success = AlphanumericIdEncoder.TryDecodeUlong(stackalloc byte[100], out _);
+			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeUlong_WithTooLongCharInput_ShouldReturnExpectedResult()
+		public void TryDecodeUlong_WithTooLongCharInput_ShouldFail()
 		{
-			Span<char> chars = stackalloc char[100];
-			SampleAlphanumericStringOfUlongId.AsSpan().CopyTo(chars);
-
-			var success = AlphanumericIdEncoder.TryDecodeUlong(chars, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleUlongId, result);
+			var success = AlphanumericIdEncoder.TryDecodeUlong(stackalloc char[100], out _);
+			Assert.False(success);
 		}
 
 		[Theory]
@@ -379,9 +373,10 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("1234567890$")] // Invalid char
 		[InlineData("12345678,00")] // Invalid char
 		[InlineData("12345678.00")] // Invalid char
-		[InlineData("+12345678901")] // Invalid char
-		[InlineData("-12345678901")] // Invalid char
+		[InlineData("+1234567890")] // Invalid char
+		[InlineData("-1234567890")] // Invalid char
 		[InlineData("1234567890_")] // Invalid char
+		[InlineData("000000000001")] // Invalid length
 		public void DecodeUlongOrDefault_Regularly_ShouldReturnSameResultAsTryDecodeUlong(string input)
 		{
 			var expectedResult = AlphanumericIdEncoder.TryDecodeUlong(input, out var expectedId)
@@ -537,15 +532,15 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void Encode_WithDecimalAndTooLongInput_ShouldSucceed()
+		public void Encode_WithDecimalAndTooLongOutput_ShouldSucceed()
 		{
 			AlphanumericIdEncoder.Encode(SampleDecimalId, stackalloc byte[100]);
 		}
 
 		[Fact]
-		public void Encode_WithDecimalAndTooShortInput_ShouldThrow()
+		public void Encode_WithDecimalAndTooShortOutput_ShouldThrow()
 		{
-			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleDecimalId, new byte[15]));
+			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleDecimalId, stackalloc byte[15]));
 		}
 
 		[Fact]
@@ -670,27 +665,17 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void TryDecodeDecimal_WithTooLongByteInput_ShouldReturnExpectedResult()
+		public void TryDecodeDecimal_WithTooLongByteInput_ShouldFail()
 		{
-			Span<byte> bytes = stackalloc byte[100];
-			SampleAlphanumericBytesOfDecimalId.AsSpan().CopyTo(bytes);
-
-			var success = AlphanumericIdEncoder.TryDecodeDecimal(bytes, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleDecimalId, result);
+			var success = AlphanumericIdEncoder.TryDecodeDecimal(stackalloc byte[100], out _);
+			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeDecimal_WithTooLongCharInput_ShouldReturnExpectedResult()
+		public void TryDecodeDecimal_WithTooLongCharInput_ShouldFail()
 		{
-			Span<char> chars = stackalloc char[100];
-			SampleAlphanumericStringOfDecimalId.AsSpan().CopyTo(chars);
-
-			var success = AlphanumericIdEncoder.TryDecodeDecimal(chars, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleDecimalId, result);
+			var success = AlphanumericIdEncoder.TryDecodeDecimal(stackalloc char[100], out _);
+			Assert.False(success);
 		}
 
 		[Theory]
@@ -713,9 +698,10 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("1234567890$")] // Invalid char
 		[InlineData("12345678,00")] // Invalid char
 		[InlineData("12345678.00")] // Invalid char
-		[InlineData("+12345678901")] // Invalid char
-		[InlineData("-12345678901")] // Invalid char
+		[InlineData("+1234567890")] // Invalid char
+		[InlineData("-1234567890")] // Invalid char
 		[InlineData("1234567890_")] // Invalid char
+		[InlineData("000000000001")] // Invalid length
 		public void DecodeDecimalOrDefault_Regularly_ShouldReturnSameResultAsTryDecodeDecimal(string input)
 		{
 			var expectedResult = AlphanumericIdEncoder.TryDecodeDecimal(input, out var expectedId)
@@ -924,15 +910,15 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void Encode_WithGuidAndTooLongInput_ShouldSucceed()
+		public void Encode_WithGuidAndTooLongOutput_ShouldSucceed()
 		{
 			AlphanumericIdEncoder.Encode(SampleGuidId, stackalloc byte[100]);
 		}
 
 		[Fact]
-		public void Encode_WithGuidAndTooShortInput_ShouldThrow()
+		public void Encode_WithGuidAndTooShortOutput_ShouldThrow()
 		{
-			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleGuidId, new byte[21]));
+			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleGuidId, stackalloc byte[21]));
 		}
 
 		[Fact]
@@ -1080,27 +1066,17 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void TryDecodeGuid_WithTooLongByteInput_ShouldReturnExpectedResult()
+		public void TryDecodeGuid_WithTooLongByteInput_ShouldFail()
 		{
-			Span<byte> bytes = stackalloc byte[100];
-			SampleAlphanumericBytesOfGuidId.AsSpan().CopyTo(bytes);
-
-			var success = AlphanumericIdEncoder.TryDecodeGuid(bytes, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleGuidId, result);
+			var success = AlphanumericIdEncoder.TryDecodeGuid(stackalloc byte[100], out _);
+			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeGuid_WithTooLongCharInput_ShouldReturnExpectedResult()
+		public void TryDecodeGuid_WithTooLongCharInput_ShouldFail()
 		{
-			Span<char> chars = stackalloc char[100];
-			SampleAlphanumericStringOfGuidId.AsSpan().CopyTo(chars);
-
-			var success = AlphanumericIdEncoder.TryDecodeGuid(chars, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleGuidId, result);
+			var success = AlphanumericIdEncoder.TryDecodeGuid(stackalloc char[100], out _);
+			Assert.False(success);
 		}
 
 		[Theory]

@@ -104,7 +104,7 @@ namespace Architect.Identities.Tests.Encodings
 			Assert.True(result >= 0L);
 			Assert.Equal(expectedResult, (ulong)result);
 		}
-
+		
 		[Theory]
 		[InlineData(SampleHexStringOfUlongId)]
 		[InlineData("0000000000000001")]
@@ -112,12 +112,12 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("000000000000000f")]
 		[InlineData("7FFFFFFFFFFFFFFF")] // Int64.MaxValue
 		[InlineData("10000000000000000")] // UInt64.MaxValue + 1 invalid
-		[InlineData("0000000000000001G")] // Invalid char
-		[InlineData("0000000000000001,00")] // Invalid char
-		[InlineData("0000000000000001.00")] // Invalid char
-		[InlineData("+0000000000000001")] // Invalid char
-		[InlineData("-0000000000000001")] // Invalid char
-		[InlineData("0000000000000001_")] // Invalid char
+		[InlineData("000000000000001G")] // Invalid char
+		[InlineData("00,0000000000001")] // Invalid char
+		[InlineData("00.0000000000001")] // Invalid char
+		[InlineData("+000000000000001")] // Invalid char
+		[InlineData("-000000000000001")] // Invalid char
+		[InlineData("000000000000001_")] // Invalid char
 		public void TryDecodeLong_WithByteInput_ShouldReturnSameResultAsWithStringInput(string inputString)
 		{
 			var expectedSuccess = HexadecimalIdEncoder.TryDecodeLong(inputString, out var expectedResult);
@@ -162,12 +162,12 @@ namespace Architect.Identities.Tests.Encodings
 		[InlineData("000000000000000f")]
 		[InlineData("FFFFFFFFFFFFFFFF")] // UInt64.MaxValue
 		[InlineData("10000000000000000")] // UInt64.MaxValue + 1 invalid
-		[InlineData("0000000000000001G")] // Invalid char
-		[InlineData("0000000000000001,00")] // Invalid char
-		[InlineData("0000000000000001.00")] // Invalid char
-		[InlineData("+0000000000000001")] // Invalid char
-		[InlineData("-0000000000000001")] // Invalid char
-		[InlineData("0000000000000001_")] // Invalid char
+		[InlineData("000000000000001G")] // Invalid char
+		[InlineData("00,0000000000001")] // Invalid char
+		[InlineData("00.0000000000001")] // Invalid char
+		[InlineData("+000000000000001")] // Invalid char
+		[InlineData("-000000000000001")] // Invalid char
+		[InlineData("000000000000001_")] // Invalid char
 		public void DecodeLongOrDefault_WithByteInput_ShouldReturnSameResultAsWithStringInput(string inputString)
 		{
 			var expectedResult = HexadecimalIdEncoder.DecodeLongOrDefault(inputString);
@@ -226,15 +226,15 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void Encode_WithUlongAndTooLongInput_ShouldSucceed()
+		public void Encode_WithUlongAndTooLongOutput_ShouldSucceed()
 		{
 			HexadecimalIdEncoder.Encode(SampleUlongId, stackalloc byte[100]);
 		}
 
 		[Fact]
-		public void Encode_WithUlongAndTooShortInput_ShouldThrow()
+		public void Encode_WithUlongAndTooShortOutput_ShouldThrow()
 		{
-			Assert.Throws<IndexOutOfRangeException>(() => HexadecimalIdEncoder.Encode(SampleUlongId, new byte[10]));
+			Assert.Throws<IndexOutOfRangeException>(() => HexadecimalIdEncoder.Encode(SampleUlongId, stackalloc byte[15]));
 		}
 
 		[Fact]
@@ -323,39 +323,29 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void TryDecodeUlong_WithTooShortByteInput_ShouldFail()
 		{
-			var success = HexadecimalIdEncoder.TryDecodeUlong(stackalloc byte[10], out _);
+			var success = HexadecimalIdEncoder.TryDecodeUlong(stackalloc byte[15], out _);
 			Assert.False(success);
 		}
 
 		[Fact]
 		public void TryDecodeUlong_WithTooShortCharInput_ShouldFail()
 		{
-			var success = HexadecimalIdEncoder.TryDecodeUlong(stackalloc char[10], out _);
+			var success = HexadecimalIdEncoder.TryDecodeUlong(stackalloc char[15], out _);
 			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeUlong_WithTooLongByteInput_ShouldReturnExpectedResult()
+		public void TryDecodeUlong_WithTooLongByteInput_ShouldFail()
 		{
-			Span<byte> bytes = stackalloc byte[100];
-			SampleHexBytesOfUlongId.AsSpan().CopyTo(bytes);
-
-			var success = HexadecimalIdEncoder.TryDecodeUlong(bytes, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleUlongId, result);
+			var success = HexadecimalIdEncoder.TryDecodeUlong(stackalloc byte[100], out _);
+			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeUlong_WithTooLongCharInput_ShouldReturnExpectedResult()
+		public void TryDecodeUlong_WithTooLongCharInput_ShouldFail()
 		{
-			Span<char> chars = stackalloc char[100];
-			SampleHexStringOfUlongId.AsSpan().CopyTo(chars);
-
-			var success = HexadecimalIdEncoder.TryDecodeUlong(chars, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleUlongId, result);
+			var success = HexadecimalIdEncoder.TryDecodeUlong(stackalloc char[100], out _);
+			Assert.False(success);
 		}
 
 		[Theory]
@@ -538,15 +528,15 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void Encode_WithDecimalAndTooLongInput_ShouldSucceed()
+		public void Encode_WithDecimalAndTooLongOutput_ShouldSucceed()
 		{
 			HexadecimalIdEncoder.Encode(SampleDecimalId, stackalloc byte[100]);
 		}
 
 		[Fact]
-		public void Encode_WithDecimalAndTooShortInput_ShouldThrow()
+		public void Encode_WithDecimalAndTooShortOutput_ShouldThrow()
 		{
-			Assert.Throws<IndexOutOfRangeException>(() => HexadecimalIdEncoder.Encode(SampleDecimalId, new byte[15]));
+			Assert.Throws<IndexOutOfRangeException>(() => HexadecimalIdEncoder.Encode(SampleDecimalId, stackalloc byte[25]));
 		}
 
 		[Fact]
@@ -663,39 +653,29 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void TryDecodeDecimal_WithTooShortByteInput_ShouldFail()
 		{
-			var success = HexadecimalIdEncoder.TryDecodeDecimal(stackalloc byte[15], out _);
+			var success = HexadecimalIdEncoder.TryDecodeDecimal(stackalloc byte[25], out _);
 			Assert.False(success);
 		}
 
 		[Fact]
 		public void TryDecodeDecimal_WithTooShortCharInput_ShouldFail()
 		{
-			var success = HexadecimalIdEncoder.TryDecodeDecimal(stackalloc char[15], out _);
+			var success = HexadecimalIdEncoder.TryDecodeDecimal(stackalloc char[25], out _);
 			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeDecimal_WithTooLongByteInput_ShouldReturnExpectedResult()
+		public void TryDecodeDecimal_WithTooLongByteInput_ShouldFail()
 		{
-			Span<byte> bytes = stackalloc byte[100];
-			SampleHexBytesOfDecimalId.AsSpan().CopyTo(bytes);
-
-			var success = HexadecimalIdEncoder.TryDecodeDecimal(bytes, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleDecimalId, result);
+			var success = HexadecimalIdEncoder.TryDecodeDecimal(stackalloc byte[100], out _);
+			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeDecimal_WithTooLongCharInput_ShouldReturnExpectedResult()
+		public void TryDecodeDecimal_WithTooLongCharInput_ShouldFail()
 		{
-			Span<char> chars = stackalloc char[100];
-			SampleHexStringOfDecimalId.AsSpan().CopyTo(chars);
-
-			var success = HexadecimalIdEncoder.TryDecodeDecimal(chars, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleDecimalId, result);
+			var success = HexadecimalIdEncoder.TryDecodeDecimal(stackalloc char[100], out _);
+			Assert.False(success);
 		}
 
 		[Theory]
@@ -932,15 +912,15 @@ namespace Architect.Identities.Tests.Encodings
 		}
 
 		[Fact]
-		public void Encode_WithGuidAndTooLongInput_ShouldSucceed()
+		public void Encode_WithGuidAndTooLongOutput_ShouldSucceed()
 		{
 			HexadecimalIdEncoder.Encode(SampleGuidId, stackalloc byte[100]);
 		}
 
 		[Fact]
-		public void Encode_WithGuidAndTooShortInput_ShouldThrow()
+		public void Encode_WithGuidAndTooShortOutput_ShouldThrow()
 		{
-			Assert.Throws<IndexOutOfRangeException>(() => HexadecimalIdEncoder.Encode(SampleGuidId, new byte[21]));
+			Assert.Throws<IndexOutOfRangeException>(() => HexadecimalIdEncoder.Encode(SampleGuidId, stackalloc byte[31]));
 		}
 
 		[Fact]
@@ -1076,39 +1056,29 @@ namespace Architect.Identities.Tests.Encodings
 		[Fact]
 		public void TryDecodeGuid_WithTooShortByteInput_ShouldFail()
 		{
-			var success = HexadecimalIdEncoder.TryDecodeGuid(stackalloc byte[21], out _);
+			var success = HexadecimalIdEncoder.TryDecodeGuid(stackalloc byte[31], out _);
 			Assert.False(success);
 		}
 
 		[Fact]
 		public void TryDecodeGuid_WithTooShortCharInput_ShouldFail()
 		{
-			var success = HexadecimalIdEncoder.TryDecodeGuid(stackalloc char[10], out _);
+			var success = HexadecimalIdEncoder.TryDecodeGuid(stackalloc char[31], out _);
 			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeGuid_WithTooLongByteInput_ShouldReturnExpectedResult()
+		public void TryDecodeGuid_WithTooLongByteInput_ShouldFail()
 		{
-			Span<byte> bytes = stackalloc byte[100];
-			SampleHexBytesOfGuidId.AsSpan().CopyTo(bytes);
-
-			var success = HexadecimalIdEncoder.TryDecodeGuid(bytes, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleGuidId, result);
+			var success = HexadecimalIdEncoder.TryDecodeGuid(stackalloc byte[100], out _);
+			Assert.False(success);
 		}
 
 		[Fact]
-		public void TryDecodeGuid_WithTooLongCharInput_ShouldReturnExpectedResult()
+		public void TryDecodeGuid_WithTooLongCharInput_ShouldFail()
 		{
-			Span<char> chars = stackalloc char[100];
-			SampleHexStringOfGuidId.AsSpan().CopyTo(chars);
-
-			var success = HexadecimalIdEncoder.TryDecodeGuid(chars, out var result);
-
-			Assert.True(success);
-			Assert.Equal(SampleGuidId, result);
+			var success = HexadecimalIdEncoder.TryDecodeGuid(stackalloc char[100], out _);
+			Assert.False(success);
 		}
 
 		[Theory]

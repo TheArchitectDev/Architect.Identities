@@ -25,14 +25,16 @@ https://github.com/TheArchitectDev/Architect.Identities
 Release notes:
 
 2.0.0:
-- BREAKING: Removed Fluid. Configured ambient scopes are considered undesirable.
-- BREAKING: Removed ApplicationInstanceId. Configured ambient scopes are considered undesirable.
-- BREAKING: Removed ambient access to IPublicIdentityConverter. Configured ambient scopes are considered undesirable.
+- BREAKING: Removed Fluid. Ambient scopes with startup configuration are considered undesirable.
+- BREAKING: Removed ApplicationInstanceId. Ambient scopes with startup configuration are considered undesirable.
+- BREAKING: Removed ambient access to IPublicIdentityConverter. Ambient scopes with startup configuration are considered undesirable.
 - BREAKING: IdEncoder has been reworked into BinaryIdEncoder, AphanumericIdEncoder, and HexadecimalIdEncoder.
+- BREAKING: ID decoding methods now throw if the input is too long. This is specially relevant for strings (such as query parameters) where 0123456789123456 and 0123456789123456aaaa should not produce the same ID.
 - BREAKING: IPublicIdentityConverter now throws on big-endian architectures, instead of risking silent portability issues between architectures.
 - BREAKING: Now using AmbientContexts 2.0.0.
 - Semi-breaking: DistributedIds are now always 28 digits, to avoid a change from 27 to 28 digits in the future. Newly generated IDs will be significantly greater than before.
-- DistributedIds can now burst-generate ~128K IDs at once before the 128 IDs per millisecond throttling kicks in. This makes it much less likely for throttling to be encountered.
+- DistributedIds can now burst-generate ~128,000 IDs at once before the ~128 IDs per millisecond throttling kicks in. This makes it much less likely for throttling to be encountered.
+- Hexadecimal ID encodings are now supported.
 - IPublicIdentityConverter now comes with a TestPublicIdentityConverter implementation for unit tests.
 - Added UnsupportedOSPlatform("browser") to PublicIdentities, due to continuing lack of AES support.
 
