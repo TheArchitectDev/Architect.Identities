@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +10,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 			.DefineDynamicModule("UniqueTestDbContextModule");
 
 		public DbSet<TestEntity> Entities { get; protected set; }
+		public DbSet<StronglyTypedTestEntity> StronglyTypedEntities { get; protected set; }
 		public Action<ModelBuilder, DbContext> OnModelCreatingAction { get; }
 
 		public static TestDbContext Create(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
@@ -31,8 +32,15 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 
 			var type = typeBuilder.CreateType();
 
-			var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite });
-			return instance;
+			try
+			{
+				var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite });
+				return instance;
+			}
+			catch (TargetInvocationException e)
+			{
+				throw e.InnerException;
+			}
 		}
 
 		protected TestDbContext(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
@@ -60,6 +68,25 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 				entity.Property(e => e.Name);
 
 				entity.Property(e => e.Number);
+
+				entity.Property(e => e.DoesNotHaveIdSuffixEither)
+					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
+
+				entity.HasKey(e => e.Id);
+			});
+
+			modelBuilder.Entity<StronglyTypedTestEntity>(entity =>
+			{
+				entity.Property(e => e.Id)
+					.ValueGeneratedNever()
+					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
+
+				entity.Property(e => e.Name);
+
+				entity.Property(e => e.Number);
+
+				entity.Property(e => e.ForeignID)
+					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
 
 				entity.HasKey(e => e.Id);
 			});

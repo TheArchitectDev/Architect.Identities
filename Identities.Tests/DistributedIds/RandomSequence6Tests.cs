@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using Xunit;
 
 namespace Architect.Identities.Tests.DistributedIds
@@ -19,6 +19,9 @@ namespace Architect.Identities.Tests.DistributedIds
 			Assert.NotEqual(0UL, result);
 		}
 
+		/// <summary>
+		/// Unfortunately non-deterministic.
+		/// </summary>
 		[Fact]
 		public void Create_Regularly_ShouldHaveHighEntropyInLow5Bytes()
 		{

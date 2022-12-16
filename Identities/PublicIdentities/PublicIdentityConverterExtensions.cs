@@ -18,7 +18,7 @@ namespace Architect.Identities
 		public static long? GetLongOrDefault(this IPublicIdentityConverter converter, Guid publicId)
 		{
 			if (converter is null) throw new ArgumentNullException(nameof(converter));
-			return converter.TryGetLong(publicId, out var id) ? id : (long?)null;
+			return converter.TryGetLong(publicId, out var id) ? id : null;
 		}
 		/// <summary>
 		/// <para>
@@ -31,7 +31,7 @@ namespace Architect.Identities
 		public static ulong? GetUlongOrDefault(this IPublicIdentityConverter converter, Guid publicId)
 		{
 			if (converter is null) throw new ArgumentNullException(nameof(converter));
-			return converter.TryGetUlong(publicId, out var id) ? id : (ulong?)null;
+			return converter.TryGetUlong(publicId, out var id) ? id : null;
 		}
 		/// <summary>
 		/// <para>
@@ -44,7 +44,7 @@ namespace Architect.Identities
 		public static decimal? GetDecimalOrDefault(this IPublicIdentityConverter converter, Guid publicId)
 		{
 			if (converter is null) throw new ArgumentNullException(nameof(converter));
-			return converter.TryGetDecimal(publicId, out var id) ? id : (decimal?)null;
+			return converter.TryGetDecimal(publicId, out var id) ? id : null;
 		}
 	}
 }

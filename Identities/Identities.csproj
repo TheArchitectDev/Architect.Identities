@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
 		<AssemblyName>Architect.Identities</AssemblyName>
 		<RootNamespace>Architect.Identities</RootNamespace>
 		<Nullable>Enable</Nullable>
@@ -28,11 +28,13 @@ Release notes:
 - BREAKING: Removed Fluid. Configured ambient scopes are considered undesirable.
 - BREAKING: Removed ApplicationInstanceId. Configured ambient scopes are considered undesirable.
 - BREAKING: Removed ambient access to IPublicIdentityConverter. Configured ambient scopes are considered undesirable.
+- BREAKING: IdEncoder has been reworked into BinaryIdEncoder, AphanumericIdEncoder, and HexadecimalIdEncoder.
 - BREAKING: IPublicIdentityConverter now throws on big-endian architectures, instead of risking silent portability issues between architectures.
 - BREAKING: Now using AmbientContexts 2.0.0.
-- Semi-breaking: DistributedIds are now always 28 digits, to avoid a change from 27 to 28 digits in the future. Migrating will cause a one-time skip to greater ID values.
-- DistributedIds can now burst-generate ~128K IDs at once before the 128 IDs per millisecond throttling kicks in. This makes it less likely that throttling is encountered.
+- Semi-breaking: DistributedIds are now always 28 digits, to avoid a change from 27 to 28 digits in the future. Newly generated IDs will be significantly greater than before.
+- DistributedIds can now burst-generate ~128K IDs at once before the 128 IDs per millisecond throttling kicks in. This makes it much less likely for throttling to be encountered.
 - IPublicIdentityConverter now comes with a TestPublicIdentityConverter implementation for unit tests.
+- Added UnsupportedOSPlatform("browser") to PublicIdentities, due to continuing lack of AES support.
 
 1.0.2:
 - Now using AmbientContexts 1.1.1, which fixes extremely rare bugs and improves performance.

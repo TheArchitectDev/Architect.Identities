@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Architect.Identities.Helpers;
+using Architect.Identities.Encodings;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -14,6 +14,9 @@ namespace Architect.Identities
 	/// For optimal performance, singleton or pooled use is preferred.
 	/// </para>
 	/// </summary>
+#if NET5_0_OR_GREATER
+	[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 	internal sealed class AesPublicIdentityConverter : IPublicIdentityConverter
 	{
 		static AesPublicIdentityConverter()
@@ -69,7 +72,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// Converts the given long to ulong, or throws an <see cref="ArgumentOutOfRangeException"/> if it is negative.
 		/// </summary>
-		private static ulong LongToUlong(long id) => id >= 0 ? (ulong)id : throw new ArgumentOutOfRangeException();
+		private static ulong LongToUlong(long id) => id >= 0 ? (ulong)id : throw new ArgumentOutOfRangeException(nameof(id));
 
 		public Guid GetPublicRepresentation(ulong id)
 		{

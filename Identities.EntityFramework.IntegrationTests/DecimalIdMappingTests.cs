@@ -23,6 +23,13 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		}
 
 		[Fact]
+		public void StoreWithDecimalIdPrecision_WithUnsuitableProperty_Throws()
+		{
+			Assert.Throws<ArgumentException>(() => TestDbContext.Create((modelBuilder, dbContext) =>
+				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Name).StoreWithDecimalIdPrecision(dbContext))));
+		}
+
+		[Fact]
 		public void StoreWithDecimalIdPrecision_WithSqlite_ReturnsExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
@@ -83,18 +90,21 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		[Fact]
 		public void StoreWithDecimalIdPrecision_WithNonIdProperty_ReturnsExpectedPrecision()
 		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.DoesNotHaveIdSuffix).StoreWithDecimalIdPrecision(dbContext)));
+			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) => modelBuilder
+				.Entity<TestEntity>(entity => entity.Property(e => e.DoesNotHaveIdSuffix).StoreWithDecimalIdPrecision(dbContext))
+				.Entity<TestEntity>(entity => entity.Property(e => e.DoesNotHaveIdSuffixEither).StoreWithDecimalIdPrecision(dbContext)));
 
-			var entity = new TestEntity();
+			var entity = new TestEntity(number: 1234567890123456789012345678m);
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.DoesNotHaveIdSuffix, loadedEntity.DoesNotHaveIdSuffix);
+			Assert.Equal(entity.DoesNotHaveIdSuffixEither, loadedEntity.DoesNotHaveIdSuffixEither);
 			Assert.Equal(0, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffix));
+			Assert.Equal(0, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffixEither));
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqlite_ReturnsExpectedPrecision()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ReturnsExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
 				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
@@ -107,12 +117,41 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqlite_AffectsOtherIdProperties()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ReturnsExpectedPrecision()
+		{
+			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
+				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+
+			var entity = new StronglyTypedTestEntity();
+			var loadedEntity = this.SaveAndReload(entity, dbContext);
+
+			Assert.Equal(entity.Id, loadedEntity.Id);
+			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
+		}
+
+		[Fact]
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_AffectsSecondaryIdProperties()
 		{
 			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
 				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
 
 			var entity = new TestEntity();
+			var loadedEntity = this.SaveAndReload(entity, dbContext);
+
+			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
+			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
+
+			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
+			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
+		}
+
+		[Fact]
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_AffectsSecondaryIdProperties()
+		{
+			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
+				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+
+			var entity = new StronglyTypedTestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
@@ -132,7 +171,11 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.Number, loadedEntity.Number);
+			Assert.Equal(entity.DoesNotHaveIdSuffix, loadedEntity.DoesNotHaveIdSuffix);
+			Assert.Equal(entity.DoesNotHaveIdSuffixEither, loadedEntity.DoesNotHaveIdSuffixEither);
 			Assert.NotEqual(0, GetSignAndScale(loadedEntity.Number));
+			Assert.NotEqual(0, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffix));
+			Assert.NotEqual(0, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffixEither));
 		}
 
 		private TestEntity SaveAndReload(TestEntity entity, TestDbContext dbContext)
@@ -143,6 +186,17 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			dbContext.Entry(entity).State = EntityState.Detached;
 
 			var loadedEntity = dbContext.Entities.ToList()[0];
+			return loadedEntity;
+		}
+
+		private StronglyTypedTestEntity SaveAndReload(StronglyTypedTestEntity entity, TestDbContext dbContext)
+		{
+			dbContext.StronglyTypedEntities.Add(entity);
+			dbContext.SaveChanges();
+
+			dbContext.Entry(entity).State = EntityState.Detached;
+
+			var loadedEntity = dbContext.StronglyTypedEntities.ToList()[0];
 			return loadedEntity;
 		}
 

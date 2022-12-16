@@ -23,7 +23,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Identities.EntityFramework\Identities.EntityFramework.csproj" />
 		<ProjectReference Include="..\Identities\Identities.csproj" />
 	</ItemGroup>
 

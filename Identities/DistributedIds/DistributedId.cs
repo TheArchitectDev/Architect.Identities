@@ -20,7 +20,7 @@ namespace Architect.Identities
 	/// The incremental property makes values much more efficient for use as primary keys in databases than random <see cref="Guid"/> values.
 	/// </para>
 	/// <para>
-	/// The values are decimals of up to 28 digits, with 0 decimal places. In SQL databases, the corresponding type is DECIMAL(28, 0).
+	/// The values are decimals of exactly 28 digits, with 0 decimal places. In SQL databases, the corresponding type is DECIMAL(28, 0).
 	/// In [Azure] SQL Server and MySQL, this takes 13 bytes of storage, making it about 20% more compact than a <see cref="Guid"/>.
 	/// </para>
 	/// <para>
@@ -30,6 +30,7 @@ namespace Architect.Identities
 	/// Decimals avoid such issues.
 	/// </para>
 	/// <para>
+	/// About 128K
 	/// There is a rate limit of 128 values generated per millisecond (i.e. 128K per second) on average, with threads sleeping if necessary.
 	/// </para>
 	/// <para>
@@ -40,7 +41,7 @@ namespace Architect.Identities
 	{
 		/// <summary>
 		/// <para>
-		/// Returns a new ID value of up to 28 decimal digits, with no decimal places.
+		/// Returns a new ID value of exactly 28 decimal digits, with no decimal places.
 		/// </para>
 		/// <para>
 		/// Like <see cref="Guid"/> values, created values are hard to guess and extremely unlikely to collide.

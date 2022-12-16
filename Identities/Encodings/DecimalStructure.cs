@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Architect.Identities.Helpers
+namespace Architect.Identities.Encodings
 {
 	/// <summary>
 	/// Provides operations related to the binary layout of decimals.

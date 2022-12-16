@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Architect.Identities.Tests.Encodings
 {
-	public sealed class Base62Tests
+	public sealed class Base62EncoderTests
 	{
 		[Theory]
 		[InlineData("12345678", "4DruweP3xQ8")]
@@ -12,7 +12,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var bytes = System.Text.Encoding.UTF8.GetBytes(text);
 			Span<byte> outputChars = stackalloc byte[base62String.Length];
-			Base62.ToBase62Chars8(bytes, outputChars);
+			Base62Encoder.ToBase62Chars8(bytes, outputChars);
 			var outputString = System.Text.Encoding.UTF8.GetString(outputChars);
 
 			Assert.Equal(base62String, outputString);
@@ -25,7 +25,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<byte> bytes = stackalloc byte[11];
 			System.Text.Encoding.UTF8.GetBytes(text, bytes);
-			Base62.ToBase62Chars8(bytes, bytes);
+			Base62Encoder.ToBase62Chars8(bytes, bytes);
 			var outputString = System.Text.Encoding.UTF8.GetString(bytes);
 
 			Assert.Equal(base62String, outputString);
@@ -39,7 +39,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var bytes = System.Text.Encoding.UTF8.GetBytes(text);
 			Span<byte> outputChars = stackalloc byte[base62String.Length];
-			Base62.ToBase62Chars16(bytes, outputChars);
+			Base62Encoder.ToBase62Chars16(bytes, outputChars);
 			var outputString = System.Text.Encoding.UTF8.GetString(outputChars);
 
 			Assert.Equal(base62String, outputString);
@@ -52,7 +52,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var chars = System.Text.Encoding.UTF8.GetBytes(base62String);
 			Span<byte> outputBytes = stackalloc byte[text.Length];
-			Base62.FromBase62Chars11(chars, outputBytes);
+			Base62Encoder.FromBase62Chars11(chars, outputBytes);
 			var originalString = System.Text.Encoding.UTF8.GetString(outputBytes);
 
 			Assert.Equal(text, originalString);
@@ -65,7 +65,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<byte> bytes = stackalloc byte[11];
 			System.Text.Encoding.UTF8.GetBytes(base62String, bytes);
-			Base62.FromBase62Chars11(bytes, bytes);
+			Base62Encoder.FromBase62Chars11(bytes, bytes);
 			var originalString = System.Text.Encoding.UTF8.GetString(bytes[..8]);
 
 			Assert.Equal(text, originalString);
@@ -78,9 +78,9 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var bytes = System.Text.Encoding.UTF8.GetBytes(text);
 			Span<byte> outputChars = stackalloc byte[base62String.Length];
-			Base62.ToBase62Chars8(bytes, outputChars);
+			Base62Encoder.ToBase62Chars8(bytes, outputChars);
 			Span<byte> decodedBytes = stackalloc byte[bytes.Length];
-			Base62.FromBase62Chars11(outputChars, decodedBytes);
+			Base62Encoder.FromBase62Chars11(outputChars, decodedBytes);
 			var originalString = System.Text.Encoding.UTF8.GetString(decodedBytes);
 
 			Assert.Equal(text, originalString);
@@ -94,7 +94,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var chars = System.Text.Encoding.UTF8.GetBytes(base62String);
 			Span<byte> outputBytes = stackalloc byte[text.Length];
-			Base62.FromBase62Chars22(chars, outputBytes);
+			Base62Encoder.FromBase62Chars22(chars, outputBytes);
 			var originalString = System.Text.Encoding.UTF8.GetString(outputBytes);
 
 			Assert.Equal(text, originalString);
@@ -108,7 +108,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			Span<byte> bytes = stackalloc byte[22];
 			System.Text.Encoding.UTF8.GetBytes(base62String, bytes);
-			Base62.FromBase62Chars22(bytes, bytes);
+			Base62Encoder.FromBase62Chars22(bytes, bytes);
 			var originalString = System.Text.Encoding.UTF8.GetString(bytes[..16]);
 
 			Assert.Equal(text, originalString);
@@ -122,9 +122,9 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var bytes = System.Text.Encoding.UTF8.GetBytes(text);
 			Span<byte> outputChars = stackalloc byte[base62String.Length];
-			Base62.ToBase62Chars16(bytes, outputChars);
+			Base62Encoder.ToBase62Chars16(bytes, outputChars);
 			Span<byte> decodedBytes = stackalloc byte[bytes.Length];
-			Base62.FromBase62Chars22(outputChars, decodedBytes);
+			Base62Encoder.FromBase62Chars22(outputChars, decodedBytes);
 			var originalString = System.Text.Encoding.UTF8.GetString(decodedBytes);
 
 			Assert.Equal(text, originalString);

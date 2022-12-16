@@ -18,7 +18,7 @@ namespace Architect.Identities
 		/// Only with possession of the configured key can it be converted back to the original ID.
 		/// </para>
 		/// <para>
-		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
+		/// The various ID encoders in the package provide methods to encode the resulting object in various ways, such as in binary, alphanumeric, or hexadecimal form.
 		/// </para>
 		/// </summary>
 		public Guid GetPublicRepresentation(long id)
@@ -35,7 +35,7 @@ namespace Architect.Identities
 		/// Only with possession of the configured key can it be converted back to the original ID.
 		/// </para>
 		/// <para>
-		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
+		/// The various ID encoders in the package provide methods to encode the resulting object in various ways, such as in binary, alphanumeric, or hexadecimal form.
 		/// </para>
 		/// </summary>
 		public Guid GetPublicRepresentation(ulong id);
@@ -48,7 +48,7 @@ namespace Architect.Identities
 		/// Only with possession of the configured key can it be converted back to the original ID.
 		/// </para>
 		/// <para>
-		/// The resulting object provides methods to convert it to a hexadecimal string, or it can be converted to an alphanumeric string using the <see cref="IdEncoder"/>.
+		/// The various ID encoders in the package provide methods to encode the resulting object in various ways, such as in binary, alphanumeric, or hexadecimal form.
 		/// </para>
 		/// </summary>
 		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>

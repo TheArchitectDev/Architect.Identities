@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 
@@ -7,7 +7,7 @@ namespace Architect.Identities.Encodings
 	/// <summary>
 	/// A limited base62 encoder, aimed at simplicity, efficiency, and useful endianness.
 	/// </summary>
-	internal static class Base62
+	internal static class Base62Encoder
 	{
 		private static Base62Alphabet DefaultAlphabet { get; } = new Base62Alphabet(Encoding.ASCII.GetBytes("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"));
 
@@ -72,7 +72,7 @@ namespace Architect.Identities.Encodings
 		/// Converts the given 11 base62 chars to 8 bytes.
 		/// </para>
 		/// <para>
-		/// Throws <see cref="ArgumentException"/> on invalid input.
+		/// Throws an <see cref="ArgumentException"/> on invalid input.
 		/// </para>
 		/// </summary>
 		public static void FromBase62Chars11(ReadOnlySpan<byte> chars, Span<byte> bytes)
@@ -90,7 +90,7 @@ namespace Architect.Identities.Encodings
 		/// Converts the given 22 base62 chars to 16 bytes.
 		/// </para>
 		/// <para>
-		/// Throws <see cref="ArgumentException"/> on invalid input.
+		/// Throws an <see cref="ArgumentException"/> on invalid input.
 		/// </para>
 		/// </summary>
 		public static void FromBase62Chars22(ReadOnlySpan<byte> chars, Span<byte> bytes)
