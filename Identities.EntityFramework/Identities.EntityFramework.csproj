@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
@@ -29,7 +29,7 @@ Release notes:
 - BREAKING: Now using EF Core 7.0.0.
 - BREAKING: No longer referencing the Identities package. (Still considered an addition to it, but the hard link is now gone.)
 - BREAKING: Removed ApplicationInstanceIds. (See Identities 2.0.0.)
-- BREAKING: No longer fixing ID storage for SQLite. Detecting it and converting to and from TEXT is a nuisance. This feature may be re-introduced with sufficient demand. However, the recommendation is to test against a containizered (SQL Server, MySQL, ...) database.
+- BREAKING: Decimal IDs in SQLite may be read back with a one (inadvertent) decimal place, e.g. "1234567890123456789012345678" =&gt; "1234567890123456789012345678.0". Detecting and fixing for SQLite is a hassle.
 - BREAKING: DecimalIdMappingExtensions's methods have been replaced by modelConfigurationBuilder.ConfigureDecimalIdTypes(). This should be called from DbContext.ConfigureConventions().
 - The new extension method handles decimal-convertible types (i.e. value objects) in addition to plain decimals.
 - The new extension method also sets DefaultTypeMapping, to achieve appropriate behavior when EF writes things like CAST(). Property mappings alone do not cover such scenarios.
