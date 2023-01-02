@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text;
 
@@ -7,34 +7,49 @@ namespace Architect.Identities.Encodings
 	/// <summary>
 	/// A simple hexadecimal encoder, aimed at simplicity and efficiency.
 	/// </summary>
-	internal static class Hexadecimal
+	internal static class HexadecimalEncoder
 	{
-		private static HexAlphabet DefaultAlphabet { get; } = new HexAlphabet(Encoding.ASCII.GetBytes("0123456789ABCDEF"));
+		private static readonly HexAlphabet DefaultAlphabet = new HexAlphabet(Encoding.ASCII.GetBytes("0123456789ABCDEF"));
 
-		public static void ToHexChars(ReadOnlySpan<byte> bytes, Span<byte> chars)
+		/// <summary>
+		/// <para>
+		/// Converts the given bytes to hexadecimal chars.
+		/// </para>
+		/// </summary>
+		public static void ToHexChars(ReadOnlySpan<byte> bytes, Span<byte> chars, int inputByteCount)
 		{
-			System.Diagnostics.Debug.Assert(bytes.Length == 16);
-			System.Diagnostics.Debug.Assert(chars.Length == 32);
+			System.Diagnostics.Debug.Assert(bytes.Length >= inputByteCount);
+			System.Diagnostics.Debug.Assert(chars.Length >= 2 * inputByteCount);
 
 			var alphabet = DefaultAlphabet.ForwardAlphabet;
 
-			var i = 0;
-			foreach (int byteValue in bytes)
+			// E.g. if inputByteCount = 16, write the first two characters at position (16 * 2) - 1 = 31 and the one before it
+			for (var i = (inputByteCount << 1) - 1; i >= 0; i -= 2)
 			{
-				chars[i] = alphabet[byteValue >> 4];
-				chars[i + 1] = alphabet[byteValue & 15];
-				i += 2;
+				var byteValue = bytes[i >> 1];
+
+				chars[i - 1] = alphabet[byteValue >> 4];
+				chars[i] = alphabet[byteValue & 15];
 			}
 		}
 
-		public static void FromHexChars(ReadOnlySpan<byte> chars, Span<byte> bytes)
+		/// <summary>
+		/// <para>
+		/// Converts the given hexadecimal chars to bytes.
+		/// </para>
+		/// <para>
+		/// Throws an <see cref="ArgumentException"/> on invalid input.
+		/// </para>
+		/// </summary>
+		public static void FromHexChars(ReadOnlySpan<byte> chars, Span<byte> bytes, int inputByteCount)
 		{
-			System.Diagnostics.Debug.Assert(chars.Length == 32);
-			System.Diagnostics.Debug.Assert(bytes.Length == 16);
+			System.Diagnostics.Debug.Assert(inputByteCount % 1 == 0, "An even number of input bytes is expected.");
+			System.Diagnostics.Debug.Assert(chars.Length >= inputByteCount);
+			System.Diagnostics.Debug.Assert(bytes.Length >= inputByteCount / 2);
 
 			var alphabet = DefaultAlphabet.ReverseAlphabet;
 
-			for (var i = 0; i < chars.Length; i += 2)
+			for (var i = 0; i < inputByteCount; i += 2)
 			{
 				int leftValue = alphabet[chars[i]];
 				int rightValue = alphabet[chars[i + 1]];
@@ -95,13 +110,26 @@ namespace Architect.Identities.Encodings
 		/// The result should be cached for reuse.
 		/// </para>
 		/// </summary>
+		/// <param name="alphabet">An uppercase alphabet. For each uppercase letter, its lowercase equivalent will be mapped to the same binary value.</param>
 		internal static sbyte[] GetReverseAlphabet(ReadOnlySpan<byte> alphabet)
 		{
 			if (alphabet.Length != 16) throw new ArgumentException("Expected an alphabet of length 16.");
 
 			var result = new sbyte[256];
+
 			Array.Fill(result, (sbyte)-1);
-			for (sbyte i = 0; i < alphabet.Length; i++) result[alphabet[i]] = i;
+
+			for (sbyte i = 0; i < alphabet.Length; i++)
+			{
+				// Map the character to its represented binary value
+				var charValue = alphabet[i];
+
+				// If the character is an uppercase letter, map its lowercase equivalent to the same represented binary value
+				result[charValue] = i;
+				if (charValue >= 'A' && charValue <= 'Z')
+					result[charValue + 32] = i;
+			}
+
 			return result;
 		}
 	}

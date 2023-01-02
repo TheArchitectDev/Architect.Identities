@@ -99,9 +99,7 @@ namespace Test
 
 			var sw = Stopwatch.StartNew();
 
-#pragma warning disable CS4014 // Deliberately unawaited background task
-			LogAtIntervals(sw); // Unawaited task
-#pragma warning restore CS4014
+			_ = LogAtIntervals(sw); // Unawaited task
 
 			while (true)
 			{

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +10,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 			.DefineDynamicModule("UniqueTestDbContextModule");
 
 		public DbSet<TestEntity> Entities { get; protected set; }
+		public DbSet<StronglyTypedTestEntity> StronglyTypedEntities { get; protected set; }
 		public Action<ModelBuilder, DbContext> OnModelCreatingAction { get; }
 
 		public static TestDbContext Create(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
@@ -31,8 +32,15 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 
 			var type = typeBuilder.CreateType();
 
-			var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite });
-			return instance;
+			try
+			{
+				var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite, });
+				return instance;
+			}
+			catch (TargetInvocationException e)
+			{
+				throw e.InnerException;
+			}
 		}
 
 		protected TestDbContext(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
@@ -48,18 +56,54 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 			this.Database.EnsureCreated();
 		}
 
+		protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+		{
+			base.ConfigureConventions(configurationBuilder);
+
+			configurationBuilder.ConfigureDecimalIdTypes(modelAssemblies: this.GetType().Assembly);
+		}
+
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
 
 			modelBuilder.Entity<TestEntity>(entity =>
 			{
-				entity.Property(e => e.Id)
-					.ValueGeneratedNever();
+				entity.Property(e => e.Id);
 
 				entity.Property(e => e.Name);
 
 				entity.Property(e => e.Number);
+
+				entity.Property(e => e.ForeignId)
+					.HasColumnName("ForeignId1");
+
+				entity.Property(e => e.ForeignID)
+					.HasColumnName("ForeignId2");
+
+				entity.Property(e => e.DoesNotHaveIdSuffix);
+
+				entity.Property(e => e.DoesNotHaveIdSuffixEither)
+					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
+
+				entity.HasKey(e => e.Id);
+			});
+
+			modelBuilder.Entity<StronglyTypedTestEntity>(entity =>
+			{
+				entity.Property(e => e.Id);
+
+				entity.Property(e => e.Name);
+
+				entity.Property(e => e.Number);
+
+				entity.Property(e => e.ForeignId)
+					.HasColumnName("ForeignId1");
+
+				entity.Property(e => e.ForeignID)
+					.HasColumnName("ForeignId2");
+
+				entity.Property(e => e.DoesNotHaveIdSuffix);
 
 				entity.HasKey(e => e.Id);
 			});

@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
+#if NET5_0_OR_GREATER
+	[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 	public static class PublicIdentityExtensions
 	{
 		/// <summary>

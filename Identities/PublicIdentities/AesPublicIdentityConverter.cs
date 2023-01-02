@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Architect.Identities.Helpers;
+using Architect.Identities.Encodings;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -14,6 +14,9 @@ namespace Architect.Identities
 	/// For optimal performance, singleton or pooled use is preferred.
 	/// </para>
 	/// </summary>
+#if NET5_0_OR_GREATER
+	[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
+#endif
 	internal sealed class AesPublicIdentityConverter : IPublicIdentityConverter
 	{
 		static AesPublicIdentityConverter()
@@ -48,13 +51,13 @@ namespace Architect.Identities
 			if (aesKey.Length < 16) throw new ArgumentException("Expected at least a 128-bit key.");
 
 			this.Key = aesKey.ToArray();
-			this.Aes = new AesManaged() // Single-block crypto is faster managed than unmanaged
-			{
-				Key = Key,
-				Mode = CipherMode.ECB,
-				Padding = PaddingMode.None, // Required for correct results
-				IV = new byte[16], // Not used with ECB, but set to zero anyway
-			};
+
+			this.Aes = Aes.Create();
+			this.Aes.Key = this.Key;
+			this.Aes.Mode = CipherMode.ECB;
+			this.Aes.Padding = PaddingMode.None; // Required for correct results
+			this.Aes.IV = new byte[16]; // Not used with ECB, but set to zero anyway
+
 			this.Encryptor = this.Aes.CreateEncryptor() ?? throw new ArgumentException($"{this.Aes} produced a null encryptor.");
 			this.Decryptor = this.Aes.CreateDecryptor() ?? throw new ArgumentException($"{this.Aes} produced a null decryptor.");
 		}
@@ -69,7 +72,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// Converts the given long to ulong, or throws an <see cref="ArgumentOutOfRangeException"/> if it is negative.
 		/// </summary>
-		private static ulong LongToUlong(long id) => id >= 0 ? (ulong)id : throw new ArgumentOutOfRangeException();
+		private static ulong LongToUlong(long id) => id >= 0 ? (ulong)id : throw new ArgumentOutOfRangeException(nameof(id));
 
 		public Guid GetPublicRepresentation(ulong id)
 		{

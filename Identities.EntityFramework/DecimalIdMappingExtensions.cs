@@ -2,8 +2,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Architect.Identities.EntityFramework
@@ -13,138 +11,55 @@ namespace Architect.Identities.EntityFramework
 	/// </summary>
 	public static class DecimalIdMappingExtensions
 	{
-		private const string DefaultColumnType = "DECIMAL(28,0)";
-
-		private static ValueConverter DecimalConverter { get; }
-			= new ValueConverter<decimal, string>(d => d.ToString(), s => Decimal.Parse(s));
-		private static ValueConverter NullableDecimalConverter { get; }
-			= new ValueConverter<decimal?, string?>(d => d == null ? null : d.ToString(), s => s == null ? (decimal?)null : Decimal.Parse(s));
+		private static readonly Type[] ParameterListWithSingleDecimal = new[] { typeof(decimal) };
 
 		/// <summary>
 		/// <para>
-		/// Sets column type "DECIMAL(28,0)" for all currently mapped decimal properties (including nullable ones) whose name ends with "Id" or "ID".
+		/// Configures the mapping of decimal ID types to DECIMAL(28,0).
 		/// </para>
 		/// <para>
-		/// Invoke this after all properties have been configured.
+		/// Primarily, this method registers a <see cref="DecimalIdConvention"/>, which configures properties named *Id or *ID, provided that they are of type decimal or have appropriate conversions to and from decimal.
 		/// </para>
 		/// <para>
-		/// If the database type is SQLite, this method configures a different type and a custom conversion.
-		/// Doing so avoids truncation of decimals to 8 bytes, and ensures that they are reconstituted with their original precision.
+		/// Additionaly, for any given assemblies, this method configures the default type mapping for any of their types named *Id or *ID that are convertible to and from decimal.
+		/// The default type mapping is used when types occur in queries outside of properties, such as when Entity Framework writes calls to CAST().
 		/// </para>
 		/// </summary>
-		/// <param name="modelBuilder">The model builder whose configuration to update.</param>
-		/// <param name="dbContext">The <see cref="DbContext"/> whose <see cref="ModelBuilder"/> is being configured. Accessed if a SQLite assembly is loaded.</param>
-		/// <param name="columnType">The column type to configure for the properties. Can be changed for databases that require a different type.</param>
-		public static ModelBuilder StoreDecimalIdsWithCorrectPrecision(this ModelBuilder modelBuilder, DbContext dbContext, string columnType = DefaultColumnType)
+		/// <param name="modelAssemblies">Any assemblies containing types mapped to tables. For example, if domain objects are mapped directly, the domain layer's assembly should be passed here.</param>
+		public static ModelConfigurationBuilder ConfigureDecimalIdTypes(this ModelConfigurationBuilder modelConfigurationBuilder, params Assembly[] modelAssemblies)
 		{
-			if (modelBuilder is null) throw new ArgumentNullException(nameof(modelBuilder));
-			if (dbContext is null) throw new ArgumentNullException(nameof(dbContext));
-			if (columnType is null) throw new ArgumentNullException(nameof(columnType));
+			// Configure decimal-like ID properties
+			modelConfigurationBuilder.Conventions.Add(_ => new DecimalIdConvention());
 
-			var isSqlite = dbContext.IsSqlite();
-
-			var propertyMappings = modelBuilder.Model.GetEntityTypes()
-				.Where(entityType => GetClrType(entityType) is not null)
-				.SelectMany(entityType => entityType.GetProperties())
-				.Where(property => GetClrType(property) == typeof(decimal) || GetClrType(property) == typeof(decimal?))
-				.Where(property => GetName(property).EndsWith("Id") || GetName(property).EndsWith("ID"))
-				.Select(property => (Property: property, Entity: modelBuilder.Entity(GetClrType(property.DeclaringEntityType))))
-				.Select(pair => (PropertyBuilder: pair.Entity.Property(GetName(pair.Property)), IsNullable: GetClrType(pair.Property) == typeof(decimal?)));
-
-			foreach (var (propertyBuilder, isNullable) in propertyMappings)
+			// Configure decimal-like types outside of properties (e.g. in CAST(), SUM(), AVG(), etc.)
+			foreach (var decimalIdType in modelAssemblies.SelectMany(assembly => assembly.GetTypes().Where(type =>
+				type.Name.EndsWith("Id") &&
+				IsDecimalConvertible(type))))
 			{
-				StoreWithDecimalIdPrecision(propertyBuilder, isNullable, dbContext, columnType, isSqlite);
+				modelConfigurationBuilder.DefaultTypeMapping(decimalIdType)
+					.HasConversion(typeof(CastingConverter<,>).MakeGenericType(decimalIdType, typeof(decimal)))
+					.HasPrecision(28, 0);
 			}
 
-			return modelBuilder;
-
-			// Local function that gets the ClrType property value from a given entity or property type
-			static Type? GetClrType(object entityOrPropertyType)
-			{
-				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
-				return (Type?)entityOrPropertyType.GetType().GetProperty(nameof(IMutableProperty.ClrType))!.GetValue(entityOrPropertyType);
-			}
-
-			// Local function that gets the Name property value from a given entity or property type
-			static string GetName(object entityOrPropertyType)
-			{
-				// This workaround is needed because the library otherwise breaks if EF 6+ is used by the host application, due to breaking changes in EF
-				return (string)entityOrPropertyType.GetType().GetProperty(nameof(IMutableProperty.Name))!.GetValue(entityOrPropertyType)!;
-			}
+			return modelConfigurationBuilder;
 		}
 
 		/// <summary>
-		/// <para>
-		/// Sets column type "DECIMAL(28,0)" for the decimal property.
-		/// </para>
-		/// <para>
-		/// If the database type is SQLite, this method configures a different type and a custom conversion.
-		/// Doing so avoids truncation of decimals to 8 bytes, and ensures that they are reconstituted with their original precision.
-		/// </para>
-		/// <para>
-		/// To do this without repetition for each decimal ID property, call <see cref="StoreDecimalIdsWithCorrectPrecision(ModelBuilder, DbContext, String)"/> on the <see cref="ModelBuilder"/>.
-		/// </para>
+		/// Determines whether the given type is convertible to and from decimal.
 		/// </summary>
-		/// <param name="propertyBuilder">The property builder whose configuration to update.</param>
-		/// <param name="dbContext">The <see cref="DbContext"/> whose <see cref="ModelBuilder"/> is being configured. Accessed if a SQLite assembly is loaded.</param>
-		/// <param name="columnType">The column type to configure for the properties. Can be changed for databases that require a different type.</param>
-		public static PropertyBuilder<decimal> StoreWithDecimalIdPrecision(this PropertyBuilder<decimal> propertyBuilder, DbContext dbContext, string columnType = DefaultColumnType)
+		internal static bool IsDecimalConvertible(Type type)
 		{
-			StoreWithDecimalIdPrecision(propertyBuilder, isNullable: false, dbContext, columnType);
-			return propertyBuilder;
-		}
+			// Must have explicit OR implicit conversion from decimal
+			if (type.GetMethod("op_Explicit", genericParameterCount: 0, ParameterListWithSingleDecimal) is null && // Compiler enforces that return type is the type itself
+				type.GetMethod("op_Implicit", genericParameterCount: 0, ParameterListWithSingleDecimal) is null) // Compiler enforces that return type is the type itself
+				return false;
 
-		/// <summary>
-		/// <para>
-		/// Sets column type "DECIMAL(28,0)" for the nullable decimal property.
-		/// </para>
-		/// <para>
-		/// If the database type is SQLite, this method configures a different type and a custom conversion.
-		/// Doing so avoids truncation of decimals to 8 bytes, and ensures that they are reconstituted with their original precision.
-		/// </para>
-		/// <para>
-		/// To do this without repetition for each decimal ID property, call <see cref="StoreDecimalIdsWithCorrectPrecision(ModelBuilder, DbContext, String)"/> on the <see cref="ModelBuilder"/>.
-		/// </para>
-		/// </summary>
-		/// <param name="propertyBuilder">The property builder whose configuration to update.</param>
-		/// <param name="dbContext">The <see cref="DbContext"/> whose <see cref="ModelBuilder"/> is being configured. Accessed if a SQLite assembly is loaded.</param>
-		/// <param name="columnType">The column type to configure for the properties. Can be changed for databases that require a different type.</param>
-		public static PropertyBuilder<decimal?> StoreWithDecimalIdPrecision(this PropertyBuilder<decimal?> propertyBuilder, DbContext dbContext, string columnType = DefaultColumnType)
-		{
-			StoreWithDecimalIdPrecision(propertyBuilder, isNullable: true, dbContext, columnType);
-			return propertyBuilder;
-		}
+			// Must have implicit conversion to decimal
+			if (!type.GetMethods(BindingFlags.Static | BindingFlags.Public)
+				.Any(method => method.Name == "op_Implicit" && method.ReturnType == typeof(decimal))) // Compiler enforces single parameter of the type itself
+				return false;
 
-		private static void StoreWithDecimalIdPrecision(PropertyBuilder decimalPropertyBuilder, bool isNullable, DbContext dbContext,
-			string columnType = DefaultColumnType,
-			bool? isSqlite = null)
-		{
-			if (decimalPropertyBuilder is null) throw new ArgumentNullException(nameof(decimalPropertyBuilder));
-
-			System.Diagnostics.Debug.Assert(GetPropertyInfo(decimalPropertyBuilder.Metadata)?.PropertyType == typeof(decimal) ||
-				GetPropertyInfo(decimalPropertyBuilder.Metadata)?.PropertyType == typeof(decimal?));
-
-			if (isSqlite ?? dbContext.IsSqlite())
-			{
-				decimalPropertyBuilder.HasColumnType("TEXT");
-				decimalPropertyBuilder.HasConversion(isNullable ? NullableDecimalConverter : DecimalConverter);
-			}
-			else if (columnType == DefaultColumnType && PropertyBuilderPrecisionSetter.Value is not null)
-			{
-				// We prefer to use the dynamic setter, since it is not tied to an explicit string representation, allowing broader support by providers
-				PropertyBuilderPrecisionSetter.Value.Invoke(decimalPropertyBuilder, 28, 0);
-			}
-			else
-			{
-				decimalPropertyBuilder.HasColumnType(columnType);
-			}
-
-			// Local function that gets the PropertyInfo property value from a given property
-			static PropertyInfo? GetPropertyInfo(object property)
-			{
-				// This workaround is needed because the library otherwise breaks if EF Core 6+ is used by the host application, due to breaking changes in EF
-				return (PropertyInfo?)property.GetType().GetProperty(nameof(IMutableProperty.PropertyInfo))!.GetValue(property);
-			}
+			return true;
 		}
 	}
 }
