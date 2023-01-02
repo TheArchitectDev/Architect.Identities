@@ -34,7 +34,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 
 			try
 			{
-				var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite });
+				var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite, });
 				return instance;
 			}
 			catch (TargetInvocationException e)
@@ -56,18 +56,32 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 			this.Database.EnsureCreated();
 		}
 
+		protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+		{
+			base.ConfigureConventions(configurationBuilder);
+
+			configurationBuilder.ConfigureDecimalIdTypes(modelAssemblies: this.GetType().Assembly);
+		}
+
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
 			base.OnModelCreating(modelBuilder);
 
 			modelBuilder.Entity<TestEntity>(entity =>
 			{
-				entity.Property(e => e.Id)
-					.ValueGeneratedNever();
+				entity.Property(e => e.Id);
 
 				entity.Property(e => e.Name);
 
 				entity.Property(e => e.Number);
+
+				entity.Property(e => e.ForeignId)
+					.HasColumnName("ForeignId1");
+
+				entity.Property(e => e.ForeignID)
+					.HasColumnName("ForeignId2");
+
+				entity.Property(e => e.DoesNotHaveIdSuffix);
 
 				entity.Property(e => e.DoesNotHaveIdSuffixEither)
 					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
@@ -77,16 +91,19 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 
 			modelBuilder.Entity<StronglyTypedTestEntity>(entity =>
 			{
-				entity.Property(e => e.Id)
-					.ValueGeneratedNever()
-					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
+				entity.Property(e => e.Id);
 
 				entity.Property(e => e.Name);
 
 				entity.Property(e => e.Number);
 
+				entity.Property(e => e.ForeignId)
+					.HasColumnName("ForeignId1");
+
 				entity.Property(e => e.ForeignID)
-					.HasConversion(codeValue => (decimal)codeValue, dbValue => (TestEntityId)dbValue);
+					.HasColumnName("ForeignId2");
+
+				entity.Property(e => e.DoesNotHaveIdSuffix);
 
 				entity.HasKey(e => e.Id);
 			});

@@ -21,5 +21,12 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 			this.DoesNotHaveIdSuffix = number;
 			this.DoesNotHaveIdSuffixEither = number;
 		}
+
+		/// <summary>
+		/// EF constructor.
+		/// </summary>
+		private TestEntity()
+		{
+		}
 	}
 }

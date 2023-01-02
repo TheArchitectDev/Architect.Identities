@@ -11,56 +11,25 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		/// Can be changed or deleted if the situation changes.
 		/// </summary>
 		[Fact]
-		public void NoMapping_WithSqlite_ReturnsIncorrectPrecision()
-		{
-			using var dbContext = TestDbContext.Create();
-
-			var entity = new TestEntity();
-			var loadedEntity = this.SaveAndReload(entity, dbContext);
-
-			Assert.Equal(entity.Id, loadedEntity.Id);
-			Assert.Equal(65536, GetSignAndScale(loadedEntity.Id));
-		}
-
-		[Fact]
-		public void StoreWithDecimalIdPrecision_WithUnsuitableProperty_Throws()
-		{
-			Assert.Throws<ArgumentException>(() => TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Name).StoreWithDecimalIdPrecision(dbContext))));
-		}
-
-		[Fact]
-		public void StoreWithDecimalIdPrecision_WithSqlite_ReturnsExpectedPrecision()
+		public void UnconfiguredProperty_WithSqlite_ReturnsIncorrectPrecision()
 		{
 			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext)));
+			{
+				modelBuilder.Entity<TestEntity>().Ignore(x => x.Id);
+				modelBuilder.Entity<TestEntity>().Property(x => x.Id);
+			});
 
-			var entity = new TestEntity();
+			var entity = new TestEntity(number: 1234567890123456789012345678m);
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
-			Assert.Equal(entity.Id, loadedEntity.Id);
-			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
+			Assert.Equal(entity.DoesNotHaveIdSuffix, loadedEntity.DoesNotHaveIdSuffix);
+			Assert.Equal(65536, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffix));
 		}
 
 		[Fact]
 		public void StoreWithDecimalIdPrecision_WithInMemory_ReturnsExpectedPrecision()
 		{
-			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
-				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext)));
-
-			var entity = new TestEntity();
-			var loadedEntity = this.SaveAndReload(entity, dbContext);
-
-			Assert.Equal(entity.Id, loadedEntity.Id);
-			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
-			//Assert.Equal("DECIMAL(28,0)", dbContext.Model.FindEntityType(typeof(TestEntity)).FindProperty(nameof(TestEntity.Id)).GetColumnType()); // Does not work with in-memory provider
-		}
-
-		[Fact]
-		public void StoreWithDecimalIdPrecision_WithInMemoryAndExplicitColumnType_ReturnsExpectedPrecision()
-		{
-			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
-				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext, columnType: "DECIMAL(28,0)")));
+			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true);
 
 			var entity = new TestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
@@ -74,7 +43,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		public void StoreWithDecimalIdPrecision_WithInMemoryAndDifferentColumnType_ReturnsExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
-				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).StoreWithDecimalIdPrecision(dbContext, columnType: "DECIMAL(29,1)")));
+				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).HasColumnType("DECIMAL(29,1)")));
 
 			var entity = new TestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
@@ -84,56 +53,34 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			//Assert.Equal("DECIMAL(29,1)", dbContext.Model.FindEntityType(typeof(TestEntity)).FindProperty(nameof(TestEntity.Id)).GetColumnType()); // Does not work with in-memory provider
 		}
 
-		/// <summary>
-		/// This should work too, since the precision is being explicitly set. The per-property method should not have any naming requirements.
-		/// </summary>
-		[Fact]
-		public void StoreWithDecimalIdPrecision_WithNonIdProperty_ReturnsExpectedPrecision()
-		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) => modelBuilder
-				.Entity<TestEntity>(entity => entity.Property(e => e.DoesNotHaveIdSuffix).StoreWithDecimalIdPrecision(dbContext))
-				.Entity<TestEntity>(entity => entity.Property(e => e.DoesNotHaveIdSuffixEither).StoreWithDecimalIdPrecision(dbContext)));
-
-			var entity = new TestEntity(number: 1234567890123456789012345678m);
-			var loadedEntity = this.SaveAndReload(entity, dbContext);
-
-			Assert.Equal(entity.DoesNotHaveIdSuffix, loadedEntity.DoesNotHaveIdSuffix);
-			Assert.Equal(entity.DoesNotHaveIdSuffixEither, loadedEntity.DoesNotHaveIdSuffixEither);
-			Assert.Equal(0, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffix));
-			Assert.Equal(0, GetSignAndScale(loadedEntity.DoesNotHaveIdSuffixEither));
-		}
-
 		[Fact]
 		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ReturnsExpectedPrecision()
 		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+			using var dbContext = TestDbContext.Create();
 
 			var entity = new TestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.Id, loadedEntity.Id);
-			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
+			//Assert.Equal(0, GetSignAndScale(loadedEntity.Id)); // Does not retain scale with SQLite
 		}
 
 		[Fact]
 		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ReturnsExpectedPrecision()
 		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+			using var dbContext = TestDbContext.Create();
 
 			var entity = new StronglyTypedTestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.Id, loadedEntity.Id);
-			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
+			//Assert.Equal(0, GetSignAndScale(loadedEntity.Id)); // Does not retain scale with SQLite
 		}
 
 		[Fact]
 		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_AffectsSecondaryIdProperties()
 		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+			using var dbContext = TestDbContext.Create();
 
 			var entity = new TestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
@@ -141,15 +88,14 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
 			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
 
-			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
-			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
+			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId)); // Does not retain scale with SQLite
+			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID)); // Does not retain scale with SQLite
 		}
 
 		[Fact]
 		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_AffectsSecondaryIdProperties()
 		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+			using var dbContext = TestDbContext.Create();
 
 			var entity = new StronglyTypedTestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
@@ -157,15 +103,14 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
 			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
 
-			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
-			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
+			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId)); // Does not retain scale with SQLite
+			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID)); // Does not retain scale with SQLite
 		}
 
 		[Fact]
 		public void StoreDecimalIdsWithCorrectPrecision_WithSqlite_DoesNotAffectNonIdDecimals()
 		{
-			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
-				modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext));
+			using var dbContext = TestDbContext.Create();
 
 			var entity = new TestEntity();
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
@@ -185,7 +130,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 
 			dbContext.Entry(entity).State = EntityState.Detached;
 
-			var loadedEntity = dbContext.Entities.ToList()[0];
+			var loadedEntity = dbContext.Entities.Single();
 			return loadedEntity;
 		}
 
@@ -196,7 +141,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 
 			dbContext.Entry(entity).State = EntityState.Detached;
 
-			var loadedEntity = dbContext.StronglyTypedEntities.ToList()[0];
+			var loadedEntity = dbContext.StronglyTypedEntities.Single();
 			return loadedEntity;
 		}
 

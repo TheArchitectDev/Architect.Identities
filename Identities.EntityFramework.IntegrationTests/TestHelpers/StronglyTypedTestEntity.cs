@@ -19,6 +19,13 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 			this.ForeignID = 1234567890123456789012345678m;
 			this.DoesNotHaveIdSuffix = number;
 		}
+
+		/// <summary>
+		/// EF constructor.
+		/// </summary>
+		private StronglyTypedTestEntity()
+		{
+		}
 	}
 
 	public readonly struct TestEntityId : IEquatable<TestEntityId>, IComparable<TestEntityId>

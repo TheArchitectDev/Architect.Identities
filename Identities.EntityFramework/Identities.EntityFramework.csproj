@@ -1,13 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>netcoreapp3.1</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<AssemblyName>Architect.Identities.EntityFramework</AssemblyName>
 		<RootNamespace>Architect.Identities.EntityFramework</RootNamespace>
 		<Nullable>Enable</Nullable>
 		<LangVersion>10</LangVersion>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<IsTrimmable>False</IsTrimmable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<InternalsVisibleTo>Architect.Identities.EntityFramework.IntegrationTests</InternalsVisibleTo>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -21,10 +25,14 @@ https://github.com/TheArchitectDev/Architect.Identities
 Release notes:
 
 2.0.0:
+- BREAKING: Now targeting .NET 6+, to support new EF Core APIs.
+- BREAKING: Now using EF Core 7.0.0.
 - BREAKING: No longer referencing the Identities package. (Still considered an addition to it, but the hard link is now gone.)
 - BREAKING: Removed ApplicationInstanceIds. (See Identities 2.0.0.)
-- ModelBuilder.StoreWithDecimalIdPrecision() is no longer limited to decimal types, but also supports any type that is convertible to/from decimal.
-- ModelBuilder.StoreDecimalIdsWithCorrectPrecision() is no longer limited to decimal types, but also picks up any ID properties of any type that is convertible to/from decimal.
+- BREAKING: No longer fixing ID storage for SQLite. Detecting it and converting to and from TEXT is a nuisance. This feature may be re-introduced with sufficient demand. However, the recommendation is to test against a containizered (SQL Server, MySQL, ...) database.
+- BREAKING: DecimalIdMappingExtensions's methods have been replaced by modelConfigurationBuilder.ConfigureDecimalIdTypes(). This should be called from DbContext.ConfigureConventions().
+- The new extension method handles decimal-convertible types (i.e. value objects) in addition to plain decimals.
+- The new extension method also sets DefaultTypeMapping, to achieve appropriate behavior when EF writes things like CAST(). Property mappings alone do not cover such scenarios.
 
 1.0.2:
 - Fixed an incompatibility with EF Core 6.0.0+ (caused by a breaking change in EF itself).
@@ -43,8 +51,11 @@ Release notes:
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>

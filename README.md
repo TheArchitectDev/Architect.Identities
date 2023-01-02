@@ -288,45 +288,24 @@ A DistributedId reveals its creation timestamp. Otherwise, it consists of crypto
 
 ### Entity Framework
 
-When DistributedIds are used in Entity Framework, the column type needs to be configured. Although this can be done manually, the package [Architect.Identities.EntityFramework](https://www.nuget.org/packages/Architect.Identities.EntityFramework) facilitates it through its extension methods.
-
-The recommended approach is to first map all entities, and then invoke a single extension method to set the correct column type for _all_ mapped properties that are of type `decimal` (including nullable ones) _and_ whose name ends in `Id` or `ID` (e.g. `Id`, `OrderId`, `ParentID`, etc.):
+When DistributedIds (or any decimal IDs) are used in Entity Framework, the column type needs to be configured. Although this can be done manually, the package [Architect.Identities.EntityFramework](https://www.nuget.org/packages/Architect.Identities.EntityFramework) facilitates conventions for this through its extension methods.
 
 ```cs
-protected override void OnModelCreating(ModelBuilder modelBuilder)
+protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
 {
-	modelBuilder.Entity<Order>(entity =>
-	{
-		entity.Property(o => o.Id)
-			.ValueGeneratedNever();
-		
-		entity.HasKey(o => o.Id);
-	});
-	
-	// Other entities ...
+	base.ConfigureConventions(configurationBuilder);
 
-	// For all mapped decimal columns named *Id or *ID
-	modelBuilder.StoreDecimalIdsWithCorrectPrecision(dbContext: this);
+	configurationBuilder.ConfigureDecimalIdTypes(modelAssemblies: typeof(SomeEntity).Assembly);
 }
 ```
 
-Alternatively, each property can be mapped individually:
+`ConfigureDecimalIdTypes()` uses precision 28, scale 0, and conversions to and from the decimal type (where a decimal wrapper type is used).
 
-```cs
-protected override void OnModelCreating(ModelBuilder modelBuilder)
-{
-	modelBuilder.Entity<Order>(entity =>
-	{
-		entity.Property(o => o.Id)
-			.ValueGeneratedNever()
-			.StoreWithDecimalIdPrecision(dbContext: this);
-	});
-}
-```
+The conventions are applied to any entity properties named "*Id" or "*ID" whose type is either decimal or a decimal-convertible type.
 
-The demonstrated methods abstract away the knowledge of how to configure the properties. If the database used at runtime is SQLite (e.g. for integration tests), the methods will automatically customize the mapping differently, since SQLite needs a little extra work to deal with high-precision decimals.
+Optionally, the extension method takes any number of assemblies as input. From those assemblies, it finds all types named "*Id" or "*ID" that are decimal-convertible, and configures a `DefaultTypeMapping` for them using the same conventions.
 
-It is also possible to manually configure the precision of `28, 0`.
+A `DefaultTypeMapping` kicks in when the type appears in EF-generated queries when the context of a column is lost, such as when EF generates a call to `CAST()`. Without such a mapping, EF may choose to convert a decimal to some default precision, which is generally too low.
 
 ## Public Identities
 
