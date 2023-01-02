@@ -209,7 +209,7 @@ namespace Architect.Identities
 		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryDecodeLong(ReadOnlySpan<char> chars, out long id)
 		{
-			Span<byte> bytes = stackalloc byte[Math.Min(16, chars.Length)];
+			Span<byte> bytes = stackalloc byte[Math.Min(16 + 1, chars.Length)]; // +1 space to detect oversized inputs
 
 			for (var i = 0; i < bytes.Length; i++)
 				bytes[i] = (byte)chars[i];
@@ -230,7 +230,7 @@ namespace Architect.Identities
 		public static bool TryDecodeUlong(ReadOnlySpan<byte> bytes, out ulong id)
 		{
 			// Hexadecimal encodings are exactly 16 characters long
-			if (bytes.Length < 16)
+			if (bytes.Length != 16)
 			{
 				id = default;
 				return false;
@@ -264,7 +264,7 @@ namespace Architect.Identities
 		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryDecodeUlong(ReadOnlySpan<char> chars, out ulong id)
 		{
-			Span<byte> bytes = stackalloc byte[Math.Min(16, chars.Length)];
+			Span<byte> bytes = stackalloc byte[Math.Min(16 + 1, chars.Length)]; // +1 space to detect oversized inputs
 
 			for (var i = 0; i < bytes.Length; i++)
 				bytes[i] = (byte)chars[i];
@@ -285,7 +285,7 @@ namespace Architect.Identities
 		public static bool TryDecodeDecimal(ReadOnlySpan<byte> bytes, out decimal id)
 		{
 			// Hexadecimal encodings are exactly 26 characters long
-			if (bytes.Length < 26)
+			if (bytes.Length != 26)
 			{
 				id = default;
 				return false;
@@ -322,7 +322,7 @@ namespace Architect.Identities
 		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryDecodeDecimal(ReadOnlySpan<char> chars, out decimal id)
 		{
-			Span<byte> bytes = stackalloc byte[Math.Min(26, chars.Length)];
+			Span<byte> bytes = stackalloc byte[Math.Min(26 + 1, chars.Length)]; // +1 space to detect oversized inputs
 
 			for (var i = 0; i < bytes.Length; i++)
 				bytes[i] = (byte)chars[i];
@@ -343,7 +343,7 @@ namespace Architect.Identities
 		public static bool TryDecodeGuid(ReadOnlySpan<byte> bytes, out Guid id)
 		{
 			// Hexadecimal encodings are exactly 32 characters long
-			if (bytes.Length < 32)
+			if (bytes.Length != 32)
 			{
 				id = default;
 				return false;
@@ -376,7 +376,7 @@ namespace Architect.Identities
 		/// <param name="id">On true, this outputs the decoded ID.</param>
 		public static bool TryDecodeGuid(ReadOnlySpan<char> chars, out Guid id)
 		{
-			Span<byte> bytes = stackalloc byte[Math.Min(32, chars.Length)];
+			Span<byte> bytes = stackalloc byte[Math.Min(32 + 1, chars.Length)]; // +1 space to detect oversized inputs
 
 			for (var i = 0; i < bytes.Length; i++)
 				bytes[i] = (byte)chars[i];
