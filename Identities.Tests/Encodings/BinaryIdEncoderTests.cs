@@ -27,10 +27,10 @@ public class BinaryIdEncoderTests
 	}
 
 	[Theory]
-	[InlineData(0UL, "0000000000000000")]
-	[InlineData(1UL, "0000000000000001")]
-	[InlineData(Int64.MaxValue, "7FFFFFFFFFFFFFFF")]
-	public void TryDecode_AfterEncode_ShouldBeReversible(decimal id, string _)
+	[InlineData(0UL)]
+	[InlineData(1UL)]
+	[InlineData(Int64.MaxValue)]
+	public void TryDecode_AfterEncode_ShouldBeReversible(decimal id)
 	{
 		var longBytes = new byte[8];
 		var ulongBytes = new byte[8];
@@ -57,8 +57,9 @@ public class BinaryIdEncoderTests
 		Assert.Equal(id, decimalResult);
 		Assert.Equal(AlphanumericIdEncoderTests.Guid(id), guidResult);
 
-		// #TODO: Rest
+		Assert.Equal(longResult, BinaryIdEncoder.DecodeLongOrDefault(longBytes));
 		Assert.Equal(ulongResult, BinaryIdEncoder.DecodeUlongOrDefault(ulongBytes));
-		// #TODO: Rest
+		Assert.Equal(decimalResult, BinaryIdEncoder.DecodeDecimalOrDefault(decimalBytes));
+		Assert.Equal(guidResult, BinaryIdEncoder.DecodeGuidOrDefault(guidBytes));
 	}
 }

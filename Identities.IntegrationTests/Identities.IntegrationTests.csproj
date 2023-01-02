@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net7.0</TargetFramework>
 		<AssemblyName>Architect.Identities.IntegrationTests</AssemblyName>
 		<RootNamespace>Architect.Identities.IntegrationTests</RootNamespace>
 		<ImplicitUsings>Enable</ImplicitUsings>

@@ -35,6 +35,36 @@ namespace Architect.Identities.Tests.Encodings
 			}
 		}
 
+		[Theory]
+		[InlineData(0UL)]
+		[InlineData(1UL)]
+		[InlineData(Int64.MaxValue)]
+		public void Encode_Regularly_ShouldMatchBuiltInEncoder(long id)
+		{
+			var longResult = HexadecimalIdEncoder.Encode(id);
+			var ulongResult = HexadecimalIdEncoder.Encode((ulong)id);
+			var decimalResult = HexadecimalIdEncoder.Encode((decimal)id);
+			var guidResult = HexadecimalIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id));
+
+			var longBytes = new byte[8];
+			var ulongBytes = new byte[8];
+			var decimalBytes = new byte[16];
+			var guidBytes = new byte[16];
+			BinaryIdEncoder.Encode(id, longBytes);
+			BinaryIdEncoder.Encode((ulong)id, ulongBytes);
+			BinaryIdEncoder.Encode((decimal)id, decimalBytes);
+			BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), guidBytes);
+			var expectedLongResult = Convert.ToHexString(longBytes);
+			var expectedUlongResult = Convert.ToHexString(ulongBytes);
+			var expectedDecimalResult = Convert.ToHexString(decimalBytes[3..]); // Without the 3 fixed leading zeros
+			var expectedGuidResult = Convert.ToHexString(guidBytes);
+
+			Assert.Equal(expectedLongResult, longResult);
+			Assert.Equal(expectedUlongResult, ulongResult);
+			Assert.Equal(expectedDecimalResult, decimalResult);
+			Assert.Equal(expectedGuidResult, guidResult);
+		}
+
 		#region Long
 
 		[Theory]
