@@ -51,13 +51,13 @@ namespace Architect.Identities
 			if (aesKey.Length < 16) throw new ArgumentException("Expected at least a 128-bit key.");
 
 			this.Key = aesKey.ToArray();
-			this.Aes = new AesManaged() // Single-block crypto is faster managed than unmanaged
-			{
-				Key = Key,
-				Mode = CipherMode.ECB,
-				Padding = PaddingMode.None, // Required for correct results
-				IV = new byte[16], // Not used with ECB, but set to zero anyway
-			};
+
+			this.Aes = Aes.Create();
+			this.Aes.Key = this.Key;
+			this.Aes.Mode = CipherMode.ECB;
+			this.Aes.Padding = PaddingMode.None; // Required for correct results
+			this.Aes.IV = new byte[16]; // Not used with ECB, but set to zero anyway
+
 			this.Encryptor = this.Aes.CreateEncryptor() ?? throw new ArgumentException($"{this.Aes} produced a null encryptor.");
 			this.Decryptor = this.Aes.CreateDecryptor() ?? throw new ArgumentException($"{this.Aes} produced a null decryptor.");
 		}
