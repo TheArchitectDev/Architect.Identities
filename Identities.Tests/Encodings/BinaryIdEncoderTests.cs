@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Data.SqlTypes;
 using Xunit;
 
 namespace Architect.Identities.Tests.Encodings;
@@ -24,6 +26,33 @@ public class BinaryIdEncoderTests
 		Assert.Equal(expectedHexResult.PadLeft(2 * 8, '0'), Convert.ToHexString(ulongResult));
 		Assert.Equal(expectedHexResult.PadLeft(2 * 16, '0'), Convert.ToHexString(decimalResult));
 		Assert.Equal(expectedHexResult.PadLeft(2 * 16, '0'), Convert.ToHexString(guidResult));
+	}
+
+	[Theory]
+	[InlineData(0UL)]
+	[InlineData(1UL)]
+	[InlineData(Int64.MaxValue)]
+	public void Encode_WithByteArrayReturnValue_ShouldMatchSpanOverload(decimal id)
+	{
+		var expectedLongResult = new byte[8];
+		var expectedUlongResult = new byte[8];
+		var expectedDecimalResult = new byte[16];
+		var expectedGuidResult = new byte[16];
+
+		BinaryIdEncoder.Encode((long)id, expectedLongResult);
+		BinaryIdEncoder.Encode((ulong)id, expectedUlongResult);
+		BinaryIdEncoder.Encode(id, expectedDecimalResult);
+		BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), expectedGuidResult);
+
+		var longResult = BinaryIdEncoder.Encode((long)id);
+		var ulongResult = BinaryIdEncoder.Encode((ulong)id);
+		var decimalResult = BinaryIdEncoder.Encode(id);
+		var guidResult = BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id));
+
+		Assert.Equal(expectedLongResult, longResult);
+		Assert.Equal(expectedUlongResult, ulongResult);
+		Assert.Equal(expectedDecimalResult, decimalResult);
+		Assert.Equal(expectedGuidResult, guidResult);
 	}
 
 	[Fact]
@@ -134,5 +163,46 @@ public class BinaryIdEncoderTests
 		Assert.False(BinaryIdEncoder.TryDecodeUlong(stackalloc byte[7], out _));
 		Assert.False(BinaryIdEncoder.TryDecodeDecimal(stackalloc byte[15], out _));
 		Assert.False(BinaryIdEncoder.TryDecodeGuid(stackalloc byte[15], out _));
+	}
+
+	/// <summary>
+	/// UUID sorting is inconsistent between platforms (https://devblogs.microsoft.com/oldnewthing/20190426-00/?p=102450).
+	/// However, we can make a best effort by at least ensuring correct sorting in <see cref="Guid"/> form.
+	/// As it happens, that matches the sorting in string form.
+	/// </summary>
+	[Fact]
+	public void DecodeGuid_WithIncrementalByteSequences_ShouldProduceIncrementalGuids()
+	{
+		var orderedDecimalIds = new[]
+		{
+			1m,
+			2m,
+			Int64.MaxValue,
+			UInt64.MaxValue,
+			UInt64.MaxValue + 1m,
+			DistributedIdGenerator.MaxValue,
+		};
+
+		// Decimals should be ordered
+		Assert.Equal(orderedDecimalIds, orderedDecimalIds.OrderBy(value => value));
+
+		var byteArrays = Enumerable.Range(0, orderedDecimalIds.Length).Select(_ => new byte[16]).ToList();
+
+		for (var i = 0; i < orderedDecimalIds.Length; i++)
+			BinaryIdEncoder.Encode(orderedDecimalIds[i], byteArrays[i]);
+
+		// Byte arrays should be ordered
+		for (var i = 0; i < byteArrays.Count - 1; i++)
+			Assert.True(StructuralComparisons.StructuralComparer.Compare(byteArrays[i], byteArrays[i + 1]) < 0);
+
+		var guids = byteArrays.Select(bytes => BinaryIdEncoder.DecodeGuidOrDefault(bytes)).ToList();
+
+		// Guids should be ordered
+		Assert.Equal(guids, guids.OrderBy(value => value));
+
+		var guidStrings = guids.Select(guid => guid.ToString()).ToList();
+
+		// Guid string representations should be ordered
+		Assert.Equal(guidStrings, guidStrings.OrderBy(value => value));
 	}
 }
