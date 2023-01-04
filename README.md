@@ -185,7 +185,7 @@ A DistributedId reveals its creation timestamp. Otherwise, it consists of crypto
 
 ### Entity Framework
 
-When DistributedIds (or any decimal IDs) are used in Entity Framework, the column type needs to be configured. Although this can be done manually, the package [Architect.Identities.EntityFramework](https://www.nuget.org/packages/Architect.Identities.EntityFramework) facilitates conventions for this through its extension methods.
+When DistributedIds (or any decimal IDs) are used in Entity Framework, the column type needs to be configured. Although this can be done manually, the [Architect.Identities.EntityFramework](https://www.nuget.org/packages/Architect.Identities.EntityFramework) package facilitates conventions for this through its extension methods.
 
 ```cs
 protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -196,13 +196,13 @@ protected override void ConfigureConventions(ModelConfigurationBuilder configura
 }
 ```
 
-`ConfigureDecimalIdTypes()` uses precision 28, scale 0, and conversions to and from the decimal type (where a decimal wrapper type is used).
+`ConfigureDecimalIdTypes()` uses precision 28, scale 0, and conversions to and from the decimal type (where necessary).
 
 The conventions are applied to any entity properties named "*Id" or "*ID" whose type is either decimal or a decimal-convertible type.
 
 Optionally, the extension method takes any number of assemblies as input. From those assemblies, it finds all types named "*Id" or "*ID" that are decimal-convertible, and configures a `DefaultTypeMapping` for them using the same conventions.
 
-A `DefaultTypeMapping` kicks in when the type appears in EF-generated queries when the context of a column is lost, such as when EF generates a call to `CAST()`. Without such a mapping, EF may choose to convert a decimal to some default precision, which is generally too low.
+A `DefaultTypeMapping` kicks in when the type appears in EF-generated queries where the context of a column is lost, such as when EF generates a call to `CAST()`. Without such a mapping, EF may choose to convert a decimal to some default precision, which is generally too low.
 
 ### Alternatives
 
