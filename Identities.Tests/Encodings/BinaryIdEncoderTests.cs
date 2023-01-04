@@ -144,7 +144,7 @@ public class BinaryIdEncoderTests
 	/// As it happens, that matches the sorting in string form.
 	/// </summary>
 	[Fact]
-	public void TryDecodeGuid_WithIncrementalByteSequences_ShouldProduceIncrementalGuids()
+	public void DecodeGuid_WithIncrementalByteSequences_ShouldProduceIncrementalGuids()
 	{
 		var orderedDecimalIds = new[]
 		{
