@@ -28,6 +28,33 @@ public class BinaryIdEncoderTests
 		Assert.Equal(expectedHexResult.PadLeft(2 * 16, '0'), Convert.ToHexString(guidResult));
 	}
 
+	[Theory]
+	[InlineData(0UL)]
+	[InlineData(1UL)]
+	[InlineData(Int64.MaxValue)]
+	public void Encode_WithByteArrayReturnValue_ShouldMatchSpanOverload(decimal id)
+	{
+		var expectedLongResult = new byte[8];
+		var expectedUlongResult = new byte[8];
+		var expectedDecimalResult = new byte[16];
+		var expectedGuidResult = new byte[16];
+
+		BinaryIdEncoder.Encode((long)id, expectedLongResult);
+		BinaryIdEncoder.Encode((ulong)id, expectedUlongResult);
+		BinaryIdEncoder.Encode(id, expectedDecimalResult);
+		BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), expectedGuidResult);
+
+		var longResult = BinaryIdEncoder.Encode((long)id);
+		var ulongResult = BinaryIdEncoder.Encode((ulong)id);
+		var decimalResult = BinaryIdEncoder.Encode(id);
+		var guidResult = BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id));
+
+		Assert.Equal(expectedLongResult, longResult);
+		Assert.Equal(expectedUlongResult, ulongResult);
+		Assert.Equal(expectedDecimalResult, decimalResult);
+		Assert.Equal(expectedGuidResult, guidResult);
+	}
+
 	[Fact]
 	public void Encode_WithTooLongOutput_ShouldSucceed()
 	{

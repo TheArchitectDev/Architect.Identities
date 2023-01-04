@@ -64,6 +64,19 @@ namespace Architect.Identities
 
 		/// <summary>
 		/// <para>
+		/// Returns the 8-byte big-endian binary representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">The positive ID to encode.</param>
+		public static byte[] Encode(long id)
+		{
+			var bytes = new byte[8];
+			Encode(id, bytes);
+			return bytes;
+		}
+
+		/// <summary>
+		/// <para>
 		/// Outputs the 8-byte big-endian binary representation of the given ID.
 		/// </para>
 		/// <para>
@@ -77,6 +90,19 @@ namespace Architect.Identities
 			if (bytes.Length < 8) throw new IndexOutOfRangeException("At least 8 output bytes are required.");
 
 			BinaryPrimitives.WriteUInt64BigEndian(bytes, id);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns the 8-byte big-endian binary representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">The positive ID to encode.</param>
+		public static byte[] Encode(ulong id)
+		{
+			var bytes = new byte[8];
+			Encode(id, bytes);
+			return bytes;
 		}
 
 		/// <summary>
@@ -108,7 +134,23 @@ namespace Architect.Identities
 
 		/// <summary>
 		/// <para>
+		/// Returns the 16-byte big-endian binary representation of the given ID. The first 3 bytes are always zero.
+		/// </para>
+		/// </summary>
+		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
+		public static byte[] Encode(decimal id)
+		{
+			var bytes = new byte[16];
+			Encode(id, bytes);
+			return bytes;
+		}
+
+		/// <summary>
+		/// <para>
 		/// Outputs the 16-byte big-endian binary representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
 		/// </para>
 		/// </summary>
 		/// <param name="id">Any sequence of bytes stored in a <see cref="Guid"/>.</param>
@@ -129,6 +171,19 @@ namespace Architect.Identities
 			ushorts[3] = BinaryPrimitives.ReverseEndianness(ushorts[3]); // Bytes 6-7 are the next most significant, but are still little-endian
 
 			// Bytes 8-15 are the next most significant, and are already in big-endian
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns the 16-byte big-endian binary representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="Guid"/>.</param>
+		public static byte[] Encode(Guid id)
+		{
+			var bytes = new byte[16];
+			Encode(id, bytes);
+			return bytes;
 		}
 
 		/// <summary>
