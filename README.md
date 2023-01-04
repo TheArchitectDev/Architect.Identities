@@ -211,12 +211,12 @@ There exist [various alternatives](https://www.ietf.org/archive/id/draft-peabody
 To highlight a few examples:
 
 - [Universally Unique Lexicographically Sortable Identifier (ULID)](https://github.com/ulid/spec)
- * Stored as 16 bytes or 26 base32 characters.
- * Next ID on the same timestamp is either [predictable](https://github.com/ulid/spec#monotonicity) or [potentially out of order](https://github.com/ulid/spec#sorting).
+  - Stored as 16 bytes or 26 base32 characters.
+  - Next ID on the same timestamp is either [predictable](https://github.com/ulid/spec#monotonicity) or [potentially out of order](https://github.com/ulid/spec#sorting).
 - [MongoDB's ObjectId](https://www.mongodb.com/docs/manual/reference/method/ObjectId/)
- * Stored as 12 bytes or 24 hexadecimal characters.
- * Next ID of the same second is predictable.
- * Uniquefier based on replica: once two replicas collide, multiple collisions can be expected, until redeployment.
+  - Stored as 12 bytes or 24 hexadecimal characters.
+  - Next ID of the same second is predictable.
+  - Uniquefier based on replica: once two replicas collide, multiple collisions can be expected, until redeployment.
 
 ## Public Identities
 
