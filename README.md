@@ -18,6 +18,7 @@ This package provides highly tuned tools for ID generation and management.
   * [Guessability](#guessability)
   * [Attack Surface](#attack-surface)
   * [Entity Framework](#entity-framework)
+  * [Alternatives](#alternatives)
 - [Public Identities](#public-identities)
   * [Example Value](#example-value-1)
   * [Example Usage](#example-usage-1)
@@ -64,110 +65,7 @@ Note that a DistributedId **reveals its creation timestamp**, which may be consi
 ```cs
 decimal id = DistributedId.CreateId(); // 1088824355131185736905670087
 
-// For a more compact representation, IDs can be encoded in alphanumeric
-string compactId = id.ToAlphanumeric(); // "3zfAkCP7ZtzfeQYp"
-decimal originalId = IdEncoder.GetDecimalOrDefault(compactId)
-	?? throw new ArgumentException("Not a valid encoded ID.");
-```
-
-For SQL databases, the recommended column type is `DECIMAL(28, 0)`. Alternatively, a DistributedId can be stored as 16 _case-sensitive_ ASCII characters, or even as a UUID. (The latter is discouraged, as storage engines differ in how they sort UUIDs.)
-
-The ID generation can be controlled from the outside, such as in unit tests that require constant IDs:
-
-```cs
-[Fact]
-public void ShowInversionOfControl()
-{
-	// A custom generator is included in the package
-	const decimal fixedId = 1m;
-	using (new DistributedIdGeneratorScope(new CustomDistributedIdGenerator(() => fixedId)))
-	{
-		var entity = new Entity(); // Constructor implementation uses DistributedId.CreateId()
-		Assert.Equal(fixedId, entity.Id); // True
-		
-		// A simple incremental generator is included as well
-		using (new DistributedIdGeneratorScope(new IncrementalDistributedIdGenerator(fixedId)))
-		{
-			Assert.Equal(1m, DistributedId.CreateId()); // True
-			Assert.Equal(2m, DistributedId.CreateId()); // True
-			Assert.Equal(3m, DistributedId.CreateId()); // True
-		}
-		
-		Assert.Equal(fixedId, DistributedId.CreateId()); // True
-	}
-}
-```
-
-### Benefits
-
-=======
-# Architect.Identities
-
-Reliable unique ID generation for distributed applications.
-
-This package provides highly tuned tools for ID generation and management.
-
-- [TLDR](#tldr)
-- [Introduction](#introduction)
-- [Distributed IDs](#distributed-ids)
-  * [Example Value](#example-value)
-  * [Example Usage](#example-usage)
-  * [Benefits](#benefits)
-  * [Trade-offs](#trade-offs)
-  * [Structure](#structure)
-  * [Collision Resistance](#collision-resistance)
-    + [The degenerate worst case](#the-degenerate-worst-case)
-    + [Absolute certainty](#absolute-certainty)
-  * [Guessability](#guessability)
-  * [Attack Surface](#attack-surface)
-  * [Entity Framework](#entity-framework)
-- [Public Identities](#public-identities)
-  * [Example Value](#example-value-1)
-  * [Example Usage](#example-usage-1)
-  * [Implementation](#implementation)
-  * [Forgery Resistance](#forgery-resistance)
-
-## TLDR
-
-The **[DistributedId](#distributed-ids)** is a single ID that combines the advantages of auto-increment IDs and UUIDs.
-
-For sensitive scenarios where zero metadata must be leaked from an ID, **[PublicIdentities](#public-identities)** can transform any ID into a public representation that reveals nothing, without ever introducing an unrelated secondary ID.
-
-## Introduction
-
-Should entity IDs use UUIDs or auto-increment?
-
-Auto-increment IDs are ill-suited for exposing publically: they leak hints about the row count and are easy to guess. Moreover, they are generated very late, on insertion, posing challenges to the creation of aggregates.
-
-UUIDs, on the other hand, tend to be random, causing poor performance as database keys.
-
-Using both types of ID on an entity is cumbersome and may leak a technical workaround into the domain model.
-
-Luckily, we can do better.
-
-## Distributed IDs
-
-The DistributedId is a UUID replacement that is generated on-the-fly (without orchestration), unique, hard to guess, easy to store and sort, and highly efficient as a database key.
-
-A DistributedId is created as a 93-bit decimal value of 28 digits, but can also be represented as a (case-sensitive) 16-char alphanumeric value or as a `Guid`.
-
-Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, [collisions](#collision-resistance) (i.e. duplicates) tend to be far under 1 collision per 350 billion IDs generated.
-
-DistributedIds are designed to be unique within a logical context, such as a database table, a Bounded Context, or even a whole medium-sized company. These form the most common boundaries within which uniqueness is required. Any number of distributed applications may generate new IDs within such a context.
-
-Note that a DistributedId **reveals its creation timestamp**, which may be considered sensitive data in certain contexts.
-
-### Example Value
-
-- `decimal` value: `1088824355131185736905670087` (28 digits)
-- Alphanumeric encoding: `3zfAkCP7ZtzfeQYp` (16 alphanumeric characters)
-
-### Example Usage
-
-```cs
-decimal id = DistributedId.CreateId(); // 1088824355131185736905670087
-
-// For a more compact representation, IDs can be encoded in alphanumeric
+// Alternatively, for a more compact representation, IDs can be encoded in alphanumeric
 string compactId = id.ToAlphanumeric(); // "3zfAkCP7ZtzfeQYp"
 decimal originalId = IdEncoder.GetDecimalOrDefault(compactId)
 	?? throw new ArgumentException("Not a valid encoded ID.");
@@ -219,10 +117,9 @@ public void ShowInversionOfControl()
 ### Trade-offs
 
 - Reveals its creation timestamp in milliseconds.
-- Throttles when the _sustained_ generation rate exceeds 128K IDs per second, per application replica. (Note that most cloud applications scale _out_ rather than up and do not need any single replica to generate over 128K IDs per second.)
+- Throttles when the _sustained_ generation rate exceeds 128K IDs per second, per application replica. (Note that cloud applications tend to scale _out_ rather than up.)
 - Is designed to be unique within a chosen context rather than globally. (For most companies, the context could easily by the entire company's landscape.)
 - Is slightly less efficient than a 64-bit integer.
-- Requires a `TEXT` column type with SQLite, which truncates decimals to 8 bytes.
 
 ### Structure
 
@@ -306,6 +203,20 @@ The conventions are applied to any entity properties named "*Id" or "*ID" whose 
 Optionally, the extension method takes any number of assemblies as input. From those assemblies, it finds all types named "*Id" or "*ID" that are decimal-convertible, and configures a `DefaultTypeMapping` for them using the same conventions.
 
 A `DefaultTypeMapping` kicks in when the type appears in EF-generated queries when the context of a column is lost, such as when EF generates a call to `CAST()`. Without such a mapping, EF may choose to convert a decimal to some default precision, which is generally too low.
+
+### Alternatives
+
+There exist [various alternatives](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-informative-references-2) to the DistributedId. The most common feature they lack is the combination of being incremental and unpredictable, particularly for IDs generated on the same timestamp.
+
+To highlight a few examples:
+
+- [Universally Unique Lexicographically Sortable Identifier (ULID)](https://github.com/ulid/spec)
+ * Stored as 16 bytes or 26 base32 characters.
+ * Next ID on the same timestamp is either [predictable](https://github.com/ulid/spec#monotonicity) or [potentially out of order](https://github.com/ulid/spec#sorting).
+- [MongoDB's ObjectId](https://www.mongodb.com/docs/manual/reference/method/ObjectId/)
+ * Stored as 12 bytes or 24 hexadecimal characters.
+ * Next ID of the same second is predictable.
+ * Uniquefier based on replica: once two replicas collide, multiple collisions can be expected, until redeployment.
 
 ## Public Identities
 

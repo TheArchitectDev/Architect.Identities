@@ -17,6 +17,12 @@ namespace Architect.Identities
 	/// </summary>
 	public static class BinaryIdEncoder
 	{
+		static BinaryIdEncoder()
+		{
+			if (!BitConverter.IsLittleEndian)
+				throw new PlatformNotSupportedException($"{nameof(BinaryIdEncoder)} is not supported on big-endian architectures. The conversions have not been tested.");
+		}
+
 		/// <summary>
 		/// Validates that the given ID is valid, and returns its components.
 		/// </summary>
