@@ -143,6 +143,9 @@ namespace Architect.Identities
 		/// <para>
 		/// Outputs a 32-character hexadecimal UTF-8 representation of the given ID.
 		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
+		/// </para>
 		/// </summary>
 		/// <param name="id">Any sequence of bytes stored in a <see cref="Guid"/>.</param>
 		/// <param name="bytes">At least 32 bytes, to write the hexadecimal representation to.</param>
