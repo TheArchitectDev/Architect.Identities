@@ -101,7 +101,8 @@ public void ShowInversionOfControl()
 
 ### Benefits
 
-- Is incremental (even intra-millisecond), making it _significantly_ more efficient as a primary key than a UUID.
+- Is incremental (even intra-millisecond), making it _drastically_ more efficient as a primary key than a UUID.
+- Remains incremental even if clock synchronization adjusts the clock backwards (for adjustments of up to 1 second).
 - Is shorter than a UUID, making it more efficient as a primary key.
 - Like a UUID, can be generated on-the-fly, with no registration or synchronization whatsoever.
 - Like a UUID, makes collisions extremely unlikely.
@@ -151,7 +152,7 @@ DistributedIds have strong collision resistance. The probability of generating t
 
 Most notably, collisions across different timestamps are impossible, since the millisecond values differ.
 
-Within a single application replica, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (41 bits). This guarantees unique IDs within the application replica, as long as the system clock is not adjusted backwards. Whenever it is, the scenario is comparable to having an additional replica (addressed below) during the repeated time span.
+Within a single application replica, collisions during a particular millisecond are avoided (while maintaining the incremental nature) by reusing the previous random value (48 bits) and incrementing it by a smaller random value (41 bits). This _guarantees_ unique IDs within the application replica, provided that the system clock is not adjusted backwards by more than 1 second. For larger backwards adjustments, the scenario is comparable to having an additional replica (addressed below) during the repeated time span.
 
 The scenario where collisions can occur is when multiple application replicas are generating IDs at the same millisecond. It is detailed below and should be negligible.
 

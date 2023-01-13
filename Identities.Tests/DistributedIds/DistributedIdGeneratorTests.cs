@@ -12,6 +12,7 @@ namespace Architect.Identities.Tests.DistributedIds
 		private static readonly ulong FixedTimestamp = GetTimestamp(FixedUtcDateTime);
 		private static readonly ulong EpochTimestamp = 0UL;
 		private static readonly RandomSequence6 FixedRandomSequence6 = SimulateRandomSequenceWithValue(1UL << 40);
+		private static readonly RandomSequence6 MaxRandomSequence6 = SimulateRandomSequenceWithValue(RandomSequence6.MaxValue);
 
 		private static ulong GetTimestamp(DateTime utcDateTime) => (ulong)(utcDateTime - DateTime.UnixEpoch).TotalMilliseconds;
 
@@ -140,82 +141,97 @@ namespace Architect.Identities.Tests.DistributedIds
 		}
 
 		[Fact]
-		public void AwaitUpdatedClockValue_Regularly_ShouldSleepUntilClockHasChanged()
+		public void CreateId_WithExhaustedRandomSequenceButRoomToIncrementTimestamp_ShouldIncrementTimestamp()
 		{
 			var clockValues = new[]
 			{
-				/* Initial time */ FixedUtcDateTime, // Sleep again
-				/* After first sleep */ FixedUtcDateTime, // Sleep again
-				/* After second sleep */ FixedUtcDateTime.AddHours(1), // Success
+				/* First ID */ FixedUtcDateTime,
+				/* Second ID */ FixedUtcDateTime, // Should increment timestamp
+				/* Final assertion */ FixedUtcDateTime.AddDays(1),
 			};
 			var clockValueIndex = 0;
+			DateTime GetClockValue() => clockValues[clockValueIndex++];
 
 			var sumSleepMilliseconds = 0;
 
-			var generator = new DistributedIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
+			var generator = new DistributedIdGenerator(utcClock: GetClockValue, sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
-			// Populate the previous timestamp
-			generator.CreateId();
+			var firstId = generator.CreateId();
 
-			var result = generator.AwaitUpdatedClockValue(minimumTimestamp: generator.PreviousCreationTimestamp + 1);
+			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
 
-			Assert.Equal(2, sumSleepMilliseconds);
-			Assert.Equal(result, generator.PreviousCreationTimestamp + 3600 * 1000);
+			var secondId = generator.CreateId();
+
+			Assert.True(secondId > firstId); // Generator could increment as normal
+			Assert.Equal(0, sumSleepMilliseconds); // Generated should not have slept: was able to simply increase the timestamp
+			Assert.Equal(FixedUtcDateTime.AddDays(1), GetClockValue()); // Clock should have been queried the expected number of times
 		}
 
-		/// <summary>
-		/// We prefer to wait for the clock to move forward (so long as we do not have to wait too long), to provide incremental IDs.
-		/// </summary>
 		[Fact]
-		public void AwaitUpdatedClockValue_WithMildlyRewindingClock_ShouldWaitToCatchUp()
+		public void CreateId_WithExhaustedRandomSequenceAndExhaustedTimestamp_ShouldSleepUntilClockHasAdvanced()
 		{
 			var clockValues = new[]
 			{
-				/* Initial time */ FixedUtcDateTime.AddMilliseconds(1), // Sleep again
-				/* After first sleep */ FixedUtcDateTime.AddMilliseconds(1), // Sleep again
-				/* After second sleep */ FixedUtcDateTime.AddMilliseconds(-90), // Sleep again
-				/* After third sleep */ FixedUtcDateTime.AddMilliseconds(2), // Success
+				/* First ID */ FixedUtcDateTime,
+				// From here on, add -999 milliseconds to exhaust the timestamp, so that we are forced to sleep rather, because we cannot increment AND stay in the past
+				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-999), // Not permitted to use FixedUtcDateTime-999ms, so sleep
+				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-999).AddMicroseconds(999), // Sleep again (microsecond increase only, but not a whole millisecond)
+				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-999).AddMilliseconds(1), // Success
+				/* Final assertion */ FixedUtcDateTime.AddMilliseconds(2),
 			};
 			var clockValueIndex = 0;
+			DateTime GetClockValue() => clockValues[clockValueIndex++];
 
 			var sumSleepMilliseconds = 0;
 
-			var generator = new DistributedIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
+			var generator = new DistributedIdGenerator(utcClock: GetClockValue, sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
-			// Populate the previous timestamp
-			generator.CreateId();
+			var firstId = generator.CreateId();
 
-			var result = generator.AwaitUpdatedClockValue(minimumTimestamp: generator.PreviousCreationTimestamp + 1);
+			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
 
-			Assert.Equal(3, sumSleepMilliseconds);
-			Assert.Equal(result, generator.PreviousCreationTimestamp + 1);
+			var secondId = generator.CreateId();
+
+			Assert.True(secondId > firstId); // Generator could increment as normal
+			Assert.Equal(2, sumSleepMilliseconds); // Generated should have slept the expected number of times
+			Assert.Equal(FixedUtcDateTime.AddMilliseconds(2), GetClockValue()); // Clock should have been queried the expected number of times
 		}
 
 		/// <summary>
 		/// If the clock is adjusted backwards too far, we give up waiting and start anew.
 		/// </summary>
 		[Fact]
-		public void AwaitUpdatedClockValue_WithStronglyRewindingClock_ShouldWaitToCatchUp()
+		public void CreateId_WithRewindingClock_ShouldSleepOrResetAsExpected()
 		{
 			var clockValues = new[]
 			{
-				/* Initial time */ FixedUtcDateTime, // Sleep again
-				/* After first sleep */ FixedUtcDateTime.AddMilliseconds(-90), // Sleep again
-				/* After second sleep */ FixedUtcDateTime.AddMilliseconds(-101), // Give up and reset
+				/* First ID */ FixedUtcDateTime, // Will use timestamp FixedUtcDateTime-1000ms
+				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-998), // Will use timestamp FixedUtcDateTime-999ms
+				/* Third ID */ FixedUtcDateTime.AddMilliseconds(-998 - 1000), // Not permitted to use FixedUtcDateTime-998ms (now considered the future), so will sleep for 1000 ms (barely permitted)
+				/* Third ID after sleep */ FixedUtcDateTime.AddMilliseconds(-998 - 1001), // Would have to sleep for 1001 (more than permitted), so will give up and reset to a smaller ID
+				/* Final assertion */ FixedUtcDateTime.AddDays(-1),
 			};
 			var clockValueIndex = 0;
+			DateTime GetClockValue() => clockValues[clockValueIndex++];
 
 			var sumSleepMilliseconds = 0;
 
-			var generator = new DistributedIdGenerator(utcClock: () => clockValues[clockValueIndex++], sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
+			var generator = new DistributedIdGenerator(utcClock: GetClockValue, sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
-			// Populate the previous timestamp
-			generator.CreateId();
+			var firstId = generator.CreateId();
 
-			var result = generator.AwaitUpdatedClockValue(minimumTimestamp: generator.PreviousCreationTimestamp + 1);
+			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
 
-			Assert.Equal(2, sumSleepMilliseconds);
-			Assert.Equal(result, generator.PreviousCreationTimestamp - 101);
+			var secondId = generator.CreateId();
+
+			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
+
+			var thirdId = generator.CreateId();
+
+			Assert.True(secondId > firstId); // Generator could increment as normal
+			Assert.True(thirdId < firstId); // Generator should have avoided sleeping for too long and used the smaller timestamp instead
+			Assert.Equal(1, sumSleepMilliseconds); // Generated should have slept the expected number of times
+			Assert.Equal(FixedUtcDateTime.AddDays(-1), GetClockValue()); // Clock should have been queried the expected number of times
 		}
 
 		[Fact]
