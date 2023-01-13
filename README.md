@@ -102,7 +102,7 @@ public void ShowInversionOfControl()
 ### Benefits
 
 - Is incremental (even intra-millisecond), making it _drastically_ more efficient as a primary key than a UUID.
-- Remains incremental even if clock synchronization adjusts the clock backwards (for adjustments of up to 1 second).
+- Remains incremental even if clock synchronization adjusts the clock (for adjustments of up to 1 second).
 - Is shorter than a UUID, making it more efficient as a primary key.
 - Like a UUID, can be generated on-the-fly, with no registration or synchronization whatsoever.
 - Like a UUID, makes collisions extremely unlikely.
