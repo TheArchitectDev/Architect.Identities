@@ -52,7 +52,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// The random sequence used during the previous ID creation.
 		/// </summary>
-		private RandomSequence6 PreviousRandomSequence { get; set; }
+		internal RandomSequence6 PreviousRandomSequence { get; set; }
 
 		/// <summary>
 		/// A lock object used to govern access to the mutable properties.
@@ -81,17 +81,21 @@ namespace Architect.Identities
 		/// </summary>
 		private (ulong Timestamp, RandomSequence6 RandomSequence) CreateValues()
 		{
-			// The random number generator is likely to lock, so doing this outside of our own lock is likely to increase throughput
 			var randomSequence = CreateRandomSequence();
+
+			Start:
 
 			lock (this._lockObject)
 			{
-				var timestamp = this.GetTimestamp();
+				// We start from timestamps 1000 milliseconds in the past
+				// This lets us burst-generate more IDs, by adding anywhere between 0 through 999 milliseconds without moving into the future
+				const ulong leeway = 1000;
+				var timestamp = this.GetCurrentTimestamp() - leeway;
 
 				// If the clock has not advanced beyond the last used timestamp, then we must make an effort to continue where we left off
 				if (timestamp <= this.PreviousCreationTimestamp)
 				{
-					// If we succeed in creating another, greater value for the previous timestamp, return that
+					// If we succeed in creating another, greater random value to use with the previous timestamp, return that
 					if (this.TryCreateIncrementalRandomSequence(this.PreviousRandomSequence, randomSequence, out var incrementedRandomSequence))
 					{
 						timestamp = this.PreviousCreationTimestamp;
@@ -99,71 +103,47 @@ namespace Architect.Identities
 						return (timestamp, incrementedRandomSequence);
 					}
 
-					// If we have room to advance the timestamp while staying in the past, do so
-					if (this.PreviousCreationTimestamp - timestamp < 999)
+					// We cannot increase the random portion without overflowing, so we must increase the timestamp somehow
+
+					// We may generate for timestamps in the past, i.e. no greater than (now - 1000ms) + 999ms
+					var maxPermissibleTimestamp = timestamp + leeway - 1;
+
+					// If the previous timestamp can be incremented while staying in the past, do so
+					if (this.PreviousCreationTimestamp < maxPermissibleTimestamp)
 					{
 						timestamp = this.PreviousCreationTimestamp + 1;
 					}
-					// Otherwise, sleep until the clock has advanced
-					else
+					// Otherwise, sleep and restart
+					// In the edge case where the clock was turned back by more than our leeway, sleeping would take too long, so simply fall through and lose our incremental property, using the new, smaller timestamp
+					else if (this.PreviousCreationTimestamp - maxPermissibleTimestamp <= leeway)
 					{
-						timestamp = this.AwaitUpdatedClockValue(minimumTimestamp: this.PreviousCreationTimestamp - 998);
-
-						// We should generally be able to advance 1 millisecond while just barely staying in the past now
-						// However, it is possible that the clock was adjusted backwards too much, in which case we will simply reset to the returned timestamp
-						if (this.PreviousCreationTimestamp - timestamp < 999)
-							timestamp = this.PreviousCreationTimestamp + 1;
+						goto SleepAndRestart;
 					}
 				}
 
-				// Update the previous timestamp
+				// Update the last used values
 				this.PreviousCreationTimestamp = timestamp;
 				this.PreviousRandomSequence = randomSequence;
 
 				return (timestamp, randomSequence);
 			}
+
+			SleepAndRestart:
+
+			this.SleepAction(1); // Ideally outside the lock
+			goto Start;
 		}
 
 		/// <summary>
-		/// Returns the UTC timestamp in milliseconds since the epoch, but 1000 milliseconds in the past.
-		/// By returning a timestamp in the past, we can add up to 999 milliseconds while still staying in the past.
-		/// This allows us to burst-generate more IDs without throttling, and without using future timestamps.
+		/// Returns the UTC timestamp in milliseconds since some epoch.
 		/// </summary>
-		private ulong GetTimestamp()
+		private ulong GetCurrentTimestamp()
 		{
 			// The custom epoch ensures that the resulting ID is always 28 digits long (whereas the UnixEpoch could cause 27-digit IDs)
 			var utcNow = this.Clock();
 			var millisecondsSinceEpoch = (ulong)(utcNow - Epoch).TotalMilliseconds;
 
-			// In order to allow 1000 milliseconds' worth of IDs to be generated without delays, we return timestamps 1 second in the past by default
-			// This lets us add up to 1000 milliseconds without moving into the future
-			return millisecondsSinceEpoch - 1000;
-		}
-
-		/// <summary>
-		/// <para>
-		/// Sleeps until the clock has reached at least the given <paramref name="minimumTimestamp"/> and then returns the timestamp.
-		/// </para>
-		/// <para>
-		/// May cause the current thread to sleep.
-		/// </para>
-		/// <para>
-		/// If the clock is adjusted backwards more than 100 milliseconds, this method will consider the clock reset and simply return the current timestamp.
-		/// </para>
-		/// </summary>
-		internal ulong AwaitUpdatedClockValue(ulong minimumTimestamp)
-		{
-			ulong timestamp;
-			do
-			{
-				this.SleepAction(1);
-				timestamp = this.GetTimestamp();
-
-				// If the clock was adjusted backwards more than 100 milliseconds, consider the clock to be completely reset
-				if (timestamp <= minimumTimestamp - 100)
-					return timestamp;
-			} while (timestamp < minimumTimestamp);
-			return timestamp;
+			return millisecondsSinceEpoch;
 		}
 
 		/// <summary>

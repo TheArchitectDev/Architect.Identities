@@ -28,7 +28,7 @@ namespace Architect.Identities
 	/// </summary>
 	internal readonly struct RandomSequence6
 	{
-		private const ulong MaxValue = UInt64.MaxValue >> 16;
+		internal const ulong MaxValue = UInt64.MaxValue >> 16;
 		/// <summary>
 		/// The number of bits added by the <see cref="TryAddRandomBits(RandomSequence6, out RandomSequence6)"/> operation.
 		/// </summary>
