@@ -199,7 +199,7 @@ protected override void ConfigureConventions(ModelConfigurationBuilder configura
 
 `ConfigureDecimalIdTypes()` uses precision 28, scale 0, and conversions to and from the decimal type (where necessary).
 
-The conventions are applied to any entity properties named "*Id" or "*ID" whose type is either decimal or a decimal-convertible type.
+The conventions are applied to any entity properties named "*Id" or "*ID" whose type is either decimal or a decimal-convertible type, including nullable wrappers.
 
 Optionally, the extension method takes any number of assemblies as input. From those assemblies, it finds all types named "*Id" or "*ID" that are decimal-convertible, and configures a `DefaultTypeMapping` for them using the same conventions.
 

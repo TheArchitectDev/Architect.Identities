@@ -31,7 +31,7 @@ namespace Architect.Identities.EntityFramework
 			var type = propertyBuilder.Metadata.ClrType;
 
 			// Decimal-like types only
-			if (type != typeof(decimal) && !DecimalIdMappingExtensions.IsDecimalConvertible(type))
+			if (!DecimalIdMappingExtensions.IsDecimalConvertible(type))
 				return;
 
 			if (type != typeof(decimal))
