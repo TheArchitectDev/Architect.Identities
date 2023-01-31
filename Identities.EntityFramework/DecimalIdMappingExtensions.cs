@@ -45,10 +45,18 @@ namespace Architect.Identities.EntityFramework
 		}
 
 		/// <summary>
-		/// Determines whether the given type is convertible to and from decimal.
+		/// Determines whether the given type is a type (or nullable wrapper thereof) that is <see cref="Decimal"/> or is convertible to and from it.
 		/// </summary>
 		internal static bool IsDecimalConvertible(Type type)
 		{
+			// Dig through nullable
+			if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+				type = type.GenericTypeArguments[0];
+
+			// Short-circuit for decimals
+			if (type == typeof(decimal))
+				return true;
+
 			// Must have explicit OR implicit conversion from decimal
 			if (type.GetMethod("op_Explicit", genericParameterCount: 0, ParameterListWithSingleDecimal) is null && // Compiler enforces that return type is the type itself
 				type.GetMethod("op_Implicit", genericParameterCount: 0, ParameterListWithSingleDecimal) is null) // Compiler enforces that return type is the type itself
