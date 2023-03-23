@@ -5,7 +5,7 @@
 		<AssemblyName>Architect.Identities.EntityFramework</AssemblyName>
 		<RootNamespace>Architect.Identities.EntityFramework</RootNamespace>
 		<Nullable>Enable</Nullable>
-		<LangVersion>10</LangVersion>
+		<LangVersion>11</LangVersion>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<IsTrimmable>False</IsTrimmable>
 	</PropertyGroup>
@@ -27,9 +27,9 @@ Release notes:
 2.0.0:
 - BREAKING: Now targeting .NET 6+, to support new EF Core APIs.
 - BREAKING: Now using EF Core 7.0.0.
-- BREAKING: No longer referencing the Identities package. (Still considered an addition to it, but the hard link is now gone.)
+- BREAKING: No longer referencing the Identities package. (The current package is still considered an addition to it, but the hard link is gone.)
 - BREAKING: Removed ApplicationInstanceIds. (See Identities 2.0.0.)
-- BREAKING: Decimal IDs in SQLite may be read back with a one (inadvertent) decimal place, e.g. "1234567890123456789012345678" =&gt; "1234567890123456789012345678.0". Detecting and fixing for SQLite is a hassle.
+- BREAKING: Decimal IDs in SQLite may get reconstituted with a one (inadvertent) decimal place, e.g. "1234567890123456789012345678" =&gt; "1234567890123456789012345678.0". Detecting and fixing for SQLite is a hassle.
 - BREAKING: DecimalIdMappingExtensions's methods have been replaced by modelConfigurationBuilder.ConfigureDecimalIdTypes(). This should be called from DbContext.ConfigureConventions().
 - The new extension method handles decimal-convertible types (i.e. value objects) in addition to plain decimals.
 - The new extension method also sets DefaultTypeMapping, to achieve appropriate behavior when EF writes things like CAST(). Property mappings alone do not cover such scenarios.
@@ -51,18 +51,18 @@ Release notes:
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Include="..\LICENSE">
 			<Pack>True</Pack>
 			<PackagePath></PackagePath>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
 </Project>
