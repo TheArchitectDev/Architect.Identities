@@ -19,6 +19,7 @@ This package provides highly tuned tools for ID generation and management.
   * [Attack Surface](#attack-surface)
   * [Entity Framework](#entity-framework)
   * [Alternatives](#alternatives)
+- [DistributedId128](#distributedid128)
 - [Public Identities](#public-identities)
   * [Example Value](#example-value-1)
   * [Example Usage](#example-usage-1)
@@ -28,6 +29,8 @@ This package provides highly tuned tools for ID generation and management.
 ## TLDR
 
 The **[DistributedId](#distributed-ids)** is a single ID that combines the advantages of auto-increment IDs and UUIDs.
+
+The **[DistributedId128](#distributedid128)** is a 128-bit UUID replacement with the advantages of the DistributedId and practically no rate limits or collisions, at the cost of more space.
 
 For sensitive scenarios where zero metadata must be leaked from an ID, **[PublicIdentities](#public-identities)** can transform any ID into a public representation that reveals nothing, without ever introducing an unrelated secondary ID.
 
@@ -132,10 +135,11 @@ public void ShowInversionOfControl()
 - Is ordered intuitively and consistently in .NET and databases. (By contrast, SQL Server orders UUIDs by some of the _middle_ bytes, making it very hard to implement an ordered UUID type.)
 - Can be represented numerically, as exactly 28 digits.
 - Can be represented alphanumerically, as exactly 16 alphanumeric characters.
+- Can be represented hexadecimally, as exactly 26 hex characters.
 - Contains 93 bits worth of data.
 - Contains the number of milliseconds since the start of the year 1900 in its first 45 bits.
 - Contains a cryptographically-secure pseudorandom sequence in its last 48 bits.
-- Uses 41-bit cryptographically-secure pseudorandom increments to remain incremental even intra-millisecond.
+- Uses 41-bit cryptographically-secure pseudorandom increments intra-millisecond to remain incremental on the same millisecond.
 - Can represent timestamps beyond the year 3000.
 
 ### Rate Limits
@@ -218,6 +222,40 @@ To highlight a few examples:
   - Stored as 12 bytes or 24 hexadecimal characters.
   - Next ID of the same second is predictable.
   - Uniquefier based on replica: once two replicas collide, multiple collisions can be expected, until redeployment.
+
+## DistributedId128
+
+The DistributedId128 is a 128-bit DistributedId variant that offers additional benefits at the cost of extra space.
+It should be used if the requirements on generation rate or collision resistance are extreme.
+Apart from leaking the generation timestamp, it can serve as a drop-in replacement for the common version-4 random UUIDs.
+
+Class libraries are a good example of products that should prefer the DistributedId128. They can make fewer assumptions, as their usage patterns often depend on the applications using them.
+
+### Additional Advantages
+
+- Has practically no generation rate limit (about 1M IDs per millisecond, or 1B per second, per application replica).
+- Risks practically no collisions even globally (at 75 bits of randomness _per millisecond_, incremented with 55-bit values intra-millisecond).
+- Is also a valid [version-7 UUID](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-uuid-version-7) (with the [variant](https://www.rfc-editor.org/rfc/rfc4122.html#section-4.1.1) set to 0xx/"backward compatibility", to keep the 64th bit 0), but with the rare property of being incremental _and_ hard to guess even for multiple IDs for the same millisecond.
+
+### 128-bit Structure
+
+- Is returned as a `Guid`.
+- Can be converted to a `UInt128` of exactly 38 digits (until beyond the year 4000, at which point a 39th digit would appear).
+- Occcupies 16 bytes in memory.
+- Can be represented as `DECIMAL(38, 0)` in SQL databases (until beyond the year 4000, at which point a 39th digit would appear).
+- Requires 17 bytes of storage as `DECIMAL(38, 0)` in many SQL databases, including SQL Server and MySQL.
+- Can be represented as two (strictly positive) `long` values, suitable for storing in two `BIGINT` database columns, as a composite key.
+- Can be represented in a natural, workable form by most SQL databases, being a simple `decimal` or pair of `long` values. (By contrast, not all databases have a UUID type, requiring the use of binary types, making manual queries cumbersome.)
+- Is ordered intuitively and consistently in .NET, in both `Guid`, `Guid`-to-string, `UInt128`, `UInt128`-to-string, alphanumeric, and hexadecimal formats.
+- Is ordered intuitively and consistently in .NET _and databases_ in all formats except `Guid`, due to the varying UUID availability and ordering in databases.
+- Can be represented numerically, as exactly 38 digits.
+- Can be represented alphanumerically, as exactly 22 alphanumeric characters.
+- Can be represented hexadecimally, as exactly 32 hex characters.
+- Contains the number of milliseconds since the start of the year 1700 in its first 48 bits.
+- Contains the UUID version marker "7" in bits 48 through 51.
+- Contains a cryptographically-secure pseudorandom sequence in its last 76 bits, with the exception of the 64th bit, the variant indicator, which is always 0.
+- Uses 55-bit cryptographically-secure pseudorandom increments intra-millisecond to remain incremental on the same millisecond.
+- Can represent timestamps beyond the year 9999.
 
 ## Public Identities
 

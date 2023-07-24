@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -128,5 +129,49 @@ namespace Architect.Identities
 		/// <param name="id">Any sequence of bytes stored in a <see cref="Guid"/>.</param>
 		/// <param name="bytes">At least 32 bytes, to write the hexadecimal representation to.</param>
 		public static void ToHexadecimal(this Guid id, Span<byte> bytes) => HexadecimalIdEncoder.Encode(id, bytes);
+
+		#region Transcoding
+
+#if NET7_0_OR_GREATER
+
+		/// <summary>
+		/// <para>
+		/// Transcodes the given <see cref="Guid"/> into a <see cref="UInt128"/>, retaining the lexicographical ordering.
+		/// </para>
+		/// <para>
+		/// Input values and their respective output values have the same relative ordering.
+		/// The same is true of their string representations.
+		/// The same is also true of their binary representations obtained through <see cref="BinaryIdEncoder"/>.
+		/// </para>
+		/// </summary>
+		public static UInt128 ToUInt128(this Guid id)
+		{
+			Span<byte> bytes = stackalloc byte[16];
+			BinaryIdEncoder.Encode(id, bytes);
+			BinaryIdEncoder.TryDecodeUInt128(bytes, out var result);
+			return result;
+		}
+
+		/// <summary>
+		/// <para>
+		/// Transcodes the given <see cref="UInt128"/> into a <see cref="Guid"/>, retaining the lexicographical ordering.
+		/// </para>
+		/// <para>
+		/// Input values and their respective output values have the same relative ordering.
+		/// The same is true of their string representations.
+		/// The same is also true of their binary representations obtained through <see cref="BinaryIdEncoder"/>.
+		/// </para>
+		/// </summary>
+		public static Guid ToGuid(this UInt128 id)
+		{
+			Span<byte> bytes = stackalloc byte[16];
+			BinaryIdEncoder.Encode(id, bytes);
+			BinaryIdEncoder.TryDecodeGuid(bytes, out var result);
+			return result;
+		}
+
+#endif
+
+		#endregion
 	}
 }

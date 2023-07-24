@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Data.SqlTypes;
 using Xunit;
 
 namespace Architect.Identities.Tests.Encodings;
@@ -16,16 +15,19 @@ public class BinaryIdEncoderTests
 		var ulongResult = new byte[8];
 		var decimalResult = new byte[16];
 		var guidResult = new byte[16];
+		var uint128Result = new byte[16];
 
 		BinaryIdEncoder.Encode((long)id, longResult);
 		BinaryIdEncoder.Encode((ulong)id, ulongResult);
 		BinaryIdEncoder.Encode(id, decimalResult);
 		BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), guidResult);
+		BinaryIdEncoder.Encode((UInt128)id, uint128Result);
 
 		Assert.Equal(expectedHexResult.PadLeft(2 * 8, '0'), Convert.ToHexString(longResult));
 		Assert.Equal(expectedHexResult.PadLeft(2 * 8, '0'), Convert.ToHexString(ulongResult));
 		Assert.Equal(expectedHexResult.PadLeft(2 * 16, '0'), Convert.ToHexString(decimalResult));
 		Assert.Equal(expectedHexResult.PadLeft(2 * 16, '0'), Convert.ToHexString(guidResult));
+		Assert.Equal(expectedHexResult.PadLeft(2 * 16, '0'), Convert.ToHexString(uint128Result));
 	}
 
 	[Theory]
@@ -38,39 +40,45 @@ public class BinaryIdEncoderTests
 		var expectedUlongResult = new byte[8];
 		var expectedDecimalResult = new byte[16];
 		var expectedGuidResult = new byte[16];
+		var expectedUint128Result = new byte[16];
 
 		BinaryIdEncoder.Encode((long)id, expectedLongResult);
 		BinaryIdEncoder.Encode((ulong)id, expectedUlongResult);
 		BinaryIdEncoder.Encode(id, expectedDecimalResult);
 		BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), expectedGuidResult);
+		BinaryIdEncoder.Encode((UInt128)id, expectedUint128Result);
 
 		var longResult = BinaryIdEncoder.Encode((long)id);
 		var ulongResult = BinaryIdEncoder.Encode((ulong)id);
 		var decimalResult = BinaryIdEncoder.Encode(id);
 		var guidResult = BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id));
+		var uint128Result = BinaryIdEncoder.Encode((UInt128)id);
 
 		Assert.Equal(expectedLongResult, longResult);
 		Assert.Equal(expectedUlongResult, ulongResult);
 		Assert.Equal(expectedDecimalResult, decimalResult);
 		Assert.Equal(expectedGuidResult, guidResult);
+		Assert.Equal(expectedUint128Result, uint128Result);
 	}
 
 	[Fact]
 	public void Encode_WithTooLongOutput_ShouldSucceed()
 	{
-		BinaryIdEncoder.Encode(0U, stackalloc byte[100]);
+		BinaryIdEncoder.Encode(0L, stackalloc byte[100]);
 		BinaryIdEncoder.Encode(0UL, stackalloc byte[100]);
 		BinaryIdEncoder.Encode(0m, stackalloc byte[100]);
 		BinaryIdEncoder.Encode(default(Guid), stackalloc byte[100]);
+		BinaryIdEncoder.Encode(default(UInt128), stackalloc byte[100]);
 	}
 
 	[Fact]
 	public void Encode_WithTooShortOutput_ShouldThrow()
 	{
-		Assert.Throws<IndexOutOfRangeException>(() => BinaryIdEncoder.Encode(0U, stackalloc byte[7]));
+		Assert.Throws<IndexOutOfRangeException>(() => BinaryIdEncoder.Encode(0L, stackalloc byte[7]));
 		Assert.Throws<IndexOutOfRangeException>(() => BinaryIdEncoder.Encode(0UL, stackalloc byte[7]));
 		Assert.Throws<IndexOutOfRangeException>(() => BinaryIdEncoder.Encode(0m, stackalloc byte[15]));
 		Assert.Throws<IndexOutOfRangeException>(() => BinaryIdEncoder.Encode(default(Guid), stackalloc byte[15]));
+		Assert.Throws<IndexOutOfRangeException>(() => BinaryIdEncoder.Encode(default(UInt128), stackalloc byte[15]));
 	}
 
 	[Theory]
@@ -83,31 +91,37 @@ public class BinaryIdEncoderTests
 		var ulongBytes = new byte[8];
 		var decimalBytes = new byte[16];
 		var guidBytes = new byte[16];
+		var uint128Bytes = new byte[16];
 
 		BinaryIdEncoder.Encode((long)id, longBytes);
 		BinaryIdEncoder.Encode((ulong)id, ulongBytes);
 		BinaryIdEncoder.Encode(id, decimalBytes);
 		BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), guidBytes);
+		BinaryIdEncoder.Encode((UInt128)id, uint128Bytes);
 
 		var longSuccess = BinaryIdEncoder.TryDecodeLong(longBytes, out var longResult);
 		var ulongSuccess = BinaryIdEncoder.TryDecodeUlong(ulongBytes, out var ulongResult);
 		var decimalSuccess = BinaryIdEncoder.TryDecodeDecimal(decimalBytes, out var decimalResult);
 		var guidSuccess = BinaryIdEncoder.TryDecodeGuid(guidBytes, out var guidResult);
+		var uint128Success = BinaryIdEncoder.TryDecodeUInt128(uint128Bytes, out var uint128Result);
 
 		Assert.True(longSuccess);
 		Assert.True(ulongSuccess);
 		Assert.True(decimalSuccess);
 		Assert.True(guidSuccess);
+		Assert.True(uint128Success);
 
 		Assert.Equal((long)id, longResult);
 		Assert.Equal((ulong)id, ulongResult);
 		Assert.Equal(id, decimalResult);
 		Assert.Equal(AlphanumericIdEncoderTests.Guid(id), guidResult);
+		Assert.Equal((UInt128)id, uint128Result);
 
 		Assert.Equal(longResult, BinaryIdEncoder.DecodeLongOrDefault(longBytes));
 		Assert.Equal(ulongResult, BinaryIdEncoder.DecodeUlongOrDefault(ulongBytes));
 		Assert.Equal(decimalResult, BinaryIdEncoder.DecodeDecimalOrDefault(decimalBytes));
 		Assert.Equal(guidResult, BinaryIdEncoder.DecodeGuidOrDefault(guidBytes));
+		Assert.Equal(uint128Result, BinaryIdEncoder.DecodeUInt128OrDefault(guidBytes));
 	}
 
 	[Theory]
@@ -120,31 +134,37 @@ public class BinaryIdEncoderTests
 		var ulongBytes = new byte[8];
 		var decimalBytes = new byte[16];
 		var guidBytes = new byte[16];
+		var uint128Bytes = new byte[16];
 
 		BinaryIdEncoder.Encode((long)id, longBytes);
 		BinaryIdEncoder.Encode((ulong)id, ulongBytes);
 		BinaryIdEncoder.Encode(id, decimalBytes);
 		BinaryIdEncoder.Encode(AlphanumericIdEncoderTests.Guid(id), guidBytes);
+		BinaryIdEncoder.Encode((UInt128)id, uint128Bytes);
 
 		BinaryIdEncoder.TryDecodeLong(longBytes, out var expectedLongResult);
 		BinaryIdEncoder.TryDecodeUlong(ulongBytes, out var expectedUlongResult);
 		BinaryIdEncoder.TryDecodeDecimal(decimalBytes, out var expectedDecimalResult);
 		BinaryIdEncoder.TryDecodeGuid(guidBytes, out var expectedGuidResult);
+		BinaryIdEncoder.TryDecodeUInt128(uint128Bytes, out var expectedUint128Result);
 
 		var longResult = BinaryIdEncoder.DecodeLongOrDefault(longBytes);
 		var ulongResult = BinaryIdEncoder.DecodeUlongOrDefault(ulongBytes);
 		var decimalResult = BinaryIdEncoder.DecodeDecimalOrDefault(decimalBytes);
 		var guidResult = BinaryIdEncoder.DecodeGuidOrDefault(guidBytes);
+		var uint128Result = BinaryIdEncoder.DecodeUInt128OrDefault(uint128Bytes);
 
 		Assert.Equal(expectedLongResult, longResult.Value);
 		Assert.Equal(expectedUlongResult, ulongResult.Value);
 		Assert.Equal(expectedDecimalResult, decimalResult.Value);
 		Assert.Equal(expectedGuidResult, guidResult.Value);
+		Assert.Equal(expectedUint128Result, uint128Result.Value);
 
 		Assert.Equal(BinaryIdEncoder.TryDecodeLong(stackalloc byte[1], out _), BinaryIdEncoder.DecodeLongOrDefault(stackalloc byte[1]) is not null);
 		Assert.Equal(BinaryIdEncoder.TryDecodeUlong(stackalloc byte[1], out _), BinaryIdEncoder.DecodeUlongOrDefault(stackalloc byte[1]) is not null);
 		Assert.Equal(BinaryIdEncoder.TryDecodeDecimal(stackalloc byte[1], out _), BinaryIdEncoder.DecodeDecimalOrDefault(stackalloc byte[1]) is not null);
 		Assert.Equal(BinaryIdEncoder.TryDecodeGuid(stackalloc byte[1], out _), BinaryIdEncoder.DecodeGuidOrDefault(stackalloc byte[1]) is not null);
+		Assert.Equal(BinaryIdEncoder.TryDecodeUInt128(stackalloc byte[1], out _), BinaryIdEncoder.DecodeUInt128OrDefault(stackalloc byte[1]) is not null);
 	}
 
 	[Fact]
@@ -154,6 +174,7 @@ public class BinaryIdEncoderTests
 		Assert.False(BinaryIdEncoder.TryDecodeUlong(stackalloc byte[9], out _));
 		Assert.False(BinaryIdEncoder.TryDecodeDecimal(stackalloc byte[17], out _));
 		Assert.False(BinaryIdEncoder.TryDecodeGuid(stackalloc byte[17], out _));
+		Assert.False(BinaryIdEncoder.TryDecodeUInt128(stackalloc byte[17], out _));
 	}
 
 	[Fact]
@@ -163,6 +184,7 @@ public class BinaryIdEncoderTests
 		Assert.False(BinaryIdEncoder.TryDecodeUlong(stackalloc byte[7], out _));
 		Assert.False(BinaryIdEncoder.TryDecodeDecimal(stackalloc byte[15], out _));
 		Assert.False(BinaryIdEncoder.TryDecodeGuid(stackalloc byte[15], out _));
+		Assert.False(BinaryIdEncoder.TryDecodeUInt128(stackalloc byte[15], out _));
 	}
 
 	/// <summary>

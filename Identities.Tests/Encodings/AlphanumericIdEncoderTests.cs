@@ -22,6 +22,10 @@ namespace Architect.Identities.Tests.Encodings
 		private const string SampleAlphanumericStringOfGuidId = "0000004WoWZ9OjHPSzq3Ju";
 		private static readonly byte[] SampleAlphanumericBytesOfGuidId = Encoding.ASCII.GetBytes(SampleAlphanumericStringOfGuidId);
 
+		private static readonly UInt128 SampleUInt128Id = (UInt128)1234567890123456789UL << 64 | 1234567890123456789UL;
+		private const string SampleAlphanumericStringOfUInt128Id = "1TCKi1nFuNh1TCKi1nFuNh";
+		private static readonly byte[] SampleAlphanumericBytesOfUInt128Id = Encoding.ASCII.GetBytes(SampleAlphanumericStringOfUInt128Id);
+
 		private static bool Throws(Action action)
 		{
 			try
@@ -248,7 +252,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var id = UInt64.MaxValue;
 			var results = CheckIfThrowsForAllUlongEncodings(id, new byte[11]);
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Fact]
@@ -397,7 +401,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllUlongDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Theory]
@@ -411,7 +415,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllUlongDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Theory]
@@ -428,7 +432,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllUlongDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Fact]
@@ -490,7 +494,7 @@ namespace Architect.Identities.Tests.Encodings
 		#endregion
 
 		#region Decimal
-		
+
 		private static bool[] CheckIfThrowsForAllDecimalEncodings(decimal id, byte[] bytes)
 		{
 			Span<char> chars = stackalloc char[bytes.Length];
@@ -548,7 +552,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var id = new decimal(lo: 1, mid: 1, hi: 1, isNegative: true, scale: 0);
 			var results = CheckIfThrowsForAllDecimalEncodings(id, new byte[16]);
-			Assert.All(results, result => Assert.True(result));
+			Assert.All(results, Assert.True);
 		}
 
 		[Fact]
@@ -556,7 +560,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var id = new decimal(lo: 1, mid: 1, hi: 1, isNegative: false, scale: 1);
 			var results = CheckIfThrowsForAllDecimalEncodings(id, new byte[16]);
-			Assert.All(results, result => Assert.True(result));
+			Assert.All(results, Assert.True);
 		}
 
 		[Fact]
@@ -564,7 +568,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var id = 1 + DistributedIdGenerator.MaxValue;
 			var results = CheckIfThrowsForAllDecimalEncodings(id, new byte[16]);
-			Assert.All(results, result => Assert.True(result));
+			Assert.All(results, Assert.True);
 		}
 
 		[Fact]
@@ -572,7 +576,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var id = DistributedIdGenerator.MaxValue;
 			var results = CheckIfThrowsForAllDecimalEncodings(id, new byte[16]);
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Fact]
@@ -722,7 +726,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllDecimalDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Theory]
@@ -736,7 +740,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllDecimalDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Theory]
@@ -753,7 +757,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllDecimalDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Fact]
@@ -811,7 +815,7 @@ namespace Architect.Identities.Tests.Encodings
 			var result = AlphanumericIdEncoder.DecodeDecimalOrDefault(SampleAlphanumericStringOfDecimalId);
 			Assert.Equal(SampleDecimalId, result);
 		}
-		
+
 		#endregion
 
 		#region Guid
@@ -926,7 +930,7 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var id = DistributedIdGenerator.MaxValue;
 			var results = CheckIfThrowsForAllGuidEncodings(id, new byte[22]);
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Fact]
@@ -992,7 +996,7 @@ namespace Architect.Identities.Tests.Encodings
 			sortedGuids.Sort();
 
 			Assert.Equal(guids.AsEnumerable(), sortedGuids.AsEnumerable());
-			Assert.Equal(guids.Select(guid => AlphanumericIdEncoder.Encode(guid)), sortedGuids.Select(guid => AlphanumericIdEncoder.Encode(guid)));
+			Assert.Equal(guids.Select(AlphanumericIdEncoder.Encode), sortedGuids.Select(AlphanumericIdEncoder.Encode));
 		}
 
 		[Fact]
@@ -1117,7 +1121,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllGuidDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Theory]
@@ -1131,7 +1135,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllGuidDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Theory]
@@ -1148,7 +1152,7 @@ namespace Architect.Identities.Tests.Encodings
 
 			var results = SuccessForAllGuidDecodings(bytes);
 
-			Assert.All(results, result => Assert.False(result));
+			Assert.All(results, Assert.False);
 		}
 
 		[Fact]
@@ -1237,6 +1241,312 @@ namespace Architect.Identities.Tests.Encodings
 		{
 			var result = AlphanumericIdEncoder.DecodeGuidOrDefault(SampleAlphanumericStringOfGuidId);
 			Assert.Equal(SampleGuidId, result);
+		}
+
+		#endregion
+
+		#region UInt128
+
+		private static bool[] CheckIfThrowsForAllUInt128Encodings(UInt128 id, byte[] bytes)
+		{
+			Span<char> chars = stackalloc char[bytes.Length];
+			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
+
+			return new[]
+			{
+				Throws(() => AlphanumericIdEncoder.Encode(id, bytes)),
+				Throws(() => AlphanumericIdEncoder.Encode(id)),
+			};
+		}
+
+		private static UInt128?[] ResultForAllUInt128Decodings(byte[] bytes)
+		{
+			Span<char> chars = stackalloc char[bytes.Length];
+			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
+
+			return new[]
+			{
+				AlphanumericIdEncoder.TryDecodeUInt128(bytes, out var id) ? id : null,
+				AlphanumericIdEncoder.TryDecodeUInt128(chars, out id) ? id : null,
+				AlphanumericIdEncoder.DecodeUInt128OrDefault(bytes),
+				AlphanumericIdEncoder.DecodeUInt128OrDefault(chars),
+			};
+		}
+
+		private static bool[] SuccessForAllUInt128Decodings(byte[] bytes)
+		{
+			Span<char> chars = stackalloc char[bytes.Length];
+			for (var i = 0; i < chars.Length; i++)
+				chars[i] = (char)bytes[i];
+
+			return new[]
+			{
+				AlphanumericIdEncoder.TryDecodeUInt128(bytes, out _),
+				AlphanumericIdEncoder.TryDecodeUInt128(chars, out _),
+				AlphanumericIdEncoder.DecodeUInt128OrDefault(bytes) is not null,
+				AlphanumericIdEncoder.DecodeUInt128OrDefault(chars) is not null,
+			};
+		}
+
+		[Fact]
+		public void Encode_WithUInt128AndTooLongOutput_ShouldSucceed()
+		{
+			AlphanumericIdEncoder.Encode(SampleUInt128Id, stackalloc byte[100]);
+		}
+
+		[Fact]
+		public void Encode_WithUInt128AndTooShortOutput_ShouldThrow()
+		{
+			Assert.Throws<IndexOutOfRangeException>(() => AlphanumericIdEncoder.Encode(SampleUInt128Id, stackalloc byte[15]));
+		}
+
+		[Fact]
+		public void AllUInt128EncodingMethods_WithMaximumValue_ShouldSucceed()
+		{
+			var id = UInt64.MaxValue;
+			var results = CheckIfThrowsForAllUInt128Encodings(id, new byte[22]);
+			Assert.All(results, Assert.False);
+		}
+
+		[Fact]
+		public void Encode_WithUInt128AndIncreasingValues_ShouldReturnOrdinallyIncreasingStrings()
+		{
+			var one = (UInt128)1UL;
+			var two = (UInt128)2UL;
+			var three = (UInt128)UInt64.MaxValue - 1;
+			var four = (UInt128)UInt64.MaxValue;
+			var five = UInt128.MaxValue;
+
+			var a = AlphanumericIdEncoder.Encode(one);
+			var b = AlphanumericIdEncoder.Encode(two);
+			var c = AlphanumericIdEncoder.Encode(three);
+			var d = AlphanumericIdEncoder.Encode(four);
+			var e = AlphanumericIdEncoder.Encode(five);
+
+			var expectedOrder = new[] { a, b, c, d, e };
+			var sortedOrder = new[] { d, a, c, b, e }; // Start shuffled
+			Array.Sort(sortedOrder, StringComparer.Ordinal);
+
+			Assert.Equal(expectedOrder, sortedOrder);
+		}
+
+		[Theory]
+		[InlineData(0U, "0000000000000000000000")]
+		[InlineData(1U, "0000000000000000000001")]
+		[InlineData(61U, "000000000000000000000z")]
+		[InlineData(62U, "0000000000000000000010")]
+		[InlineData(1UL << 32, "00000000000000004gfFC4")]
+		[InlineData(1 + (1UL << 32), "00000000000000004gfFC5")]
+		public void Encode_WithUInt128AndValue_ShouldReturnExpectedResult(decimal inputId, string expectedOutput)
+		{
+			var id = (UInt128)inputId; // UInt128 currently does not work as parameter
+
+			var shortString = AlphanumericIdEncoder.Encode(id);
+
+			Assert.Equal(expectedOutput, shortString);
+		}
+
+		[Fact]
+		public void Encode_WithUInt128AndMaximumValue_ShouldReturnExpectedResult()
+		{
+			var shortString = AlphanumericIdEncoder.Encode(UInt128.MaxValue);
+
+			Assert.Equal("LygHa16AHYFLygHa16AHYF", shortString);
+		}
+
+		[Fact]
+		public void Encode_WithUInt128AndByteOutput_ShouldSucceed()
+		{
+			AlphanumericIdEncoder.Encode(SampleUInt128Id, stackalloc byte[22]);
+		}
+
+		[Fact]
+		public void Encode_WithUInt128AndStringReturnValue_ShouldSucceed()
+		{
+			_ = AlphanumericIdEncoder.Encode(SampleUInt128Id);
+		}
+
+		[Theory]
+		[InlineData(0UL)]
+		[InlineData(1UL)]
+		[InlineData(61UL)]
+		[InlineData(62UL)]
+		[InlineData(9999999999999999999UL)] // 19 digits
+		[InlineData(10000000000000000000UL)] // 20 digits
+		public void Encode_WithUInt128AndValue_ShouldBeReversibleByAllDecoders(decimal inputId)
+		{
+			var id = (UInt128)inputId; // UInt128 currently does not work as parameter
+
+			var bytes = new byte[22];
+			AlphanumericIdEncoder.Encode(id, bytes);
+
+			var results = ResultForAllUInt128Decodings(bytes);
+
+			for (var i = 0; i < results.Length; i++)
+				Assert.Equal(id, results[i]);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithTooShortByteInput_ShouldFail()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(stackalloc byte[15], out _);
+			Assert.False(success);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithTooShortCharInput_ShouldFail()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(stackalloc char[21], out _);
+			Assert.False(success);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithTooLongByteInput_ShouldFail()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(stackalloc byte[100], out _);
+			Assert.False(success);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithTooLongCharInput_ShouldFail()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(stackalloc char[100], out _);
+			Assert.False(success);
+		}
+
+		[Theory]
+		[InlineData("000000000001TCKi1nFuNh", 1234567890123456789UL)]
+		[InlineData("00000000000LygHa16AHYF", UInt64.MaxValue)]
+		public void TryDecodeUInt128_Regularly_ShouldOutputExpectedResult(string input, UInt128 expectedResult)
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(input, out var result);
+			Assert.True(success);
+			Assert.Equal(expectedResult, result);
+		}
+
+		[Theory]
+		[InlineData(SampleAlphanumericStringOfUInt128Id)]
+		[InlineData("0000000000000000000001")]
+		[InlineData("00000000000000004gfFC4")]
+		[InlineData("00000000000000004gfFC5")]
+		[InlineData("00000000000LygHa16AHYF")] // UInt64.MaxValue
+		[InlineData("00000000000LygHa16AHYG")] // UInt64.MaxValue + 1 invalid
+		[InlineData("000000000001234567890$")] // Invalid char
+		[InlineData("0000000000012345678,00")] // Invalid char
+		[InlineData("0000000000012345678.00")] // Invalid char
+		[InlineData("+000000000001234567890")] // Invalid char
+		[InlineData("-000000000001234567890")] // Invalid char
+		[InlineData("000000000001234567890_")] // Invalid char
+		[InlineData("00000000000000000000001")] // Invalid length
+		public void DecodeUInt128OrDefault_Regularly_ShouldReturnSameResultAsTryDecodeUInt128(string input)
+		{
+			var expectedResult = AlphanumericIdEncoder.TryDecodeUInt128(input, out var expectedId)
+				? expectedId
+				: (UInt128?)null;
+
+			var result = AlphanumericIdEncoder.DecodeUInt128OrDefault(input);
+
+			Assert.Equal(expectedResult, result);
+		}
+
+		[Fact]
+		public void AllUInt128DecodingMethods_WithInvalidBase62Characters_ShouldFail()
+		{
+			var bytes = new byte[22];
+			SampleAlphanumericBytesOfUInt128Id.AsSpan().CopyTo(bytes);
+			bytes[0] = (byte)'$';
+
+			var results = SuccessForAllUInt128Decodings(bytes);
+
+			Assert.All(results, Assert.False);
+		}
+
+		[Theory]
+		[InlineData(1)]
+		[InlineData(10)]
+		[InlineData(11)]
+		[InlineData(21)]
+		[InlineData(64)]
+		public void AllUInt128DecodingMethods_WithInvalidLength_ShouldFail(ushort length)
+		{
+			var bytes = new byte[length];
+
+			var results = SuccessForAllUInt128Decodings(bytes);
+
+			Assert.All(results, Assert.False);
+		}
+
+		[Theory]
+		[InlineData("000000000001234567890$")]
+		[InlineData("0000000000012345678,00")]
+		[InlineData("0000000000012345678.00")]
+		[InlineData("+0000000000012345678901")]
+		[InlineData("-0000000000012345678901")]
+		[InlineData("000000000001234567890_")]
+		public void AllUInt128DecodingMethods_WithInvalidCharacters_ShouldFail(string invalidNumericString)
+		{
+			var bytes = new byte[invalidNumericString.Length];
+			for (var i = 0; i < bytes.Length; i++) bytes[i] = (byte)invalidNumericString[i];
+
+			var results = SuccessForAllUInt128Decodings(bytes);
+
+			Assert.All(results, Assert.False);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithBytes_ShouldSucceed()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(SampleAlphanumericBytesOfUInt128Id, out _);
+			Assert.True(success);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithChars_ShouldSucceed()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(SampleAlphanumericStringOfUInt128Id, out _);
+			Assert.True(success);
+		}
+
+		[Fact]
+		public void DecodeUInt128OrDefault_WithBytes_ShouldReturnExpectedValue()
+		{
+			var result = AlphanumericIdEncoder.DecodeUInt128OrDefault(SampleAlphanumericBytesOfUInt128Id);
+			Assert.Equal(SampleUInt128Id, result);
+		}
+
+		[Fact]
+		public void DecodeUInt128OrDefault_WithChars_ShouldReturnExpectedValue()
+		{
+			var result = AlphanumericIdEncoder.DecodeUInt128OrDefault(SampleAlphanumericStringOfUInt128Id);
+			Assert.Equal(SampleUInt128Id, result);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithAlphanumericBytes_ShouldSucceed()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(SampleAlphanumericBytesOfUInt128Id, out _);
+			Assert.True(success);
+		}
+
+		[Fact]
+		public void TryDecodeUInt128_WithAlphanumericString_ShouldSucceed()
+		{
+			var success = AlphanumericIdEncoder.TryDecodeUInt128(SampleAlphanumericStringOfUInt128Id, out _);
+			Assert.True(success);
+		}
+
+		[Fact]
+		public void DecodeUInt128OrDefault_WithAlphanumericBytes_ShouldReturnExpectedValue()
+		{
+			var result = AlphanumericIdEncoder.DecodeUInt128OrDefault(SampleAlphanumericBytesOfUInt128Id);
+			Assert.Equal(SampleUInt128Id, result);
+		}
+
+		[Fact]
+		public void DecodeUInt128OrDefault_WithAlphanumericString_ShouldReturnExpectedValue()
+		{
+			var result = AlphanumericIdEncoder.DecodeUInt128OrDefault(SampleAlphanumericStringOfUInt128Id);
+			Assert.Equal(SampleUInt128Id, result);
 		}
 
 		#endregion

@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using Architect.AmbientContexts;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
+	// #TODO: Add equivalent for DistributedId128
 	/// <summary>
 	/// <para>
 	/// Provides access to a distributed ID generator through the Ambient Context pattern.

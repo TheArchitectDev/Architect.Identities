@@ -166,6 +166,45 @@ namespace Architect.Identities
 			});
 		}
 
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Outputs a 22-character alphanumeric UTF-8 representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="UInt128"/>.</param>
+		/// <param name="bytes">At least 22 bytes, to write the alphanumeric representation to.</param>
+		public static void Encode(UInt128 id, Span<byte> bytes)
+		{
+			if (bytes.Length < 22) throw new IndexOutOfRangeException("At least 22 output bytes are required.");
+
+			Span<byte> inputBytes = stackalloc byte[16];
+			BinaryIdEncoder.Encode(id, inputBytes);
+
+			Base62Encoder.ToBase62Chars16(inputBytes, bytes);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns a 22-character alphanumeric string representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="UInt128"/>.</param>
+		public static string Encode(UInt128 id)
+		{
+			return String.Create(22, id, (charSpan, theId) =>
+			{
+				Span<byte> bytes = stackalloc byte[22];
+				Encode(id, bytes);
+				for (var i = 0; i < charSpan.Length; i++)
+					charSpan[i] = (char)bytes[i];
+			});
+		}
+#endif
+
 		/// <summary>
 		/// <para>
 		/// Outputs an ID decoded from the given alphanumeric UTF-8 representation.
@@ -375,6 +414,62 @@ namespace Architect.Identities
 			return TryDecodeGuid(bytes, out id);
 		}
 
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given alphanumeric UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of input characters, the first 22 of which will be read if possible.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
+		public static bool TryDecodeUInt128(ReadOnlySpan<byte> bytes, out UInt128 id)
+		{
+			// Alphanumeric encodings are exactly 22 characters long
+			if (bytes.Length != 22)
+			{
+				id = default;
+				return false;
+			}
+
+			Span<byte> outputBytes = stackalloc byte[16];
+
+			try
+			{
+				Base62Encoder.FromBase62Chars22(bytes, outputBytes);
+			}
+			catch (ArgumentException)
+			{
+				id = default;
+				return false;
+			}
+
+			return BinaryIdEncoder.TryDecodeUInt128(outputBytes, out id);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given alphanumeric string representation.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="chars">A sequence of input characters, the first 22 of which will be read if possible.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
+		public static bool TryDecodeUInt128(ReadOnlySpan<char> chars, out UInt128 id)
+		{
+			Span<byte> bytes = stackalloc byte[Math.Min(22 + 1, chars.Length)]; // +1 space to detect oversized inputs
+
+			for (var i = 0; i < bytes.Length; i++)
+				bytes[i] = (byte)chars[i];
+
+			return TryDecodeUInt128(bytes, out id);
+		}
+#endif
+
 		/// <summary>
 		/// <para>
 		/// Returns an ID decoded from the given alphanumeric UTF-8 representation.
@@ -486,5 +581,35 @@ namespace Architect.Identities
 		{
 			return TryDecodeGuid(chars, out var id) ? id : null;
 		}
+
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given alphanumeric UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of input characters, the first 22 of which will be read if possible.</param>
+		public static UInt128? DecodeUInt128OrDefault(ReadOnlySpan<byte> bytes)
+		{
+			return TryDecodeUInt128(bytes, out var id) ? id : null;
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given alphanumeric UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="chars">A sequence of input characters, the first 22 of which will be read if possible.</param>
+		public static UInt128? DecodeUInt128OrDefault(ReadOnlySpan<char> chars)
+		{
+			return TryDecodeUInt128(chars, out var id) ? id : null;
+		}
+#endif
 	}
 }
