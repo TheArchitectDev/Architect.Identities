@@ -15,14 +15,17 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>2.0.0</VersionPrefix>
+		<VersionPrefix>2.1.0</VersionPrefix>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<Description>
-EntityFramework extensions for the Architect.Identities package.
+Entity Framework extensions for the Architect.Identities package.
 
 https://github.com/TheArchitectDev/Architect.Identities
 
 Release notes:
+
+2.1.0:
+- Semi-breaking: DecimalIdConvention now truncates decimal IDs when they are reconstituted, mainly to counteract the fact that the SQLite provider tends to represent them as 12345.0, i.e. with a one decimal place.
 
 2.0.0:
 - BREAKING: Now targeting .NET 6+, to support new EF Core APIs.

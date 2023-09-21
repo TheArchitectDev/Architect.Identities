@@ -11,7 +11,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		/// Can be changed or deleted if the situation changes.
 		/// </summary>
 		[Fact]
-		public void UnconfiguredProperty_WithSqlite_ReturnsIncorrectPrecision()
+		public void UnconfiguredProperty_WithSqlite_ShouldReturnIncorrectPrecision()
 		{
 			using var dbContext = TestDbContext.Create((modelBuilder, dbContext) =>
 			{
@@ -27,7 +27,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		}
 
 		[Fact]
-		public void StoreWithDecimalIdPrecision_WithInMemory_ReturnsExpectedPrecision()
+		public void StoreWithDecimalIdPrecision_WithInMemory_ShouldReturnExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true);
 
@@ -40,7 +40,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 		}
 
 		[Fact]
-		public void StoreWithDecimalIdPrecision_WithInMemoryAndDifferentColumnType_ReturnsExpectedPrecision()
+		public void StoreWithDecimalIdPrecision_WithInMemoryAndDifferentColumnType_ShouldReturnExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create(useInMemoryInsteadOfSqlite: true, onModelCreating: (modelBuilder, dbContext) =>
 				modelBuilder.Entity<TestEntity>(entity => entity.Property(e => e.Id).HasColumnType("DECIMAL(29,1)")));
@@ -49,12 +49,12 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.Id, loadedEntity.Id);
-			//Assert.Equal(1, GetSignAndScale(loadedEntity.Id)); // Unfortunately, the in-memory provider does not honor this, but at least we know that the flow did not throw
+			Assert.Equal(0, GetSignAndScale(loadedEntity.Id)); // Truncated
 			//Assert.Equal("DECIMAL(29,1)", dbContext.Model.FindEntityType(typeof(TestEntity)).FindProperty(nameof(TestEntity.Id)).GetColumnType()); // Does not work with in-memory provider
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ReturnsExpectedPrecision()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ShouldReturnExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create();
 
@@ -62,11 +62,11 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.Id, loadedEntity.Id);
-			//Assert.Equal(0, GetSignAndScale(loadedEntity.Id)); // Does not retain scale with SQLite
+			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ReturnsExpectedPrecision()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ShouldReturnExpectedPrecision()
 		{
 			using var dbContext = TestDbContext.Create();
 
@@ -74,11 +74,11 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.Id, loadedEntity.Id);
-			//Assert.Equal(0, GetSignAndScale(loadedEntity.Id)); // Does not retain scale with SQLite
+			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_AffectsSecondaryIdProperties()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ShouldAffectSecondaryIdProperties()
 		{
 			using var dbContext = TestDbContext.Create();
 
@@ -87,13 +87,12 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
 			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
-
-			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId)); // Does not retain scale with SQLite
-			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID)); // Does not retain scale with SQLite
+			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
+			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_AffectsSecondaryIdProperties()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ShouldAffectSecondaryIdProperties()
 		{
 			using var dbContext = TestDbContext.Create();
 
@@ -102,13 +101,12 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
 			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
-
-			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId)); // Does not retain scale with SQLite
-			//Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID)); // Does not retain scale with SQLite
+			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
+			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
 		}
 
 		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqlite_DoesNotAffectNonIdDecimals()
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqlite_ShouldNotAffectNonIdDecimals()
 		{
 			using var dbContext = TestDbContext.Create();
 

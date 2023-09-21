@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Architect.Identities.EntityFramework
 {
@@ -37,7 +36,7 @@ namespace Architect.Identities.EntityFramework
 				IsDecimalConvertible(type))))
 			{
 				modelConfigurationBuilder.DefaultTypeMapping(decimalIdType)
-					.HasConversion(typeof(CastingConverter<,>).MakeGenericType(decimalIdType, typeof(decimal)))
+					.HasConversion(typeof(DecimalIdConverter<>).MakeGenericType(decimalIdType))
 					.HasPrecision(28, 0);
 			}
 
