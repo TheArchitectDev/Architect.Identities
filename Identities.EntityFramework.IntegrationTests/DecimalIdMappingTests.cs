@@ -1,4 +1,3 @@
-using System.Globalization;
 using Architect.Identities.EntityFramework.IntegrationTests.TestHelpers;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
@@ -80,14 +79,14 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 
 		[Theory]
 		[InlineData(null)]
-		[InlineData("1")]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ShouldAffectSecondaryIdProperties(string nullableForeignIdValue)
+		[InlineData(1)]
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ShouldAffectSecondaryIdProperties(int? nullableForeignIdValue)
 		{
 			using var dbContext = TestDbContext.Create();
 
 			var entity = new TestEntity()
 			{
-				ForeignID = nullableForeignIdValue is null ? null : Decimal.Parse(nullableForeignIdValue, NumberStyles.Integer, CultureInfo.InvariantCulture),
+				ForeignID = nullableForeignIdValue,
 			};
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
@@ -100,14 +99,14 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 
 		[Theory]
 		[InlineData(null)]
-		[InlineData("1")]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ShouldAffectSecondaryIdProperties(string nullableForeignIdValue)
+		[InlineData(1)]
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ShouldAffectSecondaryIdProperties(int? nullableForeignIdValue)
 		{
 			using var dbContext = TestDbContext.Create();
 
 			var entity = new StronglyTypedTestEntity()
 			{
-				ForeignID = nullableForeignIdValue is null ? null : Decimal.Parse(nullableForeignIdValue, NumberStyles.Integer, CultureInfo.InvariantCulture),
+				ForeignID = (TestEntityId?)nullableForeignIdValue,
 			};
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
