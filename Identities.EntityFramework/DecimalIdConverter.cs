@@ -1,5 +1,6 @@
 using System;
 using System.Linq.Expressions;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Architect.Identities.EntityFramework
@@ -24,7 +25,7 @@ namespace Architect.Identities.EntityFramework
 
 			// Truncate decimals before converting them
 			Expression value = (typeof(TIn) == typeof(decimal))
-				? Expression.Call(typeof(decimal).GetMethod(nameof(Decimal.Truncate))!, param)
+				? Expression.Call(typeof(DecimalIdConverter<TId>).GetMethod(nameof(TruncateIfLossless), BindingFlags.Static | BindingFlags.NonPublic)!, param)
 				: param;
 
 			var result = Expression.Lambda<Func<TIn, TOut>>(
@@ -32,6 +33,23 @@ namespace Architect.Identities.EntityFramework
 				param);
 
 			return result;
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns the truncated input value if its value is equal, or the input value otherwise.
+		/// </para>
+		/// <para>
+		/// This method can be used to remove needless decimal places, such as from 123.0.
+		/// SQLite typically causes such values.
+		/// </para>
+		/// </summary>
+		private static decimal TruncateIfLossless(decimal value)
+		{
+			var result = Decimal.Truncate(value);
+			return result == value
+				? result
+				: value;
 		}
 	}
 }
