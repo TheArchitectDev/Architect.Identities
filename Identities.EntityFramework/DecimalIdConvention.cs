@@ -32,7 +32,7 @@ namespace Architect.Identities.EntityFramework
 			if (!DecimalIdMappingExtensions.IsDecimalConvertible(type))
 				return;
 
-			propertyBuilder.HasConverter(typeof(DecimalIdConverter<>).MakeGenericType(type));
+			propertyBuilder.HasConverter(typeof(DecimalIdConverter<>).MakeGenericType(type), fromDataAnnotation: true);
 			propertyBuilder.HasPrecision(28);
 			propertyBuilder.HasScale(0);
 		}
