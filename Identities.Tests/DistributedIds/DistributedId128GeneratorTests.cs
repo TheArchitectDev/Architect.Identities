@@ -127,11 +127,11 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			var generator = new DistributedId128Generator(utcClock: GetClockValue, sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
-			var firstId = generator.CreateId();
+			var firstId = generator.CreateGuid();
 
 			generator.PreviousRandomSequence = MaxRandomSequence75; // Ensure that no more random bits can be added
 
-			var secondId = generator.CreateId();
+			var secondId = generator.CreateGuid();
 
 			Assert.True(secondId > firstId); // Generator should increment as normal
 			Assert.Equal(2, sumSleepMilliseconds); // Generated should have slept the expected number of times
@@ -159,11 +159,11 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			var generator = new DistributedId128Generator(utcClock: GetClockValue, sleepAction: milliseconds => sumSleepMilliseconds += milliseconds);
 
-			var firstId = generator.CreateId();
+			var firstId = generator.CreateGuid();
 
 			generator.PreviousRandomSequence = MaxRandomSequence75; // Ensure that no more random bits can be added
 
-			var secondId = generator.CreateId();
+			var secondId = generator.CreateGuid();
 
 			Assert.Equal(2, sumSleepMilliseconds); // Generated should have slept the expected number of times
 			Assert.True(secondId < firstId); // Generator could increment as normal
@@ -178,7 +178,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		{
 			var generator = new DistributedId128Generator(utcClock: () => new DateTime(2023, 01, 01, 0, 0, 0, DateTimeKind.Utc));
 
-			var id = generator.CreateId();
+			var id = generator.CreateGuid();
 
 			Span<byte> bytes = stackalloc byte[16];
 			BinaryIdEncoder.Encode(id, bytes);
@@ -197,7 +197,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		{
 			var generator = new DistributedId128Generator(utcClock: () => new DateTime(4000, 01, 01, 0, 0, 0, DateTimeKind.Utc));
 
-			var id = generator.CreateId();
+			var id = generator.CreateGuid();
 
 			Span<byte> bytes = stackalloc byte[16];
 			BinaryIdEncoder.Encode(id, bytes);
@@ -215,7 +215,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		{
 			var generator = new DistributedId128Generator(utcClock: () => new DateTime(6000, 01, 01, 0, 0, 0, DateTimeKind.Utc));
 
-			var id = generator.CreateId();
+			var id = generator.CreateGuid();
 
 			Span<byte> bytes = stackalloc byte[16];
 			BinaryIdEncoder.Encode(id, bytes);
@@ -232,7 +232,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		{
 			var generator = new DistributedId128Generator(utcClock: () => new DateTime(9999, 12, 31, 0, 0, 0, DateTimeKind.Utc));
 
-			var id = generator.CreateId();
+			var id = generator.CreateGuid();
 
 			Span<byte> bytes = stackalloc byte[16];
 			BinaryIdEncoder.Encode(id, bytes);
@@ -248,7 +248,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		{
 			var results = new List<Guid>();
 			for (var i = 0; i < 2000; i++)
-				results.Add(this.DefaultIdGenerator.CreateId());
+				results.Add(this.DefaultIdGenerator.CreateGuid());
 
 			Assert.Equal(results.Count, results.Distinct().Count());
 		}
@@ -258,7 +258,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		{
 			var results = new List<Guid>();
 			for (var i = 0; i < 2000; i++)
-				results.Add(this.DefaultIdGenerator.CreateId());
+				results.Add(this.DefaultIdGenerator.CreateGuid());
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i].ToString().CompareTo(results[i - 1].ToString()) > 0);
@@ -271,7 +271,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			var results = new List<Guid>();
 			for (var i = 0; i < 1_000_100; i++)
-				results.Add(generator.CreateId());
+				results.Add(generator.CreateGuid());
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -281,7 +281,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			results.Clear();
 			for (var i = 0; i < 1_000_100; i++)
-				results.Add(generator.CreateId());
+				results.Add(generator.CreateGuid());
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -302,7 +302,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 				results.Clear();
 
 				for (var i = 0; i < 2000; i++)
-					results.Add(generator.CreateId());
+					results.Add(generator.CreateGuid());
 
 				if (!didSleep) break;
 			}
@@ -321,7 +321,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			var results = new List<Guid>();
 			for (var i = 0; i < 100; i++)
-				results.Add(generator.CreateId());
+				results.Add(generator.CreateGuid());
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -346,7 +346,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 				ulong? previousTimestampComponent = null;
 				for (var i = 0; i < 2000; i++)
 				{
-					var id = generator.CreateId();
+					var id = generator.CreateGuid();
 					var timestampComponent = ExtractTimestampComponent(id);
 
 					if (previousTimestampComponent is not null && timestampComponent != previousTimestampComponent)
@@ -373,7 +373,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			var results = new List<ulong>();
 			for (var i = 0; i < 100; i++)
-				results.Add(ExtractTimestampComponent(generator.CreateId()));
+				results.Add(ExtractTimestampComponent(generator.CreateGuid()));
 
 			for (var i = 1; i < results.Count; i++)
 				Assert.True(results[i] > results[i - 1]);
@@ -400,7 +400,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 				ulong? previousTimestampComponent = null;
 				for (var i = 0; i < 2000; i++)
 				{
-					var id = generator.CreateId();
+					var id = generator.CreateGuid();
 					var timestampComponent = ExtractTimestampComponent(id);
 
 					if (previousTimestampComponent is not null && timestampComponent != previousTimestampComponent)
@@ -440,7 +440,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 				ulong? previousTimestampComponent = null;
 				for (var i = 0; i < 2000; i++)
 				{
-					var id = generator.CreateId();
+					var id = generator.CreateGuid();
 					var timestampComponent = ExtractTimestampComponent(id);
 
 					if (previousTimestampComponent is not null && timestampComponent != previousTimestampComponent)
@@ -470,7 +470,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 
 			var results = new List<(ulong, ulong)>();
 			for (var i = 0; i < 100; i++)
-				results.Add(ExtractRandomSequenceComponent(generator.CreateId()));
+				results.Add(ExtractRandomSequenceComponent(generator.CreateGuid()));
 
 			var equalCount = 0;
 			var incrementalCount = 0;
@@ -496,7 +496,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 				didSleep = false;
 
 				for (var i = 0; i < 1_000_000; i++)
-					this.DefaultIdGenerator.CreateId();
+					this.DefaultIdGenerator.CreateGuid();
 
 				if (!didSleep) break;
 			}
@@ -507,17 +507,18 @@ namespace Architect.Identities.Tests.DistributedId128s
 		[Fact]
 		public void CreateId_SubsequentlyOnSameTimestamp_ShouldReachExpectedRateLimit()
 		{
-			const int minimumRate = 750_000;
-			const int maximumExpectedRate = 1_500_000;
+			const int expectedRate = 130_000;
+			const int minimumRate = expectedRate / 2;
+			const int maximumExpectedRate = expectedRate * 2;
 
 			var sleepCount = 0;
 			var dateTime = FixedUtcDateTime;
 			var generator = new DistributedId128Generator(utcClock: () => dateTime, sleepAction: _ => { sleepCount++; dateTime = dateTime.AddMilliseconds(1); });
 
-			for (var i = 0; i < 10_000_000; i++)
-				generator.CreateId();
+			for (var i = 0; i < 10 * expectedRate; i++)
+				generator.CreateGuid();
 
-			var rate = 10_000_000 / sleepCount;
+			var rate = 10 * expectedRate / sleepCount;
 
 			Assert.True(rate >= minimumRate);
 			Assert.True(rate <= maximumExpectedRate);

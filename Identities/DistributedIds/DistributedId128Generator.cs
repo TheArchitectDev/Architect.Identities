@@ -5,8 +5,6 @@ using System.Threading;
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
-	// #TODO: Return UInt128 or Guid?
-	// #TODO: On a millisecond, each busy server generates ~1M out of 2^75 possible random values. Doing this for 100 years nonstop, we want to expect a single collision. How many servers can we have before we exceed this?
 	/// <summary>
 	/// Used to implement <see cref="DistributedId"/> in a testable way.
 	/// </summary>
@@ -81,7 +79,14 @@ namespace Architect.Identities
 			this.SleepAction = sleepAction ?? Thread.Sleep;
 		}
 
-		public Guid CreateId()
+#if NET7_0_OR_GREATER
+		public UInt128 CreateId()
+		{
+			return this.CreateGuid().ToUInt128();
+		}
+#endif
+
+		public Guid CreateGuid()
 		{
 			var (timestamp, randomSequence) = this.CreateValues();
 			return this.CreateCore(timestamp, randomSequence);

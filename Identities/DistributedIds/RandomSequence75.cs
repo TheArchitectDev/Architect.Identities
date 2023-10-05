@@ -45,7 +45,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// The number of bits added by the <see cref="TryAddRandomBits(RandomSequence75, out RandomSequence75)"/> operation.
 		/// </summary>
-		internal const int AdditionalBitCount = 55;
+		internal const int AdditionalBitCount = 58;
 		/// <summary>
 		/// A mask to keep the low <see cref="AdditionalBitCount"/> bits of a ulong, in order to add additional random bits to an existing value.
 		/// </summary>

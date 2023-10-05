@@ -77,32 +77,44 @@ namespace Architect.Identities.EntityFramework.IntegrationTests
 			Assert.Equal(0, GetSignAndScale(loadedEntity.Id));
 		}
 
-		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ShouldAffectSecondaryIdProperties()
+		[Theory]
+		[InlineData(null)]
+		[InlineData(1)]
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndPrimitiveId_ShouldAffectSecondaryIdProperties(int? nullableForeignIdValue)
 		{
 			using var dbContext = TestDbContext.Create();
 
-			var entity = new TestEntity();
+			var entity = new TestEntity()
+			{
+				ForeignID = nullableForeignIdValue,
+			};
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
 			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
 			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
-			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
+			if (nullableForeignIdValue is not null)
+				Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID.Value));
 		}
 
-		[Fact]
-		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ShouldAffectSecondaryIdProperties()
+		[Theory]
+		[InlineData(null)]
+		[InlineData(1)]
+		public void StoreDecimalIdsWithCorrectPrecision_WithSqliteAndCustomStructId_ShouldAffectSecondaryIdProperties(int? nullableForeignIdValue)
 		{
 			using var dbContext = TestDbContext.Create();
 
-			var entity = new StronglyTypedTestEntity();
+			var entity = new StronglyTypedTestEntity()
+			{
+				ForeignID = (TestEntityId?)nullableForeignIdValue,
+			};
 			var loadedEntity = this.SaveAndReload(entity, dbContext);
 
 			Assert.Equal(entity.ForeignId, loadedEntity.ForeignId);
 			Assert.Equal(entity.ForeignID, loadedEntity.ForeignID);
 			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignId));
-			Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID));
+			if (nullableForeignIdValue is not null)
+				Assert.Equal(0, GetSignAndScale(loadedEntity.ForeignID.Value));
 		}
 
 		[Fact]

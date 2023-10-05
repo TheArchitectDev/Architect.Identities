@@ -42,7 +42,7 @@ namespace Architect.Identities.Tests.DistributedIds
 		[InlineData(Int32.MinValue, Int32.MinValue)]
 		public void Join_WithNegativeValue_ShouldThrow(long upper, long lower)
 		{
-			Assert.Throws<ArgumentException>(() =>  DistributedId128.Join(upper, lower));
+			Assert.Throws<ArgumentException>(() => DistributedId128.Join(upper, lower));
 		}
 
 		[Theory]

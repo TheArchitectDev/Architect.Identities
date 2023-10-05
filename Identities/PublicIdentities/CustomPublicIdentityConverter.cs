@@ -1,6 +1,6 @@
-// ReSharper disable once CheckNamespace
 using System;
 
+// ReSharper disable once CheckNamespace
 namespace Architect.Identities
 {
 	/// <summary>
@@ -59,6 +59,18 @@ namespace Architect.Identities
 			return this.InternalConverter.GetPublicRepresentation(id);
 		}
 
+#if NET7_0_OR_GREATER
+		public Guid GetPublicRepresentation(UInt128 id)
+		{
+			return this.InternalConverter.GetPublicRepresentation(id);
+		}
+#endif
+
+		public Guid GetPublicRepresentation(Guid id)
+		{
+			return this.InternalConverter.GetPublicRepresentation(id);
+		}
+
 		public bool TryGetUlong(Guid publicId, out ulong id)
 		{
 			return this.InternalConverter.TryGetUlong(publicId, out id);
@@ -67,6 +79,18 @@ namespace Architect.Identities
 		public bool TryGetDecimal(Guid publicId, out decimal id)
 		{
 			return this.InternalConverter.TryGetDecimal(publicId, out id);
+		}
+
+#if NET7_0_OR_GREATER
+		public bool TryGetUInt128(Guid publicId, out UInt128 id)
+		{
+			return this.InternalConverter.TryGetUInt128(publicId, out id);
+		}
+#endif
+
+		public bool TryGetGuid(Guid publicId, out Guid id)
+		{
+			return this.InternalConverter.TryGetGuid(publicId, out id);
 		}
 	}
 }
