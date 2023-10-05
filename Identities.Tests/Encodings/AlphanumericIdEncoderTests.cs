@@ -1417,7 +1417,7 @@ namespace Architect.Identities.Tests.Encodings
 		[Theory]
 		[InlineData("000000000001TCKi1nFuNh", 1234567890123456789UL)]
 		[InlineData("00000000000LygHa16AHYF", UInt64.MaxValue)]
-		public void TryDecodeUInt128_Regularly_ShouldOutputExpectedResult(string input, UInt128 expectedResult)
+		public void TryDecodeUInt128_Regularly_ShouldOutputExpectedResult(string input, ulong expectedResult)
 		{
 			var success = AlphanumericIdEncoder.TryDecodeUInt128(input, out var result);
 			Assert.True(success);
