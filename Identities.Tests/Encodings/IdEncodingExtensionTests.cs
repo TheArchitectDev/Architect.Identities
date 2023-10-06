@@ -182,5 +182,40 @@ namespace Architect.Identities.Tests.Encodings
 			Assert.Equal(expectedDecimalResult.Select(chr => (byte)chr), decimalResultBytes);
 			Assert.Equal(expectedGuidResult.Select(chr => (byte)chr), guidResultBytes);
 		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("2147483647")] // Int32.MaxValue
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void ToUInt128_Regularly_ShouldReverseToGuid(string uint128IdString)
+		{
+			var id = UInt128.Parse(uint128IdString);
+
+			var guid = IdEncodingExtensions.ToGuid(id);
+			var reversed = IdEncodingExtensions.ToUInt128(guid);
+
+			Assert.Equal(id, reversed);
+		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("2147483647")] // Int32.MaxValue
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void ToGuid_Regularly_ShouldHaveSameBinaryEncoding(string uint128IdString)
+		{
+			var id = UInt128.Parse(uint128IdString);
+			var guid = IdEncodingExtensions.ToGuid(id);
+
+			var expectedBinaryRepresentation = BinaryIdEncoder.Encode(id);
+			var binaryRepresentation = BinaryIdEncoder.Encode(guid);
+
+			Assert.Equal(expectedBinaryRepresentation, binaryRepresentation);
+		}
 	}
 }

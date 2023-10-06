@@ -92,6 +92,34 @@ namespace Architect.Identities
 			return publicId;
 		}
 
+#if NET7_0_OR_GREATER
+		public Guid GetPublicRepresentation(UInt128 id)
+		{
+			// Since this package supports transcoding between UInt128 and Guid, it is desirable for the two to result in the same public representation
+			// As such, we piggyback on the Guid overload
+
+			Span<byte> idBytes = stackalloc byte[16];
+			BinaryIdEncoder.Encode(id, idBytes);
+			BinaryIdEncoder.TryDecodeGuid(idBytes, out var guid);
+
+			var result = this.GetPublicRepresentation(guid);
+			return result;
+		}
+#endif
+
+		public Guid GetPublicRepresentation(Guid id)
+		{
+			// To maintain the option of working based on UInt128 in the future, put the bytes in big-endian order first
+			Span<byte> idBytes = stackalloc byte[16];
+			BinaryIdEncoder.Encode(id, idBytes);
+
+			Span<byte> outputBytes = stackalloc byte[16];
+			this.WriteBytes(idBytes, outputBytes);
+
+			var publicId = new Guid(outputBytes);
+			return publicId;
+		}
+
 		public bool TryGetUlong(Guid publicId, out ulong id)
 		{
 			Span<byte> idBytes = stackalloc byte[16];
@@ -114,6 +142,37 @@ namespace Architect.Identities
 
 			// Invalid input if sign-and-scale component (4 bytes) are non-zero or max value is exceeded
 			if (!this.TryGetIdBytes(publicId, idBytes) || DecimalStructure.GetSignAndScale(decimalComponents) != 0 || (id = decimals[0]) > DistributedIdGenerator.MaxValue)
+			{
+				id = default;
+				return false;
+			}
+			return true;
+		}
+
+#if NET7_0_OR_GREATER
+		public bool TryGetUInt128(Guid publicId, out UInt128 id)
+		{
+			// Since this package supports transcoding between UInt128 and Guid, it is desirable for the two to result in the same public representation
+			// As such, we piggyback on the Guid overload
+
+			if (!this.TryGetGuid(publicId, out var guid))
+			{
+				id = default;
+				return false;
+			}
+
+			Span<byte> idBytes = stackalloc byte[16];
+			BinaryIdEncoder.Encode(guid, idBytes);
+			BinaryIdEncoder.TryDecodeUInt128(idBytes, out id);
+			return true;
+		}
+#endif
+
+		public bool TryGetGuid(Guid publicId, out Guid id)
+		{
+			Span<byte> idBytes = stackalloc byte[16];
+
+			if (!this.TryGetIdBytes(publicId, idBytes) || !BinaryIdEncoder.TryDecodeGuid(idBytes, out id))
 			{
 				id = default;
 				return false;
@@ -179,6 +238,26 @@ namespace Architect.Identities
 		}
 
 		/// <summary>
+		/// Implementation that writes a 16-byte ID to a span.
+		/// </summary>
+		private void WriteBytes(ReadOnlySpan<byte> idBytes, Span<byte> outputBytes)
+		{
+			System.Diagnostics.Debug.Assert(idBytes.Length == 16);
+			System.Diagnostics.Debug.Assert(outputBytes.Length == 16);
+
+			lock (this.Encryptor)
+			{
+				idBytes.CopyTo(this.EncryptorInputBlock.AsSpan());
+
+				var byteCount = this.Encryptor.TransformBlock(this.EncryptorInputBlock, 0, 16, this.EncryptorOutputBlock, 0);
+				System.Diagnostics.Debug.Assert(byteCount == 16);
+
+				// Copy the bytes over so that we can release the lock
+				this.EncryptorOutputBlock.CopyTo(outputBytes);
+			}
+		}
+
+		/// <summary>
 		/// <para>
 		/// Decrypts the given public ID, writing the result into the given output span, without checking if it is valid.
 		/// </para>
@@ -188,7 +267,8 @@ namespace Architect.Identities
 			System.Diagnostics.Debug.Assert(outputBytes.Length == 16);
 
 			// Abuse the output bytes as input space
-			if (!publicId.TryWriteBytes(outputBytes)) return false;
+			if (!publicId.TryWriteBytes(outputBytes))
+				return false;
 
 			// Decrypt
 			lock (this.Decryptor)

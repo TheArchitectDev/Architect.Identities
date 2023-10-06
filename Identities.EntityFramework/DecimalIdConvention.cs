@@ -2,18 +2,16 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Architect.Identities.EntityFramework
-
 {
 	/// <summary>
 	/// <para>
-	/// An <see cref="IPropertyAddedConvention"/> that maps decimal-like ID properties using a <see cref="CastingConverter{TModel, TProvider}"/>.
+	/// An <see cref="IPropertyAddedConvention"/> that maps decimal-like ID properties by casting them to/from decimal.
 	/// </para>
 	/// <para>
 	/// For a property to match, its name must be *Id or *ID.
-	/// Additionally, it must either be of type decimal, or be implicitly convertible to decimal and (implicitly or explicitly) convertible from decimal.
+	/// Additionally, it must either be of type decimal, or be implicitly convertible <em>to</em> decimal and (implicitly or explicitly) convertible <em>from</em> decimal.
 	/// </para>
 	/// <para>
 	/// Beware that property mappings alone do not cover scenarios such as where Entity Framework writes calls to CAST().
@@ -34,9 +32,7 @@ namespace Architect.Identities.EntityFramework
 			if (!DecimalIdMappingExtensions.IsDecimalConvertible(type))
 				return;
 
-			if (type != typeof(decimal))
-				propertyBuilder.HasConverter(typeof(CastingConverter<,>).MakeGenericType(type, typeof(decimal)));
-
+			propertyBuilder.HasConverter(typeof(DecimalIdConverter<>).MakeGenericType(type), fromDataAnnotation: true);
 			propertyBuilder.HasPrecision(28);
 			propertyBuilder.HasScale(0);
 		}

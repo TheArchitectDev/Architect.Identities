@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
+		<TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;</TargetFrameworks>
 		<AssemblyName>Architect.Identities</AssemblyName>
 		<RootNamespace>Architect.Identities</RootNamespace>
 		<Nullable>Enable</Nullable>
@@ -18,11 +18,20 @@ Reliable unique ID generation and management for distributed applications.
 Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are inefficient as primary keys in a database. Having two different IDs is cumbersome and counterintuitive. We can do better.
 
 - For a 93-bit UUID replacement that is efficient as a primary key, use the DistributedId.
+- For a 128-bit 128-bit UUID replacement with the advantages of the DistributedId and practically no rate limits or collisions, at the cost of more space, use the DistributedId128.
 - To expose IDs externally in a sensitive environment where zero metadata must be leaked, transform them with PublicIdentities.
 
 https://github.com/TheArchitectDev/Architect.Identities
 
 Release notes:
+
+2.1.0:
+- Semi-breaking: IPublicIdentityConverter now features additional methods, although the type is generally not user-implemented.
+- Semi-breaking: HexadecimalIdEncoder's char-based parameters have been renamed from "bytes" to "chars".
+- Added DistributedId128, a 128-bit (Guid/UInt128) DistributedId variant with practically no rate limits or collisions that also doubles as a version-7 UUID.
+- Added encoding methods for UInt128.
+- Added extension methods to transcode between UInt128 and Guid.
+- Added public identity conversions for UInt128 and Guid.
 
 2.0.0:
 - BREAKING: Removed Fluid. Ambient scopes with startup configuration are now considered undesirable.

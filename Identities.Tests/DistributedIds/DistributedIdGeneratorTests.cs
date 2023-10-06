@@ -11,13 +11,13 @@ namespace Architect.Identities.Tests.DistributedIds
 		private static readonly DateTime FixedUtcDateTime = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
 		private static readonly ulong FixedTimestamp = GetTimestamp(FixedUtcDateTime);
 		private static readonly ulong EpochTimestamp = 0UL;
-		private static readonly RandomSequence6 FixedRandomSequence6 = SimulateRandomSequenceWithValue(1UL << 40);
-		private static readonly RandomSequence6 MaxRandomSequence6 = SimulateRandomSequenceWithValue(RandomSequence6.MaxValue);
+		private static readonly RandomSequence48 FixedRandomSequence48 = SimulateRandomSequenceWithValue(1UL << 40);
+		private static readonly RandomSequence48 MaxRandomSequence48 = SimulateRandomSequenceWithValue(RandomSequence48.MaxValue);
 
 		private static ulong GetTimestamp(DateTime utcDateTime) => (ulong)(utcDateTime - DateTime.UnixEpoch).TotalMilliseconds;
 
 #pragma warning disable CS0618 // Type or member is obsolete -- Obsolete intended to protect against non-test usage
-		private static RandomSequence6 SimulateRandomSequenceWithValue(ulong value) => RandomSequence6.CreatedSimulated(value);
+		private static RandomSequence48 SimulateRandomSequenceWithValue(ulong value) => RandomSequence48.CreatedSimulated(value);
 #pragma warning restore CS0618 // Type or member is obsolete
 
 		/// <summary>
@@ -75,7 +75,7 @@ namespace Architect.Identities.Tests.DistributedIds
 		[Fact]
 		public void CreateCore_Regularly_ShouldUseEpochToCalculateMilliseconds()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, FixedRandomSequence6);
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, FixedRandomSequence48);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
@@ -93,14 +93,14 @@ namespace Architect.Identities.Tests.DistributedIds
 			var maxPermittedDateTime = firstOverflowingDateTime.AddMilliseconds(-1);
 			var maxPermittedTimestamp = GetTimestamp(maxPermittedDateTime);
 
-			this.DefaultIdGenerator.CreateCore(maxPermittedTimestamp, FixedRandomSequence6); // Should not throw
+			this.DefaultIdGenerator.CreateCore(maxPermittedTimestamp, FixedRandomSequence48); // Should not throw
 			Assert.Throws<InvalidOperationException>(() => this.DefaultIdGenerator.CreateCore(firstOverflowingTimestamp, randomSequence: default));
 		}
 
 		[Fact]
 		public void CreateCore_Regularly_ShouldStoreTimestampMillisecondsInHigh6Bytes()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, FixedRandomSequence6);
+			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, FixedRandomSequence48);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
@@ -158,11 +158,11 @@ namespace Architect.Identities.Tests.DistributedIds
 
 			var firstId = generator.CreateId();
 
-			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
+			generator.PreviousRandomSequence = MaxRandomSequence48; // Ensure that no more random bits can be added
 
 			var secondId = generator.CreateId();
 
-			Assert.True(secondId > firstId); // Generator could increment as normal
+			Assert.True(secondId > firstId); // Generator should increment as normal
 			Assert.Equal(0, sumSleepMilliseconds); // Generated should not have slept: was able to simply increase the timestamp
 			Assert.Equal(FixedUtcDateTime.AddDays(1), GetClockValue()); // Clock should have been queried the expected number of times
 		}
@@ -173,7 +173,7 @@ namespace Architect.Identities.Tests.DistributedIds
 			var clockValues = new[]
 			{
 				/* First ID */ FixedUtcDateTime,
-				// From here on, add -999 milliseconds to exhaust the timestamp, so that we are forced to sleep rather, because we cannot increment AND stay in the past
+				// From here on, add -999 milliseconds to exhaust the timestamp, so that we are forced to sleep, because we cannot increment AND stay in the past
 				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-999), // Not permitted to use FixedUtcDateTime-999ms, so sleep
 				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-999).AddMicroseconds(999), // Sleep again (microsecond increase only, but not a whole millisecond)
 				/* Second ID */ FixedUtcDateTime.AddMilliseconds(-999).AddMilliseconds(1), // Success
@@ -188,11 +188,11 @@ namespace Architect.Identities.Tests.DistributedIds
 
 			var firstId = generator.CreateId();
 
-			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
+			generator.PreviousRandomSequence = MaxRandomSequence48; // Ensure that no more random bits can be added
 
 			var secondId = generator.CreateId();
 
-			Assert.True(secondId > firstId); // Generator could increment as normal
+			Assert.True(secondId > firstId); // Generator should increment as normal
 			Assert.Equal(2, sumSleepMilliseconds); // Generated should have slept the expected number of times
 			Assert.Equal(FixedUtcDateTime.AddMilliseconds(2), GetClockValue()); // Clock should have been queried the expected number of times
 		}
@@ -220,15 +220,15 @@ namespace Architect.Identities.Tests.DistributedIds
 
 			var firstId = generator.CreateId();
 
-			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
+			generator.PreviousRandomSequence = MaxRandomSequence48; // Ensure that no more random bits can be added
 
 			var secondId = generator.CreateId();
 
-			generator.PreviousRandomSequence = MaxRandomSequence6; // Ensure that no more random bits can be added
+			generator.PreviousRandomSequence = MaxRandomSequence48; // Ensure that no more random bits can be added
 
 			var thirdId = generator.CreateId();
 
-			Assert.True(secondId > firstId); // Generator could increment as normal
+			Assert.True(secondId > firstId); // Generator should increment as normal
 			Assert.True(thirdId < firstId); // Generator should have avoided sleeping for too long and used the smaller timestamp instead
 			Assert.Equal(1, sumSleepMilliseconds); // Generated should have slept the expected number of times
 			Assert.Equal(FixedUtcDateTime.AddDays(-1), GetClockValue()); // Clock should have been queried the expected number of times

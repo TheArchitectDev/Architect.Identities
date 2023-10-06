@@ -24,15 +24,18 @@ namespace Architect.Identities
 				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
 		}
 
-		private static DateTime GetUtcNow() => DateTime.UtcNow;
+		private static DateTime GetUtcNow()
+		{
+			return DateTime.UtcNow;
+		}
 
 		/// <summary>
 		/// On average, a single application instance can create this many IDs on a single timestamp.
 		/// </summary>
-		internal const ushort AverageRateLimitPerTimestamp = 1 << (48 - RandomSequence6.AdditionalBitCount); // 64 for 42 bits, 128 for 41 bits
+		internal const ushort AverageRateLimitPerTimestamp = 1 << (48 - RandomSequence48.AdditionalBitCount); // 64 for 42 bits, 128 for 41 bits
 
 		/// <summary>
-		/// The custom epoch helps ensure 28-character IDs, avoiding 27-character ones.
+		/// The custom epoch helps ensure 28-digit IDs, avoiding 27-digit ones.
 		/// </summary>
 		internal static readonly DateTime Epoch = new DateTime(1900, 01, 01, 00, 00, 00, DateTimeKind.Utc);
 
@@ -52,7 +55,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// The random sequence used during the previous ID creation.
 		/// </summary>
-		internal RandomSequence6 PreviousRandomSequence { get; set; }
+		internal RandomSequence48 PreviousRandomSequence { get; set; }
 
 		/// <summary>
 		/// A lock object used to govern access to the mutable properties.
@@ -79,7 +82,7 @@ namespace Architect.Identities
 		/// Creates the values required to create an ID.
 		/// </para>
 		/// </summary>
-		private (ulong Timestamp, RandomSequence6 RandomSequence) CreateValues()
+		private (ulong Timestamp, RandomSequence48 RandomSequence) CreateValues()
 		{
 			var randomSequence = CreateRandomSequence();
 
@@ -154,9 +157,9 @@ namespace Architect.Identities
 		/// Returns a new 48-bit (6-byte) random sequence.
 		/// </para>
 		/// </summary>
-		private static RandomSequence6 CreateRandomSequence()
+		private static RandomSequence48 CreateRandomSequence()
 		{
-			return RandomSequence6.Create();
+			return RandomSequence48.Create();
 		}
 
 		/// <summary>
@@ -171,7 +174,7 @@ namespace Architect.Identities
 		/// Returns true on success or false on overflow.
 		/// </para>
 		/// </summary>
-		private bool TryCreateIncrementalRandomSequence(RandomSequence6 previousRandomSequence, RandomSequence6 newRandomSequence, out RandomSequence6 incrementedRandomSequence)
+		private bool TryCreateIncrementalRandomSequence(RandomSequence48 previousRandomSequence, RandomSequence48 newRandomSequence, out RandomSequence48 incrementedRandomSequence)
 		{
 			return previousRandomSequence.TryAddRandomBits(newRandomSequence, out incrementedRandomSequence);
 		}
@@ -185,8 +188,8 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		/// <param name="timestamp">The UTC timestamp in milliseconds since the epoch.</param>
-		/// <param name="randomSequence">A random sequence whose 2 low bytes are zeros. This is checked to ensure that the caller has understood what will be used.</param>
-		internal decimal CreateCore(ulong timestamp, RandomSequence6 randomSequence)
+		/// <param name="randomSequence">A random sequence whose 2 high bytes are zeros. This is checked to ensure that the caller has understood what will be used.</param>
+		internal decimal CreateCore(ulong timestamp, RandomSequence48 randomSequence)
 		{
 			// 93 bits fit into 28 decimals
 			// 96 bits: [3 unused bits] [45 time bits] [48 random bits]

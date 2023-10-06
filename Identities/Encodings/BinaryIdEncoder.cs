@@ -186,6 +186,39 @@ namespace Architect.Identities
 			return bytes;
 		}
 
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Outputs the 16-byte big-endian binary representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="UInt128"/>.</param>
+		/// <param name="bytes">At least 16 bytes, to write the big-endian binary representation to.</param>
+		public static void Encode(UInt128 id, Span<byte> bytes)
+		{
+			if (bytes.Length < 16) throw new IndexOutOfRangeException("At least 16 output bytes are required.");
+
+			BinaryPrimitives.WriteUInt64BigEndian(bytes, (ulong)(id >> 64));
+			BinaryPrimitives.WriteUInt64BigEndian(bytes[8..], (ulong)id);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns the 16-byte big-endian binary representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="UInt128"/>.</param>
+		public static byte[] Encode(UInt128 id)
+		{
+			var bytes = new byte[16];
+			Encode(id, bytes);
+			return bytes;
+		}
+#endif
+
 		/// <summary>
 		/// <para>
 		/// Outputs an ID decoded from the given binary representation.
@@ -301,6 +334,34 @@ namespace Architect.Identities
 			return true;
 		}
 
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given binary representation.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 16 input bytes, in big-endian order.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
+		public static bool TryDecodeUInt128(ReadOnlySpan<byte> bytes, out UInt128 id)
+		{
+			// Binary encodings are exactly 16 bytes long
+			if (bytes.Length != 16)
+			{
+				id = default;
+				return false;
+			}
+
+			var upper = BinaryPrimitives.ReadUInt64BigEndian(bytes);
+			var lower = BinaryPrimitives.ReadUInt64BigEndian(bytes[8..]);
+
+			id = new UInt128(upper: upper, lower: lower);
+			return true;
+		}
+#endif
+
 		/// <summary>
 		/// <para>
 		/// Returns an ID decoded from the given binary representation.
@@ -356,5 +417,21 @@ namespace Architect.Identities
 		{
 			return TryDecodeGuid(bytes, out var id) ? id : null;
 		}
+
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given binary representation.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of at least 16 input bytes, in big-endian order.</param>
+		public static UInt128? DecodeUInt128OrDefault(ReadOnlySpan<byte> bytes)
+		{
+			return TryDecodeUInt128(bytes, out var id) ? id : null;
+		}
+#endif
 	}
 }

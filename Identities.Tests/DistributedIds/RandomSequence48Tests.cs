@@ -3,18 +3,18 @@ using Xunit;
 
 namespace Architect.Identities.Tests.DistributedIds
 {
-	public sealed class RandomSequence6Tests
+	public sealed class RandomSequence48Tests
 	{
 		private static readonly int SafeRateLimitPerTimestamp = DistributedIdGenerator.AverageRateLimitPerTimestamp / 2;
 
 #pragma warning disable CS0618 // Type or member is obsolete -- Obsolete intended to protect against non-test usage
-		private static RandomSequence6 SimulateRandomSequenceWithValue(ulong value) => RandomSequence6.CreatedSimulated(value);
+		private static RandomSequence48 SimulateRandomSequenceWithValue(ulong value) => RandomSequence48.CreatedSimulated(value);
 #pragma warning restore CS0618 // Type or member is obsolete
 
 		[Fact]
 		public void Create_Regularly_ShouldBeNonzero()
 		{
-			var result = RandomSequence6.Create();
+			var result = RandomSequence48.Create();
 
 			Assert.NotEqual(0UL, result);
 		}
@@ -26,8 +26,8 @@ namespace Architect.Identities.Tests.DistributedIds
 		public void Create_Regularly_ShouldHaveHighEntropyInLow5Bytes()
 		{
 			var results = new List<ulong>();
-			for (var i = 0; i < 100; i++)
-				results.Add(RandomSequence6.Create());
+			for (var i = 0; i < 1000; i++)
+				results.Add(RandomSequence48.Create());
 
 			var sumValuesPerByte = new int[5];
 			Span<byte> bytes = stackalloc byte[8];
@@ -54,7 +54,7 @@ namespace Architect.Identities.Tests.DistributedIds
 		[Fact]
 		public void Create_Regularly_ShouldLeaveHigh16BitsZero()
 		{
-			var result = RandomSequence6.Create();
+			var result = RandomSequence48.Create();
 
 			Assert.Equal(0UL, result >> (64 - 16));
 		}

@@ -19,6 +19,9 @@ This package provides highly tuned tools for ID generation and management.
   * [Attack Surface](#attack-surface)
   * [Entity Framework](#entity-framework)
   * [Alternatives](#alternatives)
+- [DistributedId128](#distributedid128)
+  * [Additional Advantages](#additional-advantages)
+  * [128-bit Structure](#128-bit-structure)
 - [Public Identities](#public-identities)
   * [Example Value](#example-value-1)
   * [Example Usage](#example-usage-1)
@@ -29,7 +32,9 @@ This package provides highly tuned tools for ID generation and management.
 
 The **[DistributedId](#distributed-ids)** is a single ID that combines the advantages of auto-increment IDs and UUIDs.
 
-For sensitive scenarios where zero metadata must be leaked from an ID, **[PublicIdentities](#public-identities)** can transform any ID into a public representation that reveals nothing, without ever introducing an unrelated secondary ID.
+The **[DistributedId128](#distributedid128)** is a 128-bit UUID replacement with the advantages of the DistributedId and practically no rate limits or collisions, at the cost of more space.
+
+For sensitive scenarios where zero metadata must be leaked from an ID, **[Public Identities](#public-identities)** can transform any ID into a public representation that reveals nothing, without ever introducing an unrelated secondary ID.
 
 ## Introduction
 
@@ -37,7 +42,7 @@ Should entity IDs use UUIDs or auto-increment?
 
 Auto-increment IDs are ill-suited for exposing publically: they leak hints about the row count and are easy to guess. Moreover, they are generated very late, on insertion, posing challenges to the creation of aggregates.
 
-UUIDs, on the other hand, tend to be random, causing poor performance as database keys.
+UUIDs, on the other hand, tend to be random, causing poor performance as database/storage keys.
 
 Using both types of ID on an entity is cumbersome and may leak a technical workaround into the domain model.
 
@@ -51,7 +56,7 @@ A DistributedId is created as a 93-bit decimal value of 28 digits, but can also 
 
 Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, [collisions](#collision-resistance) (i.e. duplicates) tend to be far under 1 collision per 350 billion IDs generated.
 
-DistributedIds are designed to be unique within a logical context, such as a database table, a Bounded Context, or even a whole medium-sized company. These form the most common boundaries within which uniqueness is required. Any number of distributed applications may generate new IDs within such a context.
+DistributedIds are designed to be unique within a logical context, such as a database table, a Bounded Context, or even a whole company. These form the most common boundaries within which uniqueness is required. Any number of distributed applications may generate new IDs within such a context.
 
 Note that a DistributedId **reveals its creation timestamp**, which may be considered sensitive data in certain contexts.
 
@@ -132,10 +137,11 @@ public void ShowInversionOfControl()
 - Is ordered intuitively and consistently in .NET and databases. (By contrast, SQL Server orders UUIDs by some of the _middle_ bytes, making it very hard to implement an ordered UUID type.)
 - Can be represented numerically, as exactly 28 digits.
 - Can be represented alphanumerically, as exactly 16 alphanumeric characters.
+- Can be represented hexadecimally, as exactly 26 hex characters.
 - Contains 93 bits worth of data.
 - Contains the number of milliseconds since the start of the year 1900 in its first 45 bits.
 - Contains a cryptographically-secure pseudorandom sequence in its last 48 bits.
-- Uses 41-bit cryptographically-secure pseudorandom increments to remain incremental even intra-millisecond.
+- Uses 41-bit cryptographically-secure pseudorandom increments intra-millisecond to remain incremental on the same millisecond.
 - Can represent timestamps beyond the year 3000.
 
 ### Rate Limits
@@ -164,7 +170,7 @@ The chances of a collision occurring have been measured. Under the worst possibl
 - On average, with 10 application replicas at maximum throughput, there is **1 collision 350 billion IDs**.
 - On average, with 100 application replicas at maximum throughput, there is **1 collision per 35 billion IDs**.
 
-It is important to note that **the above is only in the degenerate scenario** where _all replicas_ are generating IDs _at the maximum rate per millisecond_, and always _on the exact same millisecond_. In practice, far fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the realistic probability of a collision, to 1 per many trillions, a negligible number.
+It is important to note that **the above is only in the degenerate scenario** where _all replicas_ are generating IDs _at the maximum rate per millisecond_, and always _on the exact same millisecond_. In practice, far fewer IDs tend to be generated per millisecond, thus spreading IDs out over more timestamps. This significantly reduces the realistic probability of a collision, to 1 per many trillions, a negligible number for the intended purposes.
 
 #### Absolute Certainty
 
@@ -172,13 +178,15 @@ Luckily, we can protect ourselves even against the extremely unlikely event of a
 
 For contexts where even a single collision could be catastrophic, such as in certain financial domains, it is advisable to avoid "upserts", and always explicitly separate inserts from updates. This way, even if a collision did occur, it would merely cause one single transaction to fail (out of billions or trillions), rather than overwriting an existing record. This is good practice in general.
 
+Alternatively, the [DistributedId128](#distributedid128) offers far greater collision resistance at the cost of an unwieldy format.
+
 ### Guessability
 
 Presupposing knowledge of the millisecond timestamp on which an ID was generated, the probability of guessing that ID is between 1/2^41 and 1/2^48, thanks to the 48-bit cryptographically-secure pseudorandom sequence. In practice, the timestamp component tends to reduce the guessability, since for most milliseconds no IDs at will will have been generated.
 
 The difference between the two probabilities (given knowledge of the timestamp) stems from the way the incremental property is achieved. If only one ID was generated on a timestamp, as tends to be common, the probability is 1/2^48. If the maximum number of IDs were generated on that timestamp, or if another ID from the same timestamp is known, an educated guess has a 1/2^41 probability of being correct.
 
-To reduce the guessability to 1/2^128, see [PublicIdentities](#public-identities).
+To reduce the guessability to 1/2^128, see [Public Identities](#public-identities).
 
 ### Attack Surface
 
@@ -219,6 +227,42 @@ To highlight a few examples:
   - Next ID of the same second is predictable.
   - Uniquefier based on replica: once two replicas collide, multiple collisions can be expected, until redeployment.
 
+## DistributedId128
+
+The DistributedId128 is a 128-bit DistributedId variant that offers additional benefits at the cost of extra space and being more unwieldy than a simple `decimal`.
+It should be used if the requirements on generation rate or collision resistance are extreme (very high volumes) or unpredictable (class libraries).
+Apart from leaking the generation timestamp, this ID can serve as a drop-in replacement for the common version-4 random UUID.
+
+Class libraries are a good example of products that should prefer the DistributedId128. They can make fewer assumptions, as their usage patterns often depend on the applications using them.
+
+### Additional Advantages
+
+- Has practically no generation rate limit (over 100K IDs per millisecond, or 100 million per second, per application replica).
+- Risks practically no collisions even globally (at 75 bits of randomness _per millisecond_, incremented with 58-bit values intra-millisecond).
+  - **OTP:** 1 million servers each generating 1 ID at the same millisecond, repeatedly, expect less than 1 collision per 75 quadrillion (75,000,000,000,000,000) IDs.
+  - **Batch processing:** 100K servers each generating 100K IDs at the same millisecond, repeatedly, expect less than 1 collision per 5 trillion (5,000,000,000,000) IDs.
+- Is also a valid [version-7 UUID](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-uuid-version-7) (_with the [variant](https://www.rfc-editor.org/rfc/rfc4122.html#section-4.1.1) set to 0xx/"backward compatibility", to keep the 64th bit 0_), but with the rare property of being incremental _and_ hard to guess even for multiple IDs at the same millisecond.
+
+### 128-bit Structure
+
+- Is returned as either a `Guid` or a `UInt128` and can be freely transcoded between the two.
+- Can be represented as a 32-char or 36-char UUID string anywhere (e.g. `094954a8-622c-76ad-1b93-cdefcbdf0888`).
+- Can be represented as `DECIMAL(38, 0)` in SQL databases (until beyond the year 4000, at which point a 39th digit would appear).
+- Occcupies 16 bytes in memory.
+- Requires 17 bytes of storage as `DECIMAL(38, 0)` or 23/24 bytes as alphanumeric UTF-8 in many SQL databases, including SQL Server and MySQL.
+- Can be represented as two (always positive) `long` values, suitable for storing in two `BIGINT` database columns, as a composite key.
+- Can be represented in a natural, workable form by most SQL databases, being a simple `DECIMAL` or `VARCHAR` or pair of `BIGINT` values. (By contrast, not all databases have a UUID type, requiring the use of binary types, making manual queries cumbersome.)
+- Is ordered intuitively and consistently in .NET, in both `Guid`, `Guid.ToString()`, `UInt128`, `UInt128.ToString()`, alphanumeric, and hexadecimal formats.
+- Is ordered intuitively and consistently in .NET _and databases_ in all formats except `Guid` (due to varying UUID availability and ordering in databases).
+- Can be represented numerically, as exactly 38 digits (until beyond the year 4000, at which point a 39th digit would appear).
+- Can be represented alphanumerically, as exactly 22 alphanumeric characters.
+- Can be represented hexadecimally, as exactly 32 hex characters.
+- Contains the number of milliseconds since the start of the year 1700 in its first 48 bits.
+- Contains the UUID version marker "7" in bits 48 through 51.
+- Contains a 75-bit cryptographically-secure pseudorandom sequence in its last 76 bits, with the exception of the 64th bit, the variant indicator, which is always 0.
+- Uses 58-bit cryptographically-secure pseudorandom increments intra-millisecond to remain incremental on the same millisecond.
+- Can represent timestamps beyond the year 9999.
+
 ## Public Identities
 
 Sometimes, revealing even a creation timestamp is too much. For example, an ID might represent a bank account.
@@ -227,8 +271,8 @@ Still, it is desirable to have only a single ID, and one that is efficient as a 
 
 ### Example Value
 
-- The regular ID can be any `long`, `ulong`, or `decimal`, such as a DistributedId or an auto-increment ID: `1088824355131185736905670087m`
-- Public `Guid` value: `30322474-a954-ffa9-941c-6f038afe4ff1` (16 bytes)
+- The regular ID can be any `long`, `ulong`, `decimal`, `UInt128`, or `Guid`, such as an auto-increment ID, a DistributedId128, or a DistributedId: `1088824355131185736905670087m`
+- Resulting public `Guid` value: `30322474-a954-ffa9-941c-6f038afe4ff1` (16 bytes)
 - Alphanumeric encoding: `48XoooHHCe1CiOHrghM7Dl` (22 alphanumeric characters)
 
 ### Example Usage
@@ -237,7 +281,7 @@ Still, it is desirable to have only a single ID, and one that is efficient as a 
 // Startup.cs
 public void ConfigureServices(IServiceCollection services)
 {
-	const string key = "k7fBDJcQam02hsByaOWPeP2CqeDeGXvrPUkEAQBtAFc="; // Strong 256-bit key
+	const string key = "k7fBDJcQam02hsByaOWPeP2CqeDeGXvrPUkEAQBtAFc="; // Strong 256-bit key, encoded in base-64
 	
 	services.AddPublicIdentities(publicIdentities => publicIdentities.Key(key));
 }
@@ -285,7 +329,7 @@ Without possession of the key, it is extremely hard to forge a valid public iden
 
 When a public identity is converted back into the original ID, its structure is validated. If it is invalid, `null` or `false` is returned, depending on the method used.
 
-For `long` and `ulong` IDs, the chance to forge a valid ID is 1/2^64. For `decimal` IDs, the chance is 1/2^32. Even if a valid value were to be forged, the resulting internal ID would be a random one and would be extremely unlikely to match an existing one.
+For `long` and `ulong` IDs, the chance to forge some valid ID is 1/2^64. For `decimal` IDs, the chance is 1/2^32. Most importantly, even if a valid value were to be forged, the resulting internal ID would be a random one and would be extremely unlikely to match an existing one. This property makes even `Guid` and `UInt128` IDs usable, despite the fact that they do not have spare space to detect forgeries.
 
 Generally, when an ID is taken as client input, something is loaded based on that ID. As such, it is often best to simply turn an invalid public identity into a nonexistent local ID, such as 0:
 

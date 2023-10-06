@@ -6,7 +6,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 		public string Name { get; }
 		public decimal Number { get; }
 		public decimal ForeignId { get; }
-		public decimal ForeignID { get; } // Deliberate spelling
+		public decimal? ForeignID { get; init; } // Deliberate spelling
 		public decimal DoesNotHaveIdSuffix { get; }
 		public TestEntityId DoesNotHaveIdSuffixEither { get; }
 

@@ -6,7 +6,7 @@ namespace Architect.Identities
 {
 	/// <summary>
 	/// <para>
-	/// Provides access to an <see cref="IDistributedIdGenerator"/> through the Ambient Context pattern.
+	/// Provides access to an <see cref="IDistributedId128Generator"/> through the Ambient Context pattern.
 	/// </para>
 	/// <para>
 	/// This type provides a lightweight Inversion of Control (IoC) mechanism.
@@ -17,33 +17,33 @@ namespace Architect.Identities
 	/// Changing the scope is intended for testing purposes, to control the IDs generated.
 	/// </para>
 	/// <para>
-	/// Outer code may construct a custom <see cref="DistributedIdGeneratorScope"/> inside a using statement, causing any code within the using block to see that instance.
+	/// Outer code may construct a custom <see cref="DistributedId128GeneratorScope"/> inside a using statement, causing any code within the using block to see that instance.
 	/// </para>
 	/// </summary>
-	public sealed class DistributedIdGeneratorScope : AmbientScope<DistributedIdGeneratorScope>
+	public sealed class DistributedId128GeneratorScope : AmbientScope<DistributedId128GeneratorScope>
 	{
-		static DistributedIdGeneratorScope()
+		static DistributedId128GeneratorScope()
 		{
-			var defaultGenerator = new DistributedIdGenerator();
-			var defaultScope = new DistributedIdGeneratorScope(defaultGenerator, AmbientScopeOption.NoNesting);
+			var defaultGenerator = new DistributedId128Generator();
+			var defaultScope = new DistributedId128GeneratorScope(defaultGenerator, AmbientScopeOption.NoNesting);
 			SetDefaultScope(defaultScope);
 		}
 
-		internal static DistributedIdGeneratorScope Current => GetAmbientScope()!;
-		internal static IDistributedIdGenerator CurrentGenerator => Current.IdGenerator;
+		internal static DistributedId128GeneratorScope Current => GetAmbientScope()!;
+		internal static IDistributedId128Generator CurrentGenerator => Current.IdGenerator;
 
-		private IDistributedIdGenerator IdGenerator { get; }
+		private IDistributedId128Generator IdGenerator { get; }
 
 		/// <summary>
-		/// Establishes the given <see cref="IDistributedIdGenerator"/> as the ambient one until the scope is disposed.
+		/// Establishes the given <see cref="IDistributedId128Generator"/> as the ambient one until the scope is disposed.
 		/// </summary>
-		public DistributedIdGeneratorScope(IDistributedIdGenerator idGenerator)
+		public DistributedId128GeneratorScope(IDistributedId128Generator idGenerator)
 			: this(idGenerator, AmbientScopeOption.ForceCreateNew)
 		{
 			this.Activate();
 		}
 
-		private DistributedIdGeneratorScope(IDistributedIdGenerator idGenerator, AmbientScopeOption scopeOption)
+		private DistributedId128GeneratorScope(IDistributedId128Generator idGenerator, AmbientScopeOption scopeOption)
 			: base(scopeOption)
 		{
 			this.IdGenerator = idGenerator ?? throw new ArgumentNullException(nameof(idGenerator));

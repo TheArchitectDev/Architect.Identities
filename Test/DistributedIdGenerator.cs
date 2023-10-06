@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using Architect.Identities;
 
 // ReSharper disable once CheckNamespace
@@ -23,7 +23,10 @@ namespace Test
 				throw new NotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
 		}
 
-		private static DateTime GetUtcNow() => DateTime.UtcNow;
+		private static DateTime GetUtcNow()
+		{
+			return DateTime.UtcNow;
+		}
 
 		/// <summary>
 		/// A single application instance will aim to create no more than this many IDs on a single timestamp.
@@ -167,7 +170,7 @@ namespace Test
 		/// </para>
 		/// </summary>
 		/// <param name="timestamp">The UTC timestamp in milliseconds since the epoch.</param>
-		/// <param name="randomSequence">A random sequence whose 2 low bytes are zeros. This is checked to ensure that the caller has understood what will be used.</param>
+		/// <param name="randomSequence">A random sequence whose 2 high bytes are zeros. This is checked to ensure that the caller has understood what will be used.</param>
 		internal decimal CreateCore(ulong timestamp, RandomSequence6 randomSequence)
 		{
 			// 93 bits fit into 28 decimals

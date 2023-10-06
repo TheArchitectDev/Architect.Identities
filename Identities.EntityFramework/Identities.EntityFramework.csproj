@@ -15,14 +15,17 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>2.0.0</VersionPrefix>
+		<VersionPrefix>2.1.0</VersionPrefix>
 		<PackageReleaseNotes></PackageReleaseNotes>
 		<Description>
-EntityFramework extensions for the Architect.Identities package.
+Entity Framework extensions for the Architect.Identities package.
 
 https://github.com/TheArchitectDev/Architect.Identities
 
 Release notes:
+
+2.1.0:
+- The ConfigureDecimalIdTypes() extension method now truncates needless trailing zeros received from the database provider (`123.0` => `123`), as is the case with SQLite.
 
 2.0.0:
 - BREAKING: Now targeting .NET 6+, to support new EF Core APIs.

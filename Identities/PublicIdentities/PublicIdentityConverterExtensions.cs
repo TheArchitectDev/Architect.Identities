@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Architect.Identities
 {
@@ -45,6 +45,34 @@ namespace Architect.Identities
 		{
 			if (converter is null) throw new ArgumentNullException(nameof(converter));
 			return converter.TryGetDecimal(publicId, out var id) ? id : null;
+		}
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Returns the original ID represented by the given public ID.
+		/// </para>
+		/// <para>
+		/// This method never returns null. It follows the "*OrDefault" API shape for consistency with other overloads.
+		/// </para>
+		/// </summary>
+		public static UInt128? GetUInt128OrDefault(this IPublicIdentityConverter converter, Guid publicId)
+		{
+			if (converter is null) throw new ArgumentNullException(nameof(converter));
+			return converter.TryGetUInt128(publicId, out var id) ? id : null;
+		}
+#endif
+		/// <summary>
+		/// <para>
+		/// Returns the original ID represented by the given public ID.
+		/// </para>
+		/// <para>
+		/// This method never returns null. It follows the "*OrDefault" API shape for consistency with other overloads.
+		/// </para>
+		/// </summary>
+		public static Guid? GetGuidOrDefault(this IPublicIdentityConverter converter, Guid publicId)
+		{
+			if (converter is null) throw new ArgumentNullException(nameof(converter));
+			return converter.TryGetGuid(publicId, out var id) ? id : null;
 		}
 	}
 }

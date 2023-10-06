@@ -6,7 +6,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 		public string Name { get; }
 		public decimal Number { get; }
 		public decimal ForeignId { get; }
-		public TestEntityId ForeignID { get; } // Deliberate spelling
+		public TestEntityId? ForeignID { get; init; } // Deliberate spelling
 		public decimal DoesNotHaveIdSuffix { get; }
 
 		public StronglyTypedTestEntity(string name = "TestName", decimal number = 0.1234567890123456789012345678m)

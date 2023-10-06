@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+using System;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Xunit;
 
@@ -182,7 +183,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref id);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
-			Assert.True(publicIdBytes.SequenceEqual(aesOutput));
+			Assert.Equal(aesOutput, publicIdBytes);
 		}
 
 		[Theory]
@@ -202,7 +203,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref id);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
-			Assert.True(publicIdBytes.SequenceEqual(aesOutput));
+			Assert.Equal(aesOutput, publicIdBytes);
 		}
 
 		[Theory]
@@ -223,7 +224,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref ulongId);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
-			Assert.True(publicIdBytes.SequenceEqual(aesOutput));
+			Assert.Equal(aesOutput, publicIdBytes);
 		}
 
 		[Fact]
@@ -257,6 +258,56 @@ namespace Architect.Identities.Tests.PublicIdentities
 		}
 
 		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("170141183460469231731687303715884105728")] // 2^127
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void GetPublicRepresentation_WithUInt128Input_ShouldReturnZeroKeyAesEncryption(string idString)
+		{
+			var id = UInt128.Parse(idString);
+
+			var publicId = this.Converter.GetPublicRepresentation(id);
+			var publicIdBytes = publicId.ToByteArray();
+
+			using var aes = Aes.Create();
+			using var encryptor = aes.CreateEncryptor(new byte[32], new byte[16]);
+
+			var aesInput = BinaryIdEncoder.Encode(id);
+			var aesOutput = new byte[16];
+			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
+
+			Assert.Equal(aesOutput, publicIdBytes);
+		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("170141183460469231731687303715884105728")] // 2^127
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void GetPublicRepresentation_WithGuidInput_ShouldReturnZeroKeyAesEncryption(string idString)
+		{
+			var id = UInt128.Parse(idString);
+			var idBytes = BinaryIdEncoder.Encode(id);
+			var guid = BinaryIdEncoder.DecodeGuidOrDefault(idBytes) ?? throw new ArgumentException("This should have succeeded.");
+
+			var publicId = this.Converter.GetPublicRepresentation(guid);
+			var publicIdBytes = publicId.ToByteArray();
+
+			using var aes = Aes.Create();
+			using var encryptor = aes.CreateEncryptor(new byte[32], new byte[16]);
+
+			var aesInput = idBytes;
+			var aesOutput = new byte[16];
+			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
+
+			Assert.Equal(aesOutput, publicIdBytes);
+		}
+
+		[Theory]
 		[InlineData(0)]
 		[InlineData(1)]
 		[InlineData(Int64.MaxValue)]
@@ -279,6 +330,43 @@ namespace Architect.Identities.Tests.PublicIdentities
 		{
 			var guid = this.Converter.GetPublicRepresentation(id);
 			var decodingSucceeded = this.Converter.TryGetUlong(guid, out var decodedId);
+
+			Assert.True(decodingSucceeded);
+			Assert.Equal(id, decodedId);
+		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("170141183460469231731687303715884105728")] // 2^127
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void TryGetUInt128_AfterGetPublicRepresentation_ShouldReturnOriginalId(string idString)
+		{
+			var id = UInt128.Parse(idString);
+
+			var publicId = this.Converter.GetPublicRepresentation(id);
+			var decodingSucceeded = this.Converter.TryGetUInt128(publicId, out var decodedId);
+
+			Assert.True(decodingSucceeded);
+			Assert.Equal(id, decodedId);
+		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("170141183460469231731687303715884105728")] // 2^127
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void TryGetGuid_AfterGetPublicRepresentation_ShouldReturnOriginalId(string idString)
+		{
+			var id = UInt128.Parse(idString);
+			var guid = BinaryIdEncoder.DecodeGuidOrDefault(BinaryIdEncoder.Encode(id)) ?? throw new ArgumentException("This should have succeeded.");
+
+			var publicId = this.Converter.GetPublicRepresentation(guid);
+			var decodingSucceeded = this.Converter.TryGetUInt128(publicId, out var decodedId);
 
 			Assert.True(decodingSucceeded);
 			Assert.Equal(id, decodedId);
@@ -401,6 +489,47 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var decodedId = this.Converter.GetDecimalOrDefault(guid);
 
 			Assert.Null(decodedId);
+		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("170141183460469231731687303715884105728")] // 2^127
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void GetUInt128OrDefault_Regularly_ShouldMatchTryGetUInt128(string idString)
+		{
+			var id = UInt128.Parse(idString);
+
+			var publicId = this.Converter.GetPublicRepresentation(id);
+			var decodingShouldSucceed = this.Converter.TryGetUInt128(publicId, out var expectedId);
+
+			var decodedId = this.Converter.GetUInt128OrDefault(publicId);
+
+			Assert.Equal(decodingShouldSucceed, decodedId is not null);
+			Assert.Equal(expectedId, decodedId);
+		}
+
+		[Theory]
+		[InlineData("0")]
+		[InlineData("1")]
+		[InlineData("18446744073709551615")] // UInt64.MaxValue
+		[InlineData("18446744073709551616")] // UInt64.MaxValue + 1
+		[InlineData("170141183460469231731687303715884105728")] // 2^127
+		[InlineData("340282366920938463463374607431768211455")] // UInt128.MaxValue
+		public void GetGuidOrDefault_Regularly_ShouldMatchTryGetGuid(string idString)
+		{
+			var id = UInt128.Parse(idString);
+			var guid = BinaryIdEncoder.DecodeGuidOrDefault(BinaryIdEncoder.Encode(id)) ?? throw new ArgumentException("This should have succeeded.");
+
+			var publicId = this.Converter.GetPublicRepresentation(guid);
+			var decodingShouldSucceed = this.Converter.TryGetGuid(publicId, out var expectedId);
+
+			var decodedId = this.Converter.GetGuidOrDefault(publicId);
+
+			Assert.Equal(decodingShouldSucceed, decodedId is not null);
+			Assert.Equal(expectedId, decodedId);
 		}
 	}
 }

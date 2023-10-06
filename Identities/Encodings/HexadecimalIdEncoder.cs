@@ -178,6 +178,47 @@ namespace Architect.Identities
 			});
 		}
 
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Outputs a 32-character hexadecimal UTF-8 representation of the given ID.
+		/// </para>
+		/// <para>
+		/// Throws if the output span is too short.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="UInt128"/>.</param>
+		/// <param name="bytes">At least 32 bytes, to write the hexadecimal representation to.</param>
+		public static void Encode(UInt128 id, Span<byte> bytes)
+		{
+			if (bytes.Length < 32) throw new IndexOutOfRangeException("At least 32 output bytes are required.");
+
+			// Abuse the caller's output span as input space
+			BinaryIdEncoder.Encode(id, bytes);
+
+			HexadecimalEncoder.ToHexChars(bytes, bytes, inputByteCount: 16);
+
+			System.Diagnostics.Debug.Assert(bytes[31] != 0, "The expected output space was not written to.");
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns a 32-character hexadecimal string representation of the given ID.
+		/// </para>
+		/// </summary>
+		/// <param name="id">Any sequence of bytes stored in a <see cref="UInt128"/>.</param>
+		public static string Encode(UInt128 id)
+		{
+			return String.Create(32, id, (charSpan, theId) =>
+			{
+				Span<byte> bytes = stackalloc byte[32];
+				Encode(id, bytes);
+				for (var i = 0; i < charSpan.Length; i++)
+					charSpan[i] = (char)bytes[i];
+			});
+		}
+#endif
+
 		/// <summary>
 		/// <para>
 		/// Outputs an ID decoded from the given hexadecimal UTF-8 representation.
@@ -387,6 +428,62 @@ namespace Architect.Identities
 			return TryDecodeGuid(bytes, out id);
 		}
 
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given hexadecimal UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of input characters, the first 32 of which will be read if possible.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
+		public static bool TryDecodeUInt128(ReadOnlySpan<byte> bytes, out UInt128 id)
+		{
+			// Hexadecimal encodings are exactly 32 characters long
+			if (bytes.Length != 32)
+			{
+				id = default;
+				return false;
+			}
+
+			Span<byte> outputBytes = stackalloc byte[16];
+
+			try
+			{
+				HexadecimalEncoder.FromHexChars(bytes, outputBytes, inputByteCount: 32);
+			}
+			catch (ArgumentException)
+			{
+				id = default;
+				return false;
+			}
+
+			return BinaryIdEncoder.TryDecodeUInt128(outputBytes, out id);
+		}
+
+		/// <summary>
+		/// <para>
+		/// Outputs an ID decoded from the given hexadecimal UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns false if the input is not a proper ID value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="chars">A sequence of input characters, the first 32 of which will be read if possible.</param>
+		/// <param name="id">On true, this outputs the decoded ID.</param>
+		public static bool TryDecodeUInt128(ReadOnlySpan<char> chars, out UInt128 id)
+		{
+			Span<byte> bytes = stackalloc byte[Math.Min(32 + 1, chars.Length)]; // +1 space to detect oversized inputs
+
+			for (var i = 0; i < bytes.Length; i++)
+				bytes[i] = (byte)chars[i];
+
+			return TryDecodeUInt128(bytes, out id);
+		}
+#endif
+
 		/// <summary>
 		/// <para>
 		/// Returns an ID decoded from the given hexadecimal UTF-8 representation.
@@ -409,10 +506,10 @@ namespace Architect.Identities
 		/// Returns null if the input is not a positive value encoded using the expected encoding.
 		/// </para>
 		/// </summary>
-		/// <param name="bytes">A sequence of input characters, the first 16 of which will be read if possible.</param>
-		public static long? DecodeLongOrDefault(ReadOnlySpan<char> bytes)
+		/// <param name="chars">A sequence of input characters, the first 16 of which will be read if possible.</param>
+		public static long? DecodeLongOrDefault(ReadOnlySpan<char> chars)
 		{
-			return TryDecodeLong(bytes, out var id) ? id : null;
+			return TryDecodeLong(chars, out var id) ? id : null;
 		}
 
 		/// <summary>
@@ -437,10 +534,10 @@ namespace Architect.Identities
 		/// Returns null if the input is not a positive value encoded using the expected encoding.
 		/// </para>
 		/// </summary>
-		/// <param name="bytes">A sequence of input characters, the first 16 of which will be read if possible.</param>
-		public static ulong? DecodeUlongOrDefault(ReadOnlySpan<char> bytes)
+		/// <param name="chars">A sequence of input characters, the first 16 of which will be read if possible.</param>
+		public static ulong? DecodeUlongOrDefault(ReadOnlySpan<char> chars)
 		{
-			return TryDecodeUlong(bytes, out var id) ? id : null;
+			return TryDecodeUlong(chars, out var id) ? id : null;
 		}
 
 		/// <summary>
@@ -465,10 +562,10 @@ namespace Architect.Identities
 		/// Returns null if the input is not a positive value encoded using the expected encoding.
 		/// </para>
 		/// </summary>
-		/// <param name="bytes">A sequence of input characters, the first 26 of which will be read if possible.</param>
-		public static decimal? DecodeDecimalOrDefault(ReadOnlySpan<char> bytes)
+		/// <param name="chars">A sequence of input characters, the first 26 of which will be read if possible.</param>
+		public static decimal? DecodeDecimalOrDefault(ReadOnlySpan<char> chars)
 		{
-			return TryDecodeDecimal(bytes, out var id) ? id : null;
+			return TryDecodeDecimal(chars, out var id) ? id : null;
 		}
 
 		/// <summary>
@@ -493,10 +590,40 @@ namespace Architect.Identities
 		/// Returns null if the input is not a positive value encoded using the expected encoding.
 		/// </para>
 		/// </summary>
-		/// <param name="bytes">A sequence of input characters, the first 32 of which will be read if possible.</param>
-		public static Guid? DecodeGuidOrDefault(ReadOnlySpan<char> bytes)
+		/// <param name="chars">A sequence of input characters, the first 32 of which will be read if possible.</param>
+		public static Guid? DecodeGuidOrDefault(ReadOnlySpan<char> chars)
 		{
-			return TryDecodeGuid(bytes, out var id) ? id : null;
+			return TryDecodeGuid(chars, out var id) ? id : null;
 		}
+
+#if NET7_0_OR_GREATER
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given hexadecimal UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="bytes">A sequence of input characters, the first 32 of which will be read if possible.</param>
+		public static UInt128? DecodeUInt128OrDefault(ReadOnlySpan<byte> bytes)
+		{
+			return TryDecodeUInt128(bytes, out var id) ? id : null;
+		}
+
+		/// <summary>
+		/// <para>
+		/// Returns an ID decoded from the given hexadecimal UTF-8 representation.
+		/// </para>
+		/// <para>
+		/// Returns null if the input is not a positive value encoded using the expected encoding.
+		/// </para>
+		/// </summary>
+		/// <param name="chars">A sequence of input characters, the first 32 of which will be read if possible.</param>
+		public static UInt128? DecodeUInt128OrDefault(ReadOnlySpan<char> chars)
+		{
+			return TryDecodeUInt128(chars, out var id) ? id : null;
+		}
+#endif
 	}
 }
