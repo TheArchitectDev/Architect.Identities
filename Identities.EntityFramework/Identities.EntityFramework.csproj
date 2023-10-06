@@ -25,7 +25,7 @@ https://github.com/TheArchitectDev/Architect.Identities
 Release notes:
 
 2.1.0:
-- Semi-breaking: DecimalIdConvention now truncates decimal IDs when they are reconstituted, mainly to counteract the fact that the SQLite provider tends to represent them as 12345.0, i.e. with a one decimal place.
+- The ConfigureDecimalIdTypes() extension method now truncates needless trailing zeros received from the database provider (`123.0` => `123`), as is the case with SQLite.
 
 2.0.0:
 - BREAKING: Now targeting .NET 6+, to support new EF Core APIs.

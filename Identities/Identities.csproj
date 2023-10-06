@@ -32,7 +32,6 @@ Release notes:
 - Added encoding methods for UInt128.
 - Added extension methods to transcode between UInt128 and Guid.
 - Added public identity conversions for UInt128 and Guid.
-- The ConfigureDecimalIdTypes() extension method now truncates needless trailing zeros received from the provider (`123.0` => `123`), as happens with SQLite.
 
 2.0.0:
 - BREAKING: Removed Fluid. Ambient scopes with startup configuration are now considered undesirable.
