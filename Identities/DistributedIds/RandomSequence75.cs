@@ -131,7 +131,7 @@ namespace Architect.Identities
 
 		private Binary128 GetValue()
 		{
-			if (this.High == 0UL && this.Low == 0UL)
+			if ((this.High | this.Low) == 0UL)
 				ThrowCreateOnlyThroughCreateMethodException();
 
 #if NET7_0_OR_GREATER

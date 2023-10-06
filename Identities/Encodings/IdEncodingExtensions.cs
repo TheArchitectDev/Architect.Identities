@@ -1,5 +1,4 @@
 using System;
-using System.Buffers.Binary;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities

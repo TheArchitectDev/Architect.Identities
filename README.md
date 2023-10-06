@@ -259,7 +259,7 @@ Class libraries are a good example of products that should prefer the Distribute
 - Can be represented hexadecimally, as exactly 32 hex characters.
 - Contains the number of milliseconds since the start of the year 1700 in its first 48 bits.
 - Contains the UUID version marker "7" in bits 48 through 51.
-- Contains a cryptographically-secure pseudorandom sequence in its last 76 bits, with the exception of the 64th bit, the variant indicator, which is always 0.
+- Contains a 75-bit cryptographically-secure pseudorandom sequence in its last 76 bits, with the exception of the 64th bit, the variant indicator, which is always 0.
 - Uses 58-bit cryptographically-secure pseudorandom increments intra-millisecond to remain incremental on the same millisecond.
 - Can represent timestamps beyond the year 9999.
 

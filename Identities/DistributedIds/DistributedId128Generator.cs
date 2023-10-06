@@ -13,7 +13,7 @@ namespace Architect.Identities
 		/// <summary>
 		/// Bits 0000_0111.
 		/// </summary>
-		private const byte VersionMarkerByte = 0b0000_0111;
+		private const byte VersionMarkerByte = 0b_0000_0111;
 		/// <summary>
 		/// Bits 0111 starting at the 48th top bit.
 		/// </summary>
@@ -35,7 +35,10 @@ namespace Architect.Identities
 				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The binary conversions have not been tested.");
 		}
 
-		private static DateTime GetUtcNow() => DateTime.UtcNow;
+		private static DateTime GetUtcNow()
+		{
+			return DateTime.UtcNow;
+		}
 
 		/// <summary>
 		/// <para>
@@ -45,7 +48,7 @@ namespace Architect.Identities
 		/// The IDs stay at 38 digits until the year 4000+, fitting in a DECIMAL(38).
 		/// </para>
 		/// <para>
-		/// The IDs stay within 127 bits until the year 6000+ (as well as having the 64th bit always set to 0), fitting in two signed longs that are positive.
+		/// The IDs stay within 127 bits until the year 6000+, fitting in two signed longs that are positive. (The 64th bit is always 0.)
 		/// </para>
 		/// </summary>
 		internal static readonly DateTime Epoch = new DateTime(1700, 01, 01, 00, 00, 00, DateTimeKind.Utc);
@@ -169,7 +172,7 @@ namespace Architect.Identities
 		/// Pure function.
 		/// </para>
 		/// <para>
-		/// Creates a new 48-bit random sequence based on the given previous one and new one.
+		/// Creates a new 75-bit random sequence based on the given previous one and new one.
 		/// Adds new randomness while maintaining the incremental property.
 		/// </para>
 		/// <para>
@@ -190,7 +193,6 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		/// <param name="timestamp">The UTC timestamp in milliseconds since the epoch.</param>
-		/// <param name="randomSequence">A random sequence whose 53 high bits are zeros. This is checked to ensure that the caller has understood what will be used.</param>
 		internal Guid CreateCore(ulong timestamp, RandomSequence75 randomSequence)
 		{
 			Span<byte> resultBytes = stackalloc byte[16];
@@ -214,7 +216,7 @@ namespace Architect.Identities
 			System.Diagnostics.Debug.Assert(result != default, "A non-default value should have been generated.");
 			System.Diagnostics.Debug.Assert((leftHalf | rightHalf) != 0UL, "A non-default value should have been generated.");
 			System.Diagnostics.Debug.Assert(leftHalf >> (64 - 48) == timestamp, "The first component should have been the timestamp.");
-			System.Diagnostics.Debug.Assert((leftHalf >> (64 - 48 - 4) & 0b1111UL) == VersionMarkerByte, "The second component should have been the expected version marker.");
+			System.Diagnostics.Debug.Assert((leftHalf >> (64 - 48 - 4) & 0b_1111UL) == VersionMarkerByte, "The second component should have been the expected version marker.");
 			System.Diagnostics.Debug.Assert(rightHalf >> 63 == 0UL, "The first variant indicator bit should have been zero.");
 
 			return result;

@@ -22,7 +22,7 @@ namespace Architect.Identities
 	/// <strong>Exposure:</strong> Note that the values expose their creation timestamps to some degree. This may be sensitive data in certain contexts.
 	/// </para>
 	/// <para>
-	/// <strong>Rate limit:</strong> The rate limit per machine is 128 values generated per millisecond (i.e. 128K per second) on average, with threads sleeping if necessary.
+	/// <strong>Rate limit:</strong> The rate limit per process is 128 values generated per millisecond (i.e. 128K per second) on average, with threads sleeping if necessary.
 	/// However, about 128K values can be burst generated instantaneously, with the burst capacity recovering quickly during non-exhaustive use.
 	/// </para>
 	/// <para>

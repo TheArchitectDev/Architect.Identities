@@ -23,7 +23,10 @@ namespace Test
 				throw new NotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
 		}
 
-		private static DateTime GetUtcNow() => DateTime.UtcNow;
+		private static DateTime GetUtcNow()
+		{
+			return DateTime.UtcNow;
+		}
 
 		/// <summary>
 		/// A single application instance will aim to create no more than this many IDs on a single timestamp.

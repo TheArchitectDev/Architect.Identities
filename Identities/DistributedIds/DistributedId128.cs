@@ -22,7 +22,7 @@ namespace Architect.Identities
 	/// <strong>Exposure:</strong> Note that the values expose their creation timestamps to some degree. This may be sensitive data in certain contexts.
 	/// </para>
 	/// <para>
-	/// <strong>Rate limit:</strong> The rate limit per machine is over 100K IDs generated per millisecond, or 1 million per second, with threads sleeping if necessary.
+	/// <strong>Rate limit:</strong> The rate limit per process is over 100K IDs generated per millisecond (i.e. over 1 million per second) on average, with threads sleeping if necessary.
 	/// </para>
 	/// <para>
 	/// <strong>Collisions:</strong>
@@ -32,7 +32,7 @@ namespace Architect.Identities
 	/// <para>
 	/// <strong>Sorting:</strong> The sort order of the resulting <see cref="Guid"/> values should only be relied upon within .NET, since other platforms may sort UUIDs differently.
 	/// For <em>universally</em> sortable values, call <see cref="Guid.ToString()"/> on the values.
-	/// Alternatively, values can be represented numerically (.NET7+ only). Until at least the year 4000, they fit in a DECIMAL(38) or a pair of signed BIGINTs (with the sign bits unused).
+	/// Alternatively, values can be represented numerically (.NET7+ only). Until at least the year 4000, these fit in a DECIMAL(38) or a pair of signed BIGINTs (with the sign bits unused).
 	/// </para>
 	/// </summary>
 	public static class DistributedId128

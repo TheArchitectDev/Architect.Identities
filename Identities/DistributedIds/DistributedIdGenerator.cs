@@ -24,7 +24,10 @@ namespace Architect.Identities
 				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
 		}
 
-		private static DateTime GetUtcNow() => DateTime.UtcNow;
+		private static DateTime GetUtcNow()
+		{
+			return DateTime.UtcNow;
+		}
 
 		/// <summary>
 		/// On average, a single application instance can create this many IDs on a single timestamp.
