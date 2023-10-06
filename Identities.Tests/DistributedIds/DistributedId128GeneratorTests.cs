@@ -8,7 +8,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		private static readonly DateTime FixedUtcDateTime = new DateTime(2020, 01, 01, 0, 0, 0, DateTimeKind.Utc);
 		private static readonly ulong FixedTimestamp = GetTimestamp(FixedUtcDateTime);
 		private static readonly ulong EpochTimestamp = 0UL;
-		private static readonly RandomSequence75 FixedRandomSequence6 = SimulateRandomSequenceWithValue(high: 1UL << 10, low: 0UL);
+		private static readonly RandomSequence75 FixedRandomSequence75 = SimulateRandomSequenceWithValue(high: 1UL << 10, low: 0UL);
 		private static readonly RandomSequence75 MaxRandomSequence75 = SimulateRandomSequenceWithValue(high: RandomSequence75.MaxHighValue, low: UInt64.MaxValue);
 
 		private static ulong GetTimestamp(DateTime utcDateTime) => (ulong)(utcDateTime - DateTime.UnixEpoch).TotalMilliseconds;
@@ -77,7 +77,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		[Fact]
 		public void CreateCore_Regularly_ShouldUseEpochToCalculateMilliseconds()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, FixedRandomSequence6);
+			var id = this.DefaultIdGenerator.CreateCore(EpochTimestamp, FixedRandomSequence75);
 
 			var milliseconds = ExtractTimestampComponent(id);
 
@@ -87,7 +87,7 @@ namespace Architect.Identities.Tests.DistributedId128s
 		[Fact]
 		public void CreateCore_Regularly_ShouldStoreTimestampMillisecondsInTop48Bits()
 		{
-			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, FixedRandomSequence6);
+			var id = this.DefaultIdGenerator.CreateCore(FixedTimestamp, FixedRandomSequence75);
 
 			var milliseconds = ExtractTimestampComponent(id);
 

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Architect.Identities.Tests.DistributedIds
 {
-	public sealed class RandomSequence6Tests
+	public sealed class RandomSequence48Tests
 	{
 		private static readonly int SafeRateLimitPerTimestamp = DistributedIdGenerator.AverageRateLimitPerTimestamp / 2;
 
