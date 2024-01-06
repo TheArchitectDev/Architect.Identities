@@ -17,10 +17,16 @@ charset = utf-8
 [*.cs]
 
 #### Rule Severities ####
-dotnet_diagnostic.CA1822.severity = none # CA1822: Instance member does not access instance data and can be marked as static
+dotnet_code_quality.CA1826.exclude_ordefault_methods = true # CA1826: Use property instead of Linq Enumerable method -- hard to replace for ...OrDefault()
+dotnet_diagnostic.CA1510.severity = none # CA1510: Use throw helper -- throw helpers are inconsistent with neighboring checks for which none can be used
+dotnet_diagnostic.CA1511.severity = none # CA1511: Use throw helper -- throw helpers are inconsistent with neighboring checks for which none can be used
+dotnet_diagnostic.CA1512.severity = none # CA1512: Use throw helper -- throw helpers are inconsistent with neighboring checks for which none can be used
+dotnet_diagnostic.CA1513.severity = none # CA1513: Use throw helper -- throw helpers are inconsistent with neighboring checks for which none can be used
 dotnet_diagnostic.CS1573.severity = none # CS1573: Undocumented public symbol while -doc compiler option is used
 dotnet_diagnostic.CS1591.severity = none # CS1591: Missing XML comment for publicly visible type
-dotnet_diagnostic.CA1816.severity = none # CA1816: Dispose() should call GC.SuppressFinalize()
+dotnet_diagnostic.CA1816.severity = default # CA1816: Dispose() should call GC.SuppressFinalize()
+dotnet_diagnostic.CA1822.severity = none # CA1822: Instance member does not access instance data and can be marked as static
+dotnet_diagnostic.IDE0305.severity = silent # IDE0305: Collection initialization can be simplified -- spoils chained LINQ calls (https://github.com/dotnet/roslyn/issues/70833)
 
 # Indentation and spacing
 indent_size = 4

@@ -7,7 +7,9 @@ namespace Architect.Identities.Tests.PublicIdentities
 {
 	public sealed class AesPublicIdentityConverterTests : IDisposable
 	{
+#pragma warning disable CA1859 // Use concrete types when possible for improved performance -- Would prevent the use of interface methods with default implementation
 		private IPublicIdentityConverter Converter { get; } = new AesPublicIdentityConverter(new byte[32]);
+#pragma warning restore CA1859 // Use concrete types when possible for improved performance
 
 		public void Dispose()
 		{
@@ -180,7 +182,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var aesInput = new byte[16];
 			var aesOutput = new byte[16];
-			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref id);
+			MemoryMarshal.Write(aesInput.AsSpan()[8..], in id);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
 			Assert.Equal(aesOutput, publicIdBytes);
@@ -200,7 +202,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 
 			var aesInput = new byte[16];
 			var aesOutput = new byte[16];
-			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref id);
+			MemoryMarshal.Write(aesInput.AsSpan()[8..], in id);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
 			Assert.Equal(aesOutput, publicIdBytes);
@@ -221,7 +223,7 @@ namespace Architect.Identities.Tests.PublicIdentities
 			var ulongId = (ulong)id;
 			var aesInput = new byte[16];
 			var aesOutput = new byte[16];
-			MemoryMarshal.Write(aesInput.AsSpan()[8..], ref ulongId);
+			MemoryMarshal.Write(aesInput.AsSpan()[8..], in ulongId);
 			encryptor.TransformBlock(aesInput, 0, 16, aesOutput, 0);
 
 			Assert.Equal(aesOutput, publicIdBytes);

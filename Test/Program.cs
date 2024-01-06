@@ -28,7 +28,7 @@ namespace Test
 		private static long IdCount = 0;
 
 		private static HashSet<decimal> DistinctValues { get; } = new HashSet<decimal>(capacity: 1571);
-		private static List<decimal> Collisions { get; } = new List<decimal>();
+		private static List<decimal> Collisions { get; } = [];
 
 		static Program()
 		{

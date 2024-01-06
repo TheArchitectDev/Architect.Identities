@@ -229,11 +229,11 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				Throws(() => HexadecimalIdEncoder.Encode(id, bytes)),
 				Throws(() => HexadecimalIdEncoder.Encode(id)),
-			};
+			];
 		}
 
 		private static ulong?[] ResultForAllUlongDecodings(byte[] bytes)
@@ -241,13 +241,13 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeUlong(bytes, out var id) ? id : null,
 				HexadecimalIdEncoder.TryDecodeUlong(chars, out id) ? id : null,
 				HexadecimalIdEncoder.DecodeUlongOrDefault(bytes),
 				HexadecimalIdEncoder.DecodeUlongOrDefault(chars),
-			};
+			];
 		}
 
 		private static bool[] SuccessForAllUlongDecodings(byte[] bytes)
@@ -256,13 +256,13 @@ namespace Architect.Identities.Tests.Encodings
 			for (var i = 0; i < chars.Length; i++)
 				chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeUlong(bytes, out _),
 				HexadecimalIdEncoder.TryDecodeUlong(chars, out _),
 				HexadecimalIdEncoder.DecodeUlongOrDefault(bytes) is not null,
 				HexadecimalIdEncoder.DecodeUlongOrDefault(chars) is not null,
-			};
+			];
 		}
 
 		[Fact]
@@ -532,11 +532,11 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				Throws(() => HexadecimalIdEncoder.Encode(id, bytes)),
 				Throws(() => HexadecimalIdEncoder.Encode(id)),
-			};
+			];
 		}
 
 		private static decimal?[] ResultForAllDecimalDecodings(byte[] bytes)
@@ -544,13 +544,13 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeDecimal(bytes, out var id) ? id : -1m,
 				HexadecimalIdEncoder.TryDecodeDecimal(chars, out id) ? id : -1m,
 				HexadecimalIdEncoder.DecodeDecimalOrDefault(bytes),
 				HexadecimalIdEncoder.DecodeDecimalOrDefault(chars),
-			};
+			];
 		}
 
 		private static bool[] SuccessForAllDecimalDecodings(byte[] bytes)
@@ -558,13 +558,13 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeDecimal(bytes, out _),
 				HexadecimalIdEncoder.TryDecodeDecimal(chars, out _),
 				HexadecimalIdEncoder.DecodeDecimalOrDefault(bytes) is not null,
 				HexadecimalIdEncoder.DecodeDecimalOrDefault(chars) is not null,
-			};
+			];
 		}
 
 		[Fact]
@@ -898,11 +898,11 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				Throws(() => HexadecimalIdEncoder.Encode(guid, bytes)),
 				Throws(() => HexadecimalIdEncoder.Encode(guid)),
-			};
+			];
 		}
 
 		private static Guid?[] ResultForAllGuidDecodings(byte[] bytes)
@@ -911,13 +911,13 @@ namespace Architect.Identities.Tests.Encodings
 			for (var i = 0; i < chars.Length; i++)
 				chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeGuid(bytes, out var id) ? id : null,
 				HexadecimalIdEncoder.TryDecodeGuid(chars, out id) ? id : null,
 				HexadecimalIdEncoder.DecodeGuidOrDefault(bytes),
 				HexadecimalIdEncoder.DecodeGuidOrDefault(chars),
-			};
+			];
 		}
 
 		private static bool[] SuccessForAllGuidDecodings(byte[] bytes)
@@ -925,13 +925,13 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeGuid(bytes, out _),
 				HexadecimalIdEncoder.TryDecodeGuid(chars, out _),
 				HexadecimalIdEncoder.DecodeGuidOrDefault(bytes) is not null,
 				HexadecimalIdEncoder.DecodeGuidOrDefault(chars) is not null,
-			};
+			];
 		}
 
 		[Theory]
@@ -1290,11 +1290,11 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				Throws(() => HexadecimalIdEncoder.Encode(id, bytes)),
 				Throws(() => HexadecimalIdEncoder.Encode(id)),
-			};
+			];
 		}
 
 		private static UInt128?[] ResultForAllUInt128Decodings(byte[] bytes)
@@ -1302,13 +1302,13 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeUInt128(bytes, out var id) ? id : null,
 				HexadecimalIdEncoder.TryDecodeUInt128(chars, out id) ? id : null,
 				HexadecimalIdEncoder.DecodeUInt128OrDefault(bytes),
 				HexadecimalIdEncoder.DecodeUInt128OrDefault(chars),
-			};
+			];
 		}
 
 		private static bool[] SuccessForAllUInt128Decodings(byte[] bytes)
@@ -1316,13 +1316,13 @@ namespace Architect.Identities.Tests.Encodings
 			Span<char> chars = stackalloc char[bytes.Length];
 			for (var i = 0; i < chars.Length; i++) chars[i] = (char)bytes[i];
 
-			return new[]
-			{
+			return
+			[
 				HexadecimalIdEncoder.TryDecodeUInt128(bytes, out _),
 				HexadecimalIdEncoder.TryDecodeUInt128(chars, out _),
 				HexadecimalIdEncoder.DecodeUInt128OrDefault(bytes) is not null,
 				HexadecimalIdEncoder.DecodeUInt128OrDefault(chars) is not null,
-			};
+			];
 		}
 
 		[Fact]
