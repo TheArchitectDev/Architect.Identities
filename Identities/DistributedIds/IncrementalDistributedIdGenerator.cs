@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 
 // ReSharper disable once CheckNamespace
 namespace Architect.Identities
@@ -11,19 +11,30 @@ namespace Architect.Identities
 	/// Generates ID values 1, 2, 3, and so on.
 	/// </para>
 	/// <para>
-	/// Although this type is thread-safe, single-threaded use also allows the generated IDs to be predicted.
+	/// Although this type is thread-safe, single-threaded use additionally allows the generated IDs to be predicted.
 	/// </para>
 	/// </summary>
 	public sealed class IncrementalDistributedIdGenerator : IDistributedIdGenerator
 	{
-		private long _lastGeneratedId = 0;
+		private readonly ulong _firstId;
+		private long _previousIncrement = -1;
+
+		public IncrementalDistributedIdGenerator()
+			: this(firstId: 1)
+		{
+		}
+
+		public IncrementalDistributedIdGenerator(ulong firstId = 1)
+		{
+			this._firstId = firstId;
+		}
 
 		public decimal CreateId()
 		{
-			var id = (decimal)this.GenerateId();
+			var id = this.GenerateId();
 			return id;
 		}
 
-		private long GenerateId() => Interlocked.Increment(ref this._lastGeneratedId);
+		private decimal GenerateId() => this._firstId + (decimal)Interlocked.Increment(ref this._previousIncrement);
 	}
 }
