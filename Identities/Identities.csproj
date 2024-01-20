@@ -32,6 +32,7 @@ Release notes:
 - Added encoding methods for UInt128.
 - Added extension methods to transcode between UInt128 and Guid.
 - Added public identity conversions for UInt128 and Guid.
+- DistributedIdGeneratorScope and DistributedId128GeneratorScope now expose the CurrentGenerator property, which helps when implementing generators that need to piggyback on the encapsulated generator.
 
 2.0.0:
 - BREAKING: Removed Fluid. Ambient scopes with startup configuration are now considered undesirable.

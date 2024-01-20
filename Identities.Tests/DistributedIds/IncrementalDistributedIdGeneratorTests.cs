@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Xunit;
 
 namespace Architect.Identities.Tests.DistributedIds
@@ -53,6 +53,26 @@ namespace Architect.Identities.Tests.DistributedIds
 
 			foreach (var result in results)
 				Assert.Equal(1m, result);
+		}
+
+		[Fact]
+		public void CreateId_RepeatedlyWithCustomStartingValue_ShouldReturnExpectedResult()
+		{
+			var generator = new IncrementalDistributedIdGenerator(firstId: 0L);
+
+			var result1 = generator.CreateId();
+			var result2 = generator.CreateId();
+
+			Assert.Equal(0m, result1);
+			Assert.Equal(1m, result2);
+
+			generator = new IncrementalDistributedIdGenerator(UInt64.MaxValue);
+
+			result1 = generator.CreateId();
+			result2 = generator.CreateId();
+
+			Assert.Equal(UInt64.MaxValue, result1);
+			Assert.Equal(UInt64.MaxValue + 1m, result2);
 		}
 	}
 }

@@ -30,7 +30,7 @@ namespace Architect.Identities
 		}
 
 		internal static DistributedIdGeneratorScope Current => GetAmbientScope()!;
-		internal static IDistributedIdGenerator CurrentGenerator => Current.IdGenerator;
+		public static IDistributedIdGenerator CurrentGenerator => Current.IdGenerator;
 
 		private IDistributedIdGenerator IdGenerator { get; }
 
