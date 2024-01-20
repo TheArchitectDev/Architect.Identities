@@ -35,6 +35,9 @@ namespace Architect.Identities
 			return id;
 		}
 
-		private decimal GenerateId() => this._firstId + (decimal)Interlocked.Increment(ref this._previousIncrement);
+		private decimal GenerateId()
+		{
+			return this._firstId + (decimal)Interlocked.Increment(ref this._previousIncrement);
+		}
 	}
 }
