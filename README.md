@@ -72,7 +72,7 @@ decimal id = DistributedId.CreateId(); // 1088824355131185736905670087
 
 // Alternatively, for a more compact representation, IDs can be encoded in alphanumeric
 string compactId = id.ToAlphanumeric(); // "3zfAkCP7ZtzfeQYp"
-decimal originalId = IdEncoder.GetDecimalOrDefault(compactId)
+decimal originalId = AlphanumericIdEncoder.DecodeDecimalOrDefault(compactId)
 	?? throw new ArgumentException("Not a valid encoded ID.");
 ```
 
@@ -297,7 +297,7 @@ public void ExampleUse(IPublicIdentityConverter publicIdConverter)
 	string publicIdString = publicId.ToAlphanumeric(); // "48XoooHHCe1CiOHrghM7Dl" (22 chars)
 	
 	// Convert back to internal ID
-	long originalId = publicIdConverter.GetLongOrDefault(IdEncoder.GetGuidOrDefault(publicIdString) ?? Guid.Empty)
+	decimal originalId = publicIdConverter.GetDecimalOrDefault(AlphanumericIdEncoder.DecodeGuidOrDefault(publicIdString) ?? Guid.Empty)
 		?? throw new ArgumentException("Not a valid ID.");
 }
 ```
@@ -312,7 +312,7 @@ public void ExampleHexadecimalEncoding(IPublicIdentityConverter publicIdConverte
 	string publicIdString = publicId.ToString("N").ToUpperInvariant(); // "32F0EDAC80632C685C43C889B058556E" (32 chars)
 	
 	// Convert back to internal ID
-	long originalId = publicIdConverter.GetLongOrDefault(new Guid(publicIdString))
+	decimal originalId = publicIdConverter.GetDecimalOrDefault(new Guid(publicIdString))
 		?? throw new ArgumentException("Not a valid ID.");
 }
 ```
@@ -335,7 +335,7 @@ Generally, when an ID is taken as client input, something is loaded based on tha
 
 ```cs
 // Any invalid input will result in id=0
-long id = publicIdConverter.GetLongOrDefault(IdEncoder.GetGuidOrDefault(publicIdString) ?? Guid.Empty)
+long id = publicIdConverter.GetLongOrDefault(AlphanumericIdEncoder.DecodeGuidOrDefault(publicIdString) ?? Guid.Empty)
 	?? 0L;
 
 var entity = this.Repository.GetEntityById(id);
