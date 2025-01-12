@@ -1,6 +1,6 @@
 using System;
 
-// ReSharper disable once CheckNamespace
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Architect.Identities
 {
 	public static class IdEncodingExtensions
