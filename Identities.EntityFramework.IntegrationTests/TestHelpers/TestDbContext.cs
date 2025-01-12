@@ -21,8 +21,8 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 				TypeAttributes.Sealed | TypeAttributes.Class | TypeAttributes.Public, typeof(TestDbContext));
 
 			var baseConstructor = typeof(TestDbContext).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, binder: null,
-				new[] { typeof(Action<ModelBuilder, DbContext>), typeof(bool) }, modifiers: null);
-			var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, new[] { typeof(Action<ModelBuilder, DbContext>), typeof(bool) });
+				[typeof(Action<ModelBuilder, DbContext>), typeof(bool)], modifiers: null);
+			var ctorBuilder = typeBuilder.DefineConstructor(MethodAttributes.Public, CallingConventions.Standard, [typeof(Action<ModelBuilder, DbContext>), typeof(bool)]);
 			var ilGenerator = ctorBuilder.GetILGenerator();
 			ilGenerator.Emit(OpCodes.Ldarg_0);
 			ilGenerator.Emit(OpCodes.Ldarg_1);
@@ -34,7 +34,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 
 			try
 			{
-				var instance = (TestDbContext)Activator.CreateInstance(type, new object[] { onModelCreating, useInMemoryInsteadOfSqlite, });
+				var instance = (TestDbContext)Activator.CreateInstance(type, [onModelCreating, useInMemoryInsteadOfSqlite,]);
 				return instance;
 			}
 			catch (TargetInvocationException e)
@@ -45,7 +45,7 @@ namespace Architect.Identities.EntityFramework.IntegrationTests.TestHelpers
 
 		protected TestDbContext(Action<ModelBuilder, DbContext> onModelCreating = null, bool useInMemoryInsteadOfSqlite = false)
 			: base(useInMemoryInsteadOfSqlite
-				  ? new DbContextOptionsBuilder().UseInMemoryDatabase("db").Options
+				  ? new DbContextOptionsBuilder().UseInMemoryDatabase(Guid.NewGuid().ToString("N")).Options
 				  : new DbContextOptionsBuilder().UseSqlite("Filename=:memory:").Options)
 		{
 			this.OnModelCreatingAction = onModelCreating ?? ((modelBuilder, dbContext) => { });
