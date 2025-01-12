@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using Xunit;
 
-namespace Architect.Identities.Tests.DistributedId128s
+namespace Architect.Identities.Tests.DistributedIds
 {
 	public sealed class DistributedId128GeneratorTests
 	{
