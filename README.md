@@ -30,29 +30,60 @@ This package provides highly tuned tools for ID generation and management.
 
 ## TLDR
 
-The **[DistributedId](#distributed-ids)** is a single ID that combines the advantages of auto-increment IDs and UUIDs.
+The **[DistributedId](#distributed-ids)** is a single, compact ID that combines the advantages of auto-increment IDs and UUIDs.
 
-The **[DistributedId128](#distributedid128)** is a 128-bit UUID replacement with the advantages of the DistributedId and practically no rate limits or collisions, at the cost of more space.
+The **[DistributedId128](#distributedid128)** is a UUID version 7 variant with the advantages of the DistributedId and practically no rate limits or collisions.
 
 For sensitive scenarios where zero metadata must be leaked from an ID, **[Public Identities](#public-identities)** can transform any ID into a public representation that reveals nothing, without ever introducing an unrelated secondary ID.
+
+### What ID should I use?
+
+If you just want to decide what kind of ID to use, follow these steps:
+
+- [Avoid](#uuid-version-7) `Guid.CreateVersion7()`, `Guid.NewGuid()`, and auto-increment _as default picks_.
+- If an ID's creation timestamp is considered safe to expose:
+  - If you need to deal with pre-existing UUIDs, choose *[DistributedId128](#distributedid128)*.
+  - If you need to scale to billions of new IDs per day, choose *[DistributedId128](#distributedid128)*.
+    - _This is probably not you._
+  - Otherwise, choose the more compact *[DistributedId](#distributed-ids)*.
+    - _Note that the numeric representation is more pleasant to store, but the string representations is shorter to humans and plays nice with SQL Server's columnstores._
+- If an ID's creation timestamp is considered sensitive (e.g. "when was this bank account opened"):
+  - If you need to deal with pre-existing UUIDs, choose `Guid.NewGuid()`.
+  - If the table size will never be significant, choose `Guid.NewGuid()`.
+  - If a secret key can be managed easily enough, choose auto-increment and use *[Public Identities](#public-identities)* to expose a deterministic, indistinguishable-from-random public representation.
+  - If the above is infeasible, concede to `Guid.NewGuid()`.
 
 ## Introduction
 
 Should entity IDs use UUIDs or auto-increment?
 
-Auto-increment IDs are ill-suited for exposing publically: they leak hints about the row count and are easy to guess. Moreover, they are generated very late, on insertion, posing challenges to the creation of aggregates.
+Auto-increment IDs are ill-suited for public exposure: they leak hints about the row count and are easy to guess. Moreover, they are generated very late, on insertion, posing challenges to the creation of entities that point to one another by ID.
 
-UUIDs, on the other hand, tend to be random, causing poor performance as database/storage keys.
+Traditional random UUIDs, on the other hand, cause poor performance as database/storage keys due to random access patterns.
 
-Using both types of ID on an entity is cumbersome and may leak a technical workaround into the domain model.
+Using both types of ID on a single entity is cumbersome and may leak a technical workaround into the domain model.
 
 Luckily, we can do better.
 
+### UUID version 7
+
+This package predates the official specification of UUID version 7 (UUIDv7) and its implementation in .NET 9.
+
+UUIDv7 is an excellent answer to the problem posed above.
+As great as it is to have a solution built into .NET, however, that implementation leaves something to be desired.
+
+The **[DistributedId128](#distributedid128)** is a UUIDv7 variant with several advantages.
+Most prominently, it remains incremental even when multiple IDs are generated at the same millisecond, so that items created in sequence (as with batches) stay in that order.
+They also stay incremental when the time synchronization protocol makes small adjustments to the system clock.
+The absence of these properties in .NET's own implementation is a source of [astonishment](https://stackoverflow.com/q/79559842/543814) and [disappointment](https://www.reddit.com/r/dotnet/comments/1ea5mgt/comment/lekva4j/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button).
+
+As an alternative, the **[DistributedId](#distributed-ids)** is a shorter equivalent that can be stored numerically as just 13 bytes, or alphanumerically as a mere 16 characters.
+
 ## Distributed IDs
 
-The DistributedId is a UUID replacement that is generated on-the-fly (without orchestration), unique, hard to guess, easy to store and sort, and highly efficient as a database key.
+The DistributedId is an alternative to UUIDs that is generated on-the-fly (without orchestration), unique, hard to guess, easy to store and sort, and highly efficient as a database key.
 
-A DistributedId is created as a 93-bit decimal value of 28 digits, but can also be represented as a (case-sensitive) 16-char alphanumeric value or as a `Guid`.
+A DistributedId is created as a 93-bit decimal value of 28 digits, but can also be represented as a (case-sensitive) 16-char alphanumeric value or even as a `Guid`.
 
 Distributed applications can create unique DistributedIds with no synchronization mechanism between them. This holds true under almost any load. Even under extreme conditions, [collisions](#collision-resistance) (i.e. duplicates) tend to be far under 1 collision per 350 billion IDs generated.
 
@@ -194,7 +225,11 @@ A DistributedId reveals its creation timestamp. Otherwise, it consists of crypto
 
 ### Entity Framework
 
-When DistributedIds (or any decimal IDs) are used in Entity Framework, the column type needs to be configured. Although this can be done manually, the [Architect.Identities.EntityFramework](https://www.nuget.org/packages/Architect.Identities.EntityFramework) package facilitates conventions for this through its extension methods.
+When DistributedIds (or any decimal IDs) are used in Entity Framework, the column type needs to be configured. Although this can be done manually, there are more convenient ways.
+
+If the [Architect.DomainModeling](https://github.com/TheArchitectDev/Architect.DomainModeling) package is used, its [Entity Framework conventions](https://github.com/TheArchitectDev/Architect.DomainModeling?tab=readme-ov-file#entity-framework-conventions) can take care of all identity mappings, as well as make it easy to customize them.
+
+Alternatively, the [Architect.Identities.EntityFramework](https://www.nuget.org/packages/Architect.Identities.EntityFramework) companion package facilitates mapping plain DistributedIds:
 
 ```cs
 protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
@@ -211,7 +246,7 @@ The conventions are applied to any entity properties named "*Id" or "*ID" whose 
 
 Optionally, the extension method takes any number of assemblies as input. From those assemblies, it finds all types named "*Id" or "*ID" that are decimal-convertible, and configures a `DefaultTypeMapping` for them using the same conventions.
 
-A `DefaultTypeMapping` kicks in when the type appears in EF-generated queries where the context of a column is lost, such as when EF generates a call to `CAST()`. Without such a mapping, EF may choose to convert a decimal to some default precision, which is generally too low.
+A `DefaultTypeMapping` applies when the type appears in EF-generated queries where the context of a column is lost, such as when EF generates a call to `CAST()`. Without such a mapping, EF may choose to convert a decimal to some default precision, which is generally too low.
 
 ### Alternatives
 
@@ -219,8 +254,11 @@ There exist [various alternatives](https://www.ietf.org/archive/id/draft-peabody
 
 To highlight a few examples:
 
+- [`Guid.CreationVersion7()`](https://learn.microsoft.com/en-us/dotnet/api/system.guid.createversion7)
+  - Stored as 16 bytes or 36 base-64 characters.
+  - Next ID on the same timestamp is [potentially our of order](https://github.com/dotnet/runtime/blob/9d5a6a9aa463d6d10b0b0ba6d5982cc82f363dc3/src/libraries/System.Private.CoreLib/src/System/Guid.cs#L311).
 - [Universally Unique Lexicographically Sortable Identifier (ULID)](https://github.com/ulid/spec)
-  - Stored as 16 bytes or 26 base32 characters.
+  - Stored as 16 bytes or 26 base-32 characters.
   - Next ID on the same timestamp is either [predictable](https://github.com/ulid/spec#monotonicity) or [potentially out of order](https://github.com/ulid/spec#sorting).
 - [MongoDB's ObjectId](https://www.mongodb.com/docs/manual/reference/method/ObjectId/)
   - Stored as 12 bytes or 24 hexadecimal characters.
@@ -229,8 +267,8 @@ To highlight a few examples:
 
 ## DistributedId128
 
-The DistributedId128 is a 128-bit DistributedId variant that offers additional benefits at the cost of extra space and being more unwieldy than a simple `decimal`.
-It should be used if the requirements on generation rate or collision resistance are extreme (very high volumes) or unpredictable (class libraries).
+The DistributedId128 is a UUIDv7 variant, and the 128-bit counterpart to the DistributedId, offering additional benefits at the cost of extra space and being more unwieldy than a simple `decimal`.
+It should be used if the requirements on generation rate or collision resistance are drastic (extreme scale) or unpredictable (class libraries).
 Apart from leaking the generation timestamp, this ID can serve as a drop-in replacement for the common version-4 random UUID.
 
 Class libraries are a good example of products that should prefer the DistributedId128. They can make fewer assumptions, as their usage patterns often depend on the applications using them.
@@ -241,7 +279,7 @@ Class libraries are a good example of products that should prefer the Distribute
 - Risks practically no collisions even globally (at 75 bits of randomness _per millisecond_, incremented with 58-bit values intra-millisecond).
   - **OTP:** 1 million servers each generating 1 ID at the same millisecond, repeatedly, expect less than 1 collision per 75 quadrillion (75,000,000,000,000,000) IDs.
   - **Batch processing:** 100K servers each generating 100K IDs at the same millisecond, repeatedly, expect less than 1 collision per 5 trillion (5,000,000,000,000) IDs.
-- Is also a valid [version-7 UUID](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-uuid-version-7) (_with the [variant](https://www.rfc-editor.org/rfc/rfc4122.html#section-4.1.1) set to 0xx/"backward compatibility", to keep the 64th bit 0_), but with the rare property of being incremental _and_ hard to guess even for multiple IDs at the same millisecond.
+- Is a [version-7 UUID](https://www.ietf.org/archive/id/draft-peabody-dispatch-new-uuid-format-04.html#name-uuid-version-7) (_with the [variant](https://www.rfc-editor.org/rfc/rfc4122.html#section-4.1.1) set to 0xx/"backward compatibility", to keep the 64th bit 0_), but with the rare property of being incremental _and_ hard to guess even for multiple IDs at the same millisecond.
 
 ### 128-bit Structure
 
@@ -249,7 +287,7 @@ Class libraries are a good example of products that should prefer the Distribute
 - Can be represented as a 32-char or 36-char UUID string anywhere (e.g. `094954a8-622c-76ad-1b93-cdefcbdf0888`).
 - Can be represented as `DECIMAL(38, 0)` in SQL databases (until beyond the year 4000, at which point a 39th digit would appear).
 - Occcupies 16 bytes in memory.
-- Requires 17 bytes of storage as `DECIMAL(38, 0)` or 23/24 bytes as alphanumeric UTF-8 in many SQL databases, including SQL Server and MySQL.
+- Requires 17 bytes of storage as `DECIMAL(38, 0)` or 22-24 bytes as alphanumeric ASCII in many SQL databases, including SQL Server and MySQL.
 - Can be represented as two (always positive) `long` values, suitable for storing in two `BIGINT` database columns, as a composite key.
 - Can be represented in a natural, workable form by most SQL databases, being a simple `DECIMAL` or `VARCHAR` or pair of `BIGINT` values. (By contrast, not all databases have a UUID type, requiring the use of binary types, making manual queries cumbersome.)
 - Is ordered intuitively and consistently in .NET, in both `Guid`, `Guid.ToString()`, `UInt128`, `UInt128.ToString()`, alphanumeric, and hexadecimal formats.
