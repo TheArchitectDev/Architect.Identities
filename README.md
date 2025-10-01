@@ -5,7 +5,9 @@ Reliable unique ID generation for distributed applications.
 This package provides highly tuned tools for ID generation and management.
 
 - [TLDR](#tldr)
+  * [What ID should I use?](#what-id-should-i-use)
 - [Introduction](#introduction)
+  * [UUID version 7](#uuid-version-7)
 - [Distributed IDs](#distributed-ids)
   * [Example Value](#example-value)
   * [Example Usage](#example-usage)
@@ -40,7 +42,7 @@ For sensitive scenarios where zero metadata must be leaked from an ID, **[Public
 
 If you just want to decide what kind of ID to use, follow these steps:
 
-- [Avoid](#uuid-version-7) `Guid.CreateVersion7()`, `Guid.NewGuid()`, and auto-increment _as default picks_.
+- Avoid `Guid.CreateVersion7()`, `Guid.NewGuid()`, and auto-increment _as default picks_.
 - If an ID's creation timestamp is considered safe to expose:
   - If you need to deal with pre-existing UUIDs, choose *[DistributedId128](#distributedid128)*.
   - If you need to scale to billions of new IDs per day, choose *[DistributedId128](#distributedid128)*.
@@ -50,7 +52,7 @@ If you just want to decide what kind of ID to use, follow these steps:
 - If an ID's creation timestamp is considered sensitive (e.g. "when was this bank account opened"):
   - If you need to deal with pre-existing UUIDs, choose `Guid.NewGuid()`.
   - If the table size will never be significant, choose `Guid.NewGuid()`.
-  - If a secret key can be managed easily enough, choose auto-increment and use *[Public Identities](#public-identities)* to expose a deterministic, indistinguishable-from-random public representation.
+  - If a secret key can be managed easily enough, choose *[DistributedId](#distributed-ids)* or auto-increment, and use *[Public Identities](#public-identities)* to expose a deterministic, indistinguishable-from-random public representation.
   - If the above is infeasible, concede to `Guid.NewGuid()`.
 
 ## Introduction
