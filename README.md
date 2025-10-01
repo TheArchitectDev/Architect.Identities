@@ -65,7 +65,7 @@ Traditional random UUIDs, on the other hand, cause poor performance as database/
 
 Using both types of ID on a single entity is cumbersome and may leak a technical workaround into the domain model.
 
-Luckily, we can do better.
+Fortunately, we can do better.
 
 ### UUID version 7
 
@@ -207,7 +207,7 @@ It is important to note that **the above is only in the degenerate scenario** wh
 
 #### Absolute Certainty
 
-Luckily, we can protect ourselves even against the extremely unlikely event of a collision.
+Fortunately, we can protect ourselves even against the extremely unlikely event of a collision.
 
 For contexts where even a single collision could be catastrophic, such as in certain financial domains, it is advisable to avoid "upserts", and always explicitly separate inserts from updates. This way, even if a collision did occur, it would merely cause one single transaction to fail (out of billions or trillions), rather than overwriting an existing record. This is good practice in general.
 
