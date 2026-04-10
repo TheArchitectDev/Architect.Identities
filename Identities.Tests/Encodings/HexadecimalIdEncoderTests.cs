@@ -866,10 +866,12 @@ namespace Architect.Identities.Tests.Encodings
 			var decimals = MemoryMarshal.CreateSpan(ref value, length: 1);
 			var components = MemoryMarshal.Cast<decimal, int>(decimals);
 
+#pragma warning disable CS0618 // Type or member is obsolete
 			var lo = DecimalStructure.GetLo(components);
 			var mid = DecimalStructure.GetMid(components);
 			var hi = (uint)DecimalStructure.GetHi(components);
 			var signAndScale = DecimalStructure.GetSignAndScale(components);
+#pragma warning restore CS0618 // Type or member is obsolete
 
 			Span<byte> bytes = stackalloc byte[16];
 			BinaryPrimitives.TryWriteInt32LittleEndian(bytes, 0);

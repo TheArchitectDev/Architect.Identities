@@ -152,6 +152,14 @@ namespace Architect.Identities
 			var high = (ulong)(value >> 64);
 			var low = (ulong)value;
 			return (high, low);
+#elif NET5_0_OR_GREATER
+			Span<int> decimalComponents = stackalloc int[4];
+			Binary128.GetBits(value, decimalComponents);
+			var lo = (ulong)(uint)decimalComponents[0];
+			var mid = (ulong)(uint)decimalComponents[1];
+			var hi = (ulong)(uint)decimalComponents[2];
+			var low = (mid << 32) | lo;
+			return (hi, low);
 #else
 			var decimals = MemoryMarshal.CreateSpan(ref value, length: 1);
 			var ints = MemoryMarshal.Cast<decimal, int>(decimals);

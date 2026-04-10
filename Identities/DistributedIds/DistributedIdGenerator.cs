@@ -15,15 +15,6 @@ namespace Architect.Identities
 		/// </summary>
 		internal const decimal MaxValue = 99999_99999_99999_99999_99999_999m;
 
-		static DistributedIdGenerator()
-		{
-			if (!Environment.Is64BitOperatingSystem)
-				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
-
-			if (!BitConverter.IsLittleEndian)
-				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The decimal-binary conversions have not been tested.");
-		}
-
 		private static DateTime GetUtcNow()
 		{
 			return DateTime.UtcNow;

@@ -1,4 +1,6 @@
 using System;
+using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Architect.Identities.Encodings;
@@ -19,26 +21,20 @@ namespace Architect.Identities
 #endif
 	internal sealed class AesPublicIdentityConverter : IPublicIdentityConverter
 	{
+#if !NET5_0_OR_GREATER
 		static AesPublicIdentityConverter()
 		{
-			if (!BitConverter.IsLittleEndian)
-				throw new PlatformNotSupportedException($"{nameof(IPublicIdentityConverter)} is not supported on big-endian architectures, to avoid issues with the portability of values between architectures.");
-
 			// Ensure that decimals are still structured the same way
 			// This prevents the application from ever generating incorrect public identities in this extremely unlikely scenario, allowing a fix to be created
 			DecimalStructure.ThrowIfDecimalStructureIsUnexpected();
 		}
+#endif
 
 		#region Byte arrays to store temporary state for ICryptoTransform parameters
 		private byte[] EncryptorInputBlock { get; } = new byte[16];
 		private byte[] EncryptorOutputBlock { get; } = new byte[16];
-		private Span<ulong> EncryptorInputUlongSpan => MemoryMarshal.Cast<byte, ulong>(this.EncryptorInputBlock);
-		private Span<decimal> EncryptorInputDecimalSpan => MemoryMarshal.Cast<byte, decimal>(this.EncryptorInputBlock);
-		private Span<int> EncryptorInputDecimalComponentSpan => MemoryMarshal.Cast<byte, int>(this.EncryptorInputBlock);
 		private byte[] DecryptorInputBlock { get; } = new byte[16];
 		private byte[] DecryptorOutputBlock { get; } = new byte[16];
-		private Span<ulong> DecryptorOutputUlongSpan => MemoryMarshal.Cast<byte, ulong>(this.DecryptorOutputBlock);
-		private Span<decimal> DecryptorOutputDecimalSpan => MemoryMarshal.Cast<byte, decimal>(this.DecryptorOutputBlock);
 		#endregion
 
 		private byte[] Key { get; }
@@ -68,11 +64,6 @@ namespace Architect.Identities
 			this.Decryptor.Dispose();
 			this.Aes.Dispose();
 		}
-
-		/// <summary>
-		/// Converts the given long to ulong, or throws an <see cref="ArgumentOutOfRangeException"/> if it is negative.
-		/// </summary>
-		private static ulong LongToUlong(long id) => id >= 0 ? (ulong)id : throw new ArgumentOutOfRangeException(nameof(id));
 
 		public Guid GetPublicRepresentation(ulong id)
 		{
@@ -123,29 +114,41 @@ namespace Architect.Identities
 		public bool TryGetUlong(Guid publicId, out ulong id)
 		{
 			Span<byte> idBytes = stackalloc byte[16];
-			var idUlongs = MemoryMarshal.Cast<byte, ulong>(idBytes);
 
-			if (!this.TryGetIdBytes(publicId, idBytes) || idUlongs[0] != 0UL) // Invalid input if the left 8 bytes contain any non-zeros
+			if (!this.TryGetIdBytes(publicId, idBytes) || Unsafe.ReadUnaligned<ulong>(ref idBytes[0]) != 0UL) // Invalid input if the left 8 bytes contain any non-zeros
 			{
 				id = default;
 				return false;
 			}
-			id = idUlongs[1];
+			id = BinaryPrimitives.ReadUInt64LittleEndian(idBytes[8..]);
 			return true;
 		}
 
 		public bool TryGetDecimal(Guid publicId, out decimal id)
 		{
 			Span<byte> idBytes = stackalloc byte[16];
-			var decimals = MemoryMarshal.Cast<byte, decimal>(idBytes);
-			var decimalComponents = MemoryMarshal.Cast<byte, int>(idBytes);
 
-			// Invalid input if sign-and-scale component (4 bytes) are non-zero or max value is exceeded
-			if (!this.TryGetIdBytes(publicId, idBytes) || DecimalStructure.GetSignAndScale(decimalComponents) != 0 || (id = decimals[0]) > DistributedIdGenerator.MaxValue)
+			if (!this.TryGetIdBytes(publicId, idBytes))
 			{
 				id = default;
 				return false;
 			}
+
+			// Little-endian decimal layout because that is what was initially done
+			var signAndScale = BinaryPrimitives.ReadInt32LittleEndian(idBytes);
+			var hi = BinaryPrimitives.ReadInt32LittleEndian(idBytes[4..]);
+			var lo = BinaryPrimitives.ReadInt32LittleEndian(idBytes[8..]);
+			var mid = BinaryPrimitives.ReadInt32LittleEndian(idBytes[12..]);
+
+			id = new decimal(lo: lo, mid: mid, hi: hi, isNegative: false, scale: 0);
+
+			// Invalid input if sign-and-scale component (4 bytes) are non-zero or max value is exceeded
+			if (id > DistributedIdGenerator.MaxValue || signAndScale != 0)
+			{
+				id = default;
+				return false;
+			}
+
 			return true;
 		}
 
@@ -189,14 +192,14 @@ namespace Architect.Identities
 
 			lock (this.Encryptor)
 			{
-				this.EncryptorInputUlongSpan[1] = id;
+				Unsafe.WriteUnaligned(ref this.EncryptorInputBlock[0], 0UL);
+				BinaryPrimitives.WriteUInt64LittleEndian(this.EncryptorInputBlock.AsSpan()[8..], id);
 
 				// The first 8 bytes are always zero, and the last 8 bytes we overwrite
 				System.Diagnostics.Debug.Assert(this.EncryptorInputBlock.Length == 16);
-				System.Diagnostics.Debug.Assert(this.EncryptorInputUlongSpan[0] == 0UL);
-				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<ulong>(this.EncryptorInputBlock) == 0, "The left 8 bytes were inadvertently used. They should remain 0.");
+				System.Diagnostics.Debug.Assert(BinaryPrimitives.ReadUInt64LittleEndian(this.EncryptorInputBlock) == 0, "The left 8 bytes were inadvertently used. They should remain 0.");
 
-				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<ulong>(this.EncryptorInputBlock.AsSpan()[8..]) == id); // Confirm reversible operation
+				System.Diagnostics.Debug.Assert(BinaryPrimitives.ReadUInt64LittleEndian(this.EncryptorInputBlock.AsSpan()[8..]) == id); // Confirm reversible operation
 
 				var byteCount = this.Encryptor.TransformBlock(this.EncryptorInputBlock, 0, 16, this.EncryptorOutputBlock, 0);
 				System.Diagnostics.Debug.Assert(byteCount == 16);
@@ -217,17 +220,34 @@ namespace Architect.Identities
 
 			lock (this.Encryptor)
 			{
-				this.EncryptorInputDecimalSpan[0] = id;
+				// Little-endian decimal layout because that is what was initially done
+#if NET5_0_OR_GREATER
+				Span<int> decimalComponents = stackalloc int[4];
+				Decimal.GetBits(id, decimalComponents);
+				Unsafe.WriteUnaligned(ref outputBytes[0], 0U); // Flags
+				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[4..], decimalComponents[2]); // Hi
+				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[8..], decimalComponents[0]); // Lo
+				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[12..], decimalComponents[1]); // Mid
+#else
+				var decimals = MemoryMarshal.CreateReadOnlySpan(ref id, 1);
+				var ints = MemoryMarshal.Cast<decimal, int>(decimals);
+				Unsafe.WriteUnaligned(ref outputBytes[0], 0U);
+				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[4..],  DecimalStructure.GetHi(ints));
+				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[8..],  DecimalStructure.GetLo(ints));
+				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[12..], DecimalStructure.GetMid(ints));
+#endif
 
-				if (id > DistributedIdGenerator.MaxValue || DecimalStructure.GetSignAndScale(this.EncryptorInputDecimalComponentSpan) != 0)
+				if (id > DistributedIdGenerator.MaxValue || id.GetSignAndScale() != 0)
 					throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
+
+				outputBytes.CopyTo(this.EncryptorInputBlock);
 
 				// The first 4 bytes are always zero, and the last 12 bytes we overwrite
 				System.Diagnostics.Debug.Assert(this.EncryptorInputBlock.Length == 16);
-				System.Diagnostics.Debug.Assert(this.EncryptorInputDecimalComponentSpan[0] == 0);
+				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<decimal>(this.EncryptorInputBlock).GetSignAndScale() == 0);
 				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<int>(this.EncryptorInputBlock) == 0, "The left 4 bytes were inadvertently used. They should remain 0.");
 
-				System.Diagnostics.Debug.Assert(this.EncryptorInputDecimalSpan[0] == id); // Confirm reversible operation
+				System.Diagnostics.Debug.Assert(MemoryMarshal.Read<decimal>(this.EncryptorInputBlock) == id); // Confirm reversible operation
 
 				var byteCount = this.Encryptor.TransformBlock(this.EncryptorInputBlock, 0, 16, this.EncryptorOutputBlock, 0);
 				System.Diagnostics.Debug.Assert(byteCount == 16);

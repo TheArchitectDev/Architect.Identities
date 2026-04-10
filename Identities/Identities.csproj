@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;</TargetFrameworks>
+		<TargetFrameworks>net10.0;net9.0;net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;</TargetFrameworks>
 		<AssemblyName>Architect.Identities</AssemblyName>
 		<RootNamespace>Architect.Identities</RootNamespace>
 		<Nullable>Enable</Nullable>
@@ -11,7 +11,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<VersionPrefix>2.1.1</VersionPrefix>
+		<VersionPrefix>2.1.2</VersionPrefix>
 		<Description>
 Reliable unique ID generation and management for distributed applications.
 
@@ -24,6 +24,10 @@ Auto-increment IDs reveal sensitive information. UUIDs (also known as GUIDs) are
 https://github.com/TheArchitectDev/Architect.Identities
 
 Release notes:
+
+2.1.2:
+- Frameworks: Added net9.0 and net10.0.
+- Platforms: Now available on 32-bit and big-endian platforms also.
 
 2.1.1:
 - Enhancement: Upgraded package versions.

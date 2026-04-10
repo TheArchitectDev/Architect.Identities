@@ -26,15 +26,6 @@ namespace Architect.Identities
 		internal static readonly UInt128 MaxValueToFitInDecimal38 = UInt128.Parse("99999999999999999999999999999999999999");
 #endif
 
-		static DistributedId128Generator()
-		{
-			if (!Environment.Is64BitOperatingSystem)
-				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
-
-			if (!BitConverter.IsLittleEndian)
-				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The binary conversions have not been tested.");
-		}
-
 		private static DateTime GetUtcNow()
 		{
 			return DateTime.UtcNow;
