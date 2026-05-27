@@ -200,7 +200,10 @@ namespace Architect.Identities
 		{
 			System.Diagnostics.Debug.Assert(outputBytes.Length == 16);
 
-			if (id < 0m) throw new ArgumentOutOfRangeException(nameof(id));
+			if (id < 0m)
+				throw new ArgumentOutOfRangeException(nameof(id));
+			if (id > DistributedIdGenerator.MaxValue || id.GetSignAndScale() != 0)
+				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 			lock (this.Encryptor)
 			{
@@ -211,9 +214,6 @@ namespace Architect.Identities
 				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[4..], decimalComponents[2]); // Hi
 				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[8..], decimalComponents[0]); // Lo
 				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[12..], decimalComponents[1]); // Mid
-
-				if (id > DistributedIdGenerator.MaxValue || id.GetSignAndScale() != 0)
-					throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 				outputBytes.CopyTo(this.EncryptorInputBlock);
 

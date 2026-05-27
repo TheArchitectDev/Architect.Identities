@@ -2,7 +2,6 @@ using System.Buffers.Binary;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
-using Architect.Identities.Encodings;
 using Xunit;
 
 namespace Architect.Identities.Tests.Encodings
@@ -863,15 +862,11 @@ namespace Architect.Identities.Tests.Encodings
 		/// </summary>
 		internal static Guid Guid(decimal value)
 		{
-			var decimals = MemoryMarshal.CreateSpan(ref value, length: 1);
-			var components = MemoryMarshal.Cast<decimal, int>(decimals);
-
-#pragma warning disable CS0618 // Type or member is obsolete
-			var lo = DecimalStructure.GetLo(components);
-			var mid = DecimalStructure.GetMid(components);
-			var hi = (uint)DecimalStructure.GetHi(components);
-			var signAndScale = DecimalStructure.GetSignAndScale(components);
-#pragma warning restore CS0618 // Type or member is obsolete
+			Span<int> components = stackalloc int[4];
+			Decimal.GetBits(value, components);
+			var lo = components[0];
+			var mid = components[1];
+			var hi = (uint)components[2];
 
 			Span<byte> bytes = stackalloc byte[16];
 			BinaryPrimitives.TryWriteInt32LittleEndian(bytes, 0);
