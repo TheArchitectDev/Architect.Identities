@@ -7,9 +7,7 @@ namespace Architect.Identities.Encodings
 	/// <summary>
 	/// Provides operations related to the binary layout of decimals.
 	/// </summary>
-#if NET5_0_OR_GREATER
 	[Obsolete("Use Decimal.GetBits instead.")]
-#endif
 	internal static class DecimalStructure
 	{
 		/// <summary>

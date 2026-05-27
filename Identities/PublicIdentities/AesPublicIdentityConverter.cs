@@ -16,20 +16,8 @@ namespace Architect.Identities
 	/// For optimal performance, singleton or pooled use is preferred.
 	/// </para>
 	/// </summary>
-#if NET5_0_OR_GREATER
-	[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
-#endif
 	internal sealed class AesPublicIdentityConverter : IPublicIdentityConverter
 	{
-#if !NET5_0_OR_GREATER
-		static AesPublicIdentityConverter()
-		{
-			// Ensure that decimals are still structured the same way
-			// This prevents the application from ever generating incorrect public identities in this extremely unlikely scenario, allowing a fix to be created
-			DecimalStructure.ThrowIfDecimalStructureIsUnexpected();
-		}
-#endif
-
 		#region Byte arrays to store temporary state for ICryptoTransform parameters
 		private byte[] EncryptorInputBlock { get; } = new byte[16];
 		private byte[] EncryptorOutputBlock { get; } = new byte[16];
@@ -83,7 +71,6 @@ namespace Architect.Identities
 			return publicId;
 		}
 
-#if NET7_0_OR_GREATER
 		public Guid GetPublicRepresentation(UInt128 id)
 		{
 			// Since this package supports transcoding between UInt128 and Guid, it is desirable for the two to result in the same public representation
@@ -96,7 +83,6 @@ namespace Architect.Identities
 			var result = this.GetPublicRepresentation(guid);
 			return result;
 		}
-#endif
 
 		public Guid GetPublicRepresentation(Guid id)
 		{
@@ -152,7 +138,6 @@ namespace Architect.Identities
 			return true;
 		}
 
-#if NET7_0_OR_GREATER
 		public bool TryGetUInt128(Guid publicId, out UInt128 id)
 		{
 			// Since this package supports transcoding between UInt128 and Guid, it is desirable for the two to result in the same public representation
@@ -169,7 +154,6 @@ namespace Architect.Identities
 			BinaryIdEncoder.TryDecodeUInt128(idBytes, out id);
 			return true;
 		}
-#endif
 
 		public bool TryGetGuid(Guid publicId, out Guid id)
 		{
@@ -221,21 +205,12 @@ namespace Architect.Identities
 			lock (this.Encryptor)
 			{
 				// Little-endian decimal layout because that is what was initially done
-#if NET5_0_OR_GREATER
 				Span<int> decimalComponents = stackalloc int[4];
 				Decimal.GetBits(id, decimalComponents);
 				Unsafe.WriteUnaligned(ref outputBytes[0], 0U); // Flags
 				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[4..], decimalComponents[2]); // Hi
 				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[8..], decimalComponents[0]); // Lo
 				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[12..], decimalComponents[1]); // Mid
-#else
-				var decimals = MemoryMarshal.CreateReadOnlySpan(ref id, 1);
-				var ints = MemoryMarshal.Cast<decimal, int>(decimals);
-				Unsafe.WriteUnaligned(ref outputBytes[0], 0U);
-				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[4..],  DecimalStructure.GetHi(ints));
-				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[8..],  DecimalStructure.GetLo(ints));
-				BinaryPrimitives.WriteInt32LittleEndian(outputBytes[12..], DecimalStructure.GetMid(ints));
-#endif
 
 				if (id > DistributedIdGenerator.MaxValue || id.GetSignAndScale() != 0)
 					throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));

@@ -22,8 +22,6 @@ namespace Architect.Identities
 		{
 			if (id < 0m) throw new ArgumentOutOfRangeException(nameof(id));
 
-#if NET5_0_OR_GREATER
-
 			// Docs:
 			// The first, second, and third elements of the returned array contain the low, middle, and high 32 bits of the 96-bit integer number.
 			// The fourth element of the returned array contains the scale factor and sign.
@@ -35,23 +33,6 @@ namespace Architect.Identities
 				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
 			return (SignAndScale: ints[3], Hi: ints[2], Mid: ints[1], Lo: ints[0]);
-
-#else
-
-			var decimals = System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpan(ref id, length: 1);
-			var components = System.Runtime.InteropServices.MemoryMarshal.Cast<decimal, int>(decimals);
-			var signAndScale = Encodings.DecimalStructure.GetSignAndScale(components);
-			var hi = Encodings.DecimalStructure.GetHi(components);
-			var lo = Encodings.DecimalStructure.GetLo(components);
-			var mid = Encodings.DecimalStructure.GetMid(components);
-
-			// Validate format and range
-			if (id > DistributedIdGenerator.MaxValue || signAndScale != 0)
-				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
-
-			return (signAndScale, hi, mid, lo);
-
-#endif
 		}
 
 		/// <summary>
@@ -168,21 +149,7 @@ namespace Architect.Identities
 		{
 			if (bytes.Length < 16) throw new IndexOutOfRangeException("At least 16 output bytes are required.");
 
-#if NET8_0_OR_GREATER
 			id.TryWriteBytes(bytes, bigEndian: true, out _);
-#else
-
-			id.TryWriteBytes(bytes);
-
-			// A UUID has certain byte groups in little-endian
-			// Our entire output must be big-endian
-			BinaryPrimitives.WriteUInt32BigEndian(bytes, BinaryPrimitives.ReadUInt32LittleEndian(bytes)); // Make big-endian byte group 0-3
-			BinaryPrimitives.WriteUInt16BigEndian(bytes[4..], BinaryPrimitives.ReadUInt16LittleEndian(bytes[4..])); // Make big-endian byte group 4-5
-			BinaryPrimitives.WriteUInt16BigEndian(bytes[6..], BinaryPrimitives.ReadUInt16LittleEndian(bytes[6..])); // Make big-endian byte group 6-7
-
-			// The right half is in big-endian and needs to be for a UUID as well
-
-#endif
 		}
 
 		/// <summary>
@@ -198,7 +165,6 @@ namespace Architect.Identities
 			return bytes;
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs the 16-byte big-endian binary representation of the given ID.
@@ -229,7 +195,6 @@ namespace Architect.Identities
 			Encode(id, bytes);
 			return bytes;
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -330,25 +295,10 @@ namespace Architect.Identities
 				return false;
 			}
 
-#if NET8_0_OR_GREATER
 			id = new Guid(bytes, bigEndian: true);
 			return true;
-#else
-			Span<byte> resultBytes = stackalloc byte[16];
-
-			// Our entire input was big-endian
-			// A UUID expects certain byte groups in little-endian
-			BinaryPrimitives.WriteUInt32LittleEndian(resultBytes, BinaryPrimitives.ReadUInt32BigEndian(bytes)); // Make little-endian byte group 0-3
-			BinaryPrimitives.WriteUInt16LittleEndian(resultBytes[4..], BinaryPrimitives.ReadUInt16BigEndian(bytes[4..])); // Make little-endian byte group 4-5
-			BinaryPrimitives.WriteUInt16LittleEndian(resultBytes[6..], BinaryPrimitives.ReadUInt16BigEndian(bytes[6..])); // Make little-endian byte group 6-7
-			bytes[8..].CopyTo(resultBytes[8..]); // The right half is in big-endian and needs to be for a UUID as well
-
-			id = new Guid(resultBytes);
-			return true;
-#endif
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs an ID decoded from the given binary representation.
@@ -374,7 +324,6 @@ namespace Architect.Identities
 			id = new UInt128(upper: upper, lower: lower);
 			return true;
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -432,7 +381,6 @@ namespace Architect.Identities
 			return TryDecodeGuid(bytes, out var id) ? id : null;
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns an ID decoded from the given binary representation.
@@ -446,6 +394,5 @@ namespace Architect.Identities
 		{
 			return TryDecodeUInt128(bytes, out var id) ? id : null;
 		}
-#endif
 	}
 }

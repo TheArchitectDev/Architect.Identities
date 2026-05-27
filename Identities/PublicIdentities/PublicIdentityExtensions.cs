@@ -4,9 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Architect.Identities
 {
-#if NET5_0_OR_GREATER
-	[System.Runtime.Versioning.UnsupportedOSPlatform("browser")]
-#endif
 	public static class PublicIdentityExtensions
 	{
 		/// <summary>

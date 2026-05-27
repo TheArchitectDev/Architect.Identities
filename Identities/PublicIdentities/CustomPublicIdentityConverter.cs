@@ -59,12 +59,10 @@ namespace Architect.Identities
 			return this.InternalConverter.GetPublicRepresentation(id);
 		}
 
-#if NET7_0_OR_GREATER
 		public Guid GetPublicRepresentation(UInt128 id)
 		{
 			return this.InternalConverter.GetPublicRepresentation(id);
 		}
-#endif
 
 		public Guid GetPublicRepresentation(Guid id)
 		{
@@ -81,12 +79,10 @@ namespace Architect.Identities
 			return this.InternalConverter.TryGetDecimal(publicId, out id);
 		}
 
-#if NET7_0_OR_GREATER
 		public bool TryGetUInt128(Guid publicId, out UInt128 id)
 		{
 			return this.InternalConverter.TryGetUInt128(publicId, out id);
 		}
-#endif
 
 		public bool TryGetGuid(Guid publicId, out Guid id)
 		{

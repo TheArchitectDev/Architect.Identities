@@ -8,7 +8,6 @@ namespace Architect.Identities
 	/// </summary>
 	public interface IDistributedId128Generator
 	{
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns a new ID value, encoded as a <see cref="UInt128"/>.
@@ -20,7 +19,6 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		UInt128 CreateId();
-#endif
 
 		/// <summary>
 		/// <para>

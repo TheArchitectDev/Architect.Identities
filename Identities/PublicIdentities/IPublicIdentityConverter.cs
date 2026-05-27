@@ -53,7 +53,6 @@ namespace Architect.Identities
 		/// </summary>
 		/// <param name="id">A positive decimal with 0 decimal places, consisting of no more than 28 digits, such as a value generated using <see cref="DistributedId.CreateId"/>.</param>
 		Guid GetPublicRepresentation(decimal id);
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns a 16-byte public representation of the given ID.
@@ -68,7 +67,6 @@ namespace Architect.Identities
 		/// </summary>
 		/// <param name="id">Any unsigned 128-bit numeric ID.</param>
 		Guid GetPublicRepresentation(UInt128 id);
-#endif
 		/// <summary>
 		/// <para>
 		/// Returns a 16-byte public representation of the given ID.
@@ -120,7 +118,6 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		bool TryGetDecimal(Guid publicId, out decimal id);
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs the original ID represented by the given public ID.
@@ -130,7 +127,6 @@ namespace Architect.Identities
 		/// </para>
 		/// </summary>
 		bool TryGetUInt128(Guid publicId, out UInt128 id);
-#endif
 		/// <summary>
 		/// <para>
 		/// Outputs the original ID represented by the given public ID.
