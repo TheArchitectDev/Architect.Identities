@@ -46,7 +46,6 @@ namespace Architect.Identities
 			if (converter is null) throw new ArgumentNullException(nameof(converter));
 			return converter.TryGetDecimal(publicId, out var id) ? id : null;
 		}
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns the original ID represented by the given public ID.
@@ -60,7 +59,6 @@ namespace Architect.Identities
 			if (converter is null) throw new ArgumentNullException(nameof(converter));
 			return converter.TryGetUInt128(publicId, out var id) ? id : null;
 		}
-#endif
 		/// <summary>
 		/// <para>
 		/// Returns the original ID represented by the given public ID.

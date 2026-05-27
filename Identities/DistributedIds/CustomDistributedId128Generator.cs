@@ -17,8 +17,6 @@ namespace Architect.Identities
 			this.IdGenerator = idGenerator;
 		}
 
-#if NET7_0_OR_GREATER
-
 		/// <summary>
 		/// Constructs a new instance that always returns the given ID.
 		/// </summary>
@@ -42,8 +40,6 @@ namespace Architect.Identities
 			BinaryIdEncoder.TryDecodeUInt128(bytes, out var result);
 			return result;
 		}
-
-#endif
 
 		/// <summary>
 		/// Constructs a new instance that always returns the given ID.

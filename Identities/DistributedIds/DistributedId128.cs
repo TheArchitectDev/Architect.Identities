@@ -37,7 +37,6 @@ namespace Architect.Identities
 	/// </summary>
 	public static class DistributedId128
 	{
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns a new ID value, encoded as a <see cref="UInt128"/>, consisting of exactly 38 digits until beyond the year 4000.
@@ -59,7 +58,6 @@ namespace Architect.Identities
 			var id = DistributedId128GeneratorScope.CurrentGenerator.CreateId();
 			return id;
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -82,8 +80,6 @@ namespace Architect.Identities
 			var id = DistributedId128GeneratorScope.CurrentGenerator.CreateGuid();
 			return id;
 		}
-
-#if NET7_0_OR_GREATER
 
 		/// <summary>
 		/// <para>
@@ -128,7 +124,5 @@ namespace Architect.Identities
 			result |= (UInt128)lower;
 			return result;
 		}
-
-#endif
 	}
 }

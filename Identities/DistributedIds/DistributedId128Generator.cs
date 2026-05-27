@@ -19,21 +19,10 @@ namespace Architect.Identities
 		/// </summary>
 		private const ulong VersionMarker = (ulong)VersionMarkerByte << (64 - 48 - 4); // Shift left to move from bit 60 to bit 48
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// The maximum ID value to fit in 38 digits.
 		/// </summary>
 		internal static readonly UInt128 MaxValueToFitInDecimal38 = UInt128.Parse("99999999999999999999999999999999999999");
-#endif
-
-		static DistributedId128Generator()
-		{
-			if (!Environment.Is64BitOperatingSystem)
-				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on non-64-bit operating systems. It uses 64-bit instructions that must be atomic.");
-
-			if (!BitConverter.IsLittleEndian)
-				throw new PlatformNotSupportedException($"{nameof(DistributedId)} is not supported on big-endian architectures. The binary conversions have not been tested.");
-		}
 
 		private static DateTime GetUtcNow()
 		{
@@ -82,12 +71,10 @@ namespace Architect.Identities
 			this.SleepAction = sleepAction ?? Thread.Sleep;
 		}
 
-#if NET7_0_OR_GREATER
 		public UInt128 CreateId()
 		{
 			return this.CreateGuid().ToUInt128();
 		}
-#endif
 
 		public Guid CreateGuid()
 		{

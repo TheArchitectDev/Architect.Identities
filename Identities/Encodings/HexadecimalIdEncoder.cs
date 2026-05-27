@@ -178,7 +178,6 @@ namespace Architect.Identities
 			});
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs a 32-character hexadecimal UTF-8 representation of the given ID.
@@ -217,7 +216,6 @@ namespace Architect.Identities
 					charSpan[i] = (char)bytes[i];
 			});
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -428,7 +426,6 @@ namespace Architect.Identities
 			return TryDecodeGuid(bytes, out id);
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs an ID decoded from the given hexadecimal UTF-8 representation.
@@ -482,7 +479,6 @@ namespace Architect.Identities
 
 			return TryDecodeUInt128(bytes, out id);
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -596,7 +592,6 @@ namespace Architect.Identities
 			return TryDecodeGuid(chars, out var id) ? id : null;
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns an ID decoded from the given hexadecimal UTF-8 representation.
@@ -624,6 +619,5 @@ namespace Architect.Identities
 		{
 			return TryDecodeUInt128(chars, out var id) ? id : null;
 		}
-#endif
 	}
 }

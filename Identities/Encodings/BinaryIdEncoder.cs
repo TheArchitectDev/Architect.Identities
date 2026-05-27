@@ -1,8 +1,6 @@
 using System;
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using Architect.Identities.Encodings;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Architect.Identities
@@ -17,12 +15,6 @@ namespace Architect.Identities
 	/// </summary>
 	public static class BinaryIdEncoder
 	{
-		static BinaryIdEncoder()
-		{
-			if (!BitConverter.IsLittleEndian)
-				throw new PlatformNotSupportedException($"{nameof(BinaryIdEncoder)} is not supported on big-endian architectures. The conversions have not been tested.");
-		}
-
 		/// <summary>
 		/// Validates that the given ID is valid, and returns its components.
 		/// </summary>
@@ -30,19 +22,17 @@ namespace Architect.Identities
 		{
 			if (id < 0m) throw new ArgumentOutOfRangeException(nameof(id));
 
-			// Extract the components
-			var decimals = MemoryMarshal.CreateReadOnlySpan(ref id, length: 1);
-			var components = MemoryMarshal.Cast<decimal, int>(decimals);
-			var signAndScale = DecimalStructure.GetSignAndScale(components);
-			var hi = DecimalStructure.GetHi(components);
-			var lo = DecimalStructure.GetLo(components);
-			var mid = DecimalStructure.GetMid(components);
+			// Docs:
+			// The first, second, and third elements of the returned array contain the low, middle, and high 32 bits of the 96-bit integer number.
+			// The fourth element of the returned array contains the scale factor and sign.
 
-			// Validate format and range
-			if (id > DistributedIdGenerator.MaxValue || signAndScale != 0)
+			Span<int> ints = stackalloc int[4];
+			Decimal.GetBits(id, ints);
+
+			if (id > DistributedIdGenerator.MaxValue || ints[3] != 0) // Too great or negative or with nonzero scale
 				throw new ArgumentException($"The ID must be positive, have no decimal places, and consist of no more than 28 digits.", nameof(id));
 
-			return (signAndScale, hi, mid, lo);
+			return (SignAndScale: ints[3], Hi: ints[2], Mid: ints[1], Lo: ints[0]);
 		}
 
 		/// <summary>
@@ -159,18 +149,7 @@ namespace Architect.Identities
 		{
 			if (bytes.Length < 16) throw new IndexOutOfRangeException("At least 16 output bytes are required.");
 
-			var guids = MemoryMarshal.Cast<byte, Guid>(bytes);
-			guids[0] = id;
-
-			var uints = MemoryMarshal.Cast<Guid, uint>(guids);
-			var ushorts = MemoryMarshal.Cast<Guid, ushort>(guids);
-
-			// We need to order the GUID's bytes left-to-right from most significant to least significant
-			uints[0] = BinaryPrimitives.ReverseEndianness(uints[0]); // Bytes 0-3 are the most significant, but are still litte-endian
-			ushorts[2] = BinaryPrimitives.ReverseEndianness(ushorts[2]); // Bytes 4-5 are the next most significant, but are still little-endian
-			ushorts[3] = BinaryPrimitives.ReverseEndianness(ushorts[3]); // Bytes 6-7 are the next most significant, but are still little-endian
-
-			// Bytes 8-15 are the next most significant, and are already in big-endian
+			id.TryWriteBytes(bytes, bigEndian: true, out _);
 		}
 
 		/// <summary>
@@ -186,7 +165,6 @@ namespace Architect.Identities
 			return bytes;
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs the 16-byte big-endian binary representation of the given ID.
@@ -217,7 +195,6 @@ namespace Architect.Identities
 			Encode(id, bytes);
 			return bytes;
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -318,23 +295,10 @@ namespace Architect.Identities
 				return false;
 			}
 
-			Span<Guid> guids = stackalloc Guid[1];
-			guids[0] = MemoryMarshal.Read<Guid>(bytes);
-
-			var uints = MemoryMarshal.Cast<Guid, uint>(guids);
-			var ushorts = MemoryMarshal.Cast<Guid, ushort>(guids);
-
-			// Our entire input was big-endian
-			// Correct the left half of the GUID: make little-endian, with byte group significance (most to least) 0-3, 4-5, 6-7
-			uints[0] = BinaryPrimitives.ReverseEndianness(uints[0]);
-			ushorts[2] = BinaryPrimitives.ReverseEndianness(ushorts[2]);
-			ushorts[3] = BinaryPrimitives.ReverseEndianness(ushorts[3]);
-
-			id = guids[0];
+			id = new Guid(bytes, bigEndian: true);
 			return true;
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Outputs an ID decoded from the given binary representation.
@@ -360,7 +324,6 @@ namespace Architect.Identities
 			id = new UInt128(upper: upper, lower: lower);
 			return true;
 		}
-#endif
 
 		/// <summary>
 		/// <para>
@@ -418,7 +381,6 @@ namespace Architect.Identities
 			return TryDecodeGuid(bytes, out var id) ? id : null;
 		}
 
-#if NET7_0_OR_GREATER
 		/// <summary>
 		/// <para>
 		/// Returns an ID decoded from the given binary representation.
@@ -432,6 +394,5 @@ namespace Architect.Identities
 		{
 			return TryDecodeUInt128(bytes, out var id) ? id : null;
 		}
-#endif
 	}
 }

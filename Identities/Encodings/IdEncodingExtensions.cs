@@ -131,8 +131,6 @@ namespace Architect.Identities
 
 		#region Transcoding
 
-#if NET7_0_OR_GREATER
-
 		/// <summary>
 		/// <para>
 		/// Transcodes the given <see cref="Guid"/> into a <see cref="UInt128"/>, retaining the lexicographical ordering.
@@ -168,8 +166,6 @@ namespace Architect.Identities
 			BinaryIdEncoder.TryDecodeGuid(bytes, out var result);
 			return result;
 		}
-
-#endif
 
 		#endregion
 	}

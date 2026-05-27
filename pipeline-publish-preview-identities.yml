@@ -3,7 +3,7 @@ trigger:
 pr: none
 
 pool:
-  vmImage: 'windows-2022'
+  vmImage: 'windows-latest'
 
 steps:
 

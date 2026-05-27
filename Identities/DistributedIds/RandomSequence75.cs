@@ -134,33 +134,14 @@ namespace Architect.Identities
 			if ((this.High | this.Low) == 0UL)
 				ThrowCreateOnlyThroughCreateMethodException();
 
-#if NET7_0_OR_GREATER
 			return new Binary128(upper: this.High, lower: this.Low);
-#else
-			return new Binary128(
-				lo: (int)(this.Low & UInt32.MaxValue),
-				mid: (int)(this.Low >> 32),
-				hi: (int)this.High,
-				isNegative: false,
-				scale: 0);
-#endif
 		}
 
 		private static (ulong, ulong) GetHighAndLow(Binary128 value)
 		{
-#if NET7_0_OR_GREATER
 			var high = (ulong)(value >> 64);
 			var low = (ulong)value;
 			return (high, low);
-#else
-			var decimals = MemoryMarshal.CreateSpan(ref value, length: 1);
-			var ints = MemoryMarshal.Cast<decimal, int>(decimals);
-			var lo = (ulong)DecimalStructure.GetLo(ints);
-			var mid = (ulong)DecimalStructure.GetMid(ints);
-			var hi = (ulong)DecimalStructure.GetHi(ints);
-			var low = (mid << 32) | lo;
-			return (hi, low);
-#endif
 		}
 
 		public ulong GetHigh12Bits()
